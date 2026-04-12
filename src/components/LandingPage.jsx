@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Sun } from "lucide-react";
 
-export function LandingPage({ onGetStarted, onGoToPricing, onToggleTheme }) {
+export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme }) {
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -40,8 +40,11 @@ export function LandingPage({ onGetStarted, onGoToPricing, onToggleTheme }) {
             >
               <Sun className="w-5 h-5" />
             </button>
-            <Button variant="outline" onClick={onGetStarted}>
+            <Button variant="outline" onClick={onLogin}>
               Login
+            </Button>
+            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onCreateAccount || onGetStarted}>
+              Create Account
             </Button>
           </nav>
         </div>
@@ -66,17 +69,17 @@ export function LandingPage({ onGetStarted, onGoToPricing, onToggleTheme }) {
             <Button 
               size="lg" 
               className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-6 text-lg"
-              onClick={onGetStarted}
+              onClick={onCreateAccount || onGetStarted}
             >
-              Get Started for Free
+              Create Account
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="px-8 py-6 text-lg border-[#2563eb] text-[#2563eb] hover:bg-blue-50"
-              onClick={onGetStarted}
+              onClick={onLogin}
             >
-              Start Your ₹199 Trial
+              Login
             </Button>
           </div>
         </div>
@@ -229,9 +232,9 @@ export function LandingPage({ onGetStarted, onGoToPricing, onToggleTheme }) {
           <Button 
             size="lg" 
             className="bg-white text-[#2563eb] hover:bg-gray-100 px-8 py-6 text-lg"
-            onClick={onGetStarted}
+            onClick={onCreateAccount || onGetStarted}
           >
-            Get Started for Free
+            Create Account
           </Button>
         </div>
       </section>

@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Check } from "lucide-react";
 
-export function PricingPage({ onGetStarted, onBackToHome }) {
+export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccount }) {
   const [billingCycle, setBillingCycle] = useState("monthly");
 
   const pricingPlans = {
@@ -160,11 +160,11 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
             >
               Home
             </button>
-            <Button variant="outline" onClick={onGetStarted}>
+            <Button variant="outline" onClick={onLogin || onGetStarted}>
               Log In
             </Button>
-            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onGetStarted}>
-              Create Free Account
+            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onCreateAccount || onGetStarted}>
+              Create Account
             </Button>
           </nav>
         </div>
@@ -235,10 +235,10 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
 
               <Button
                 className={`w-full ${currentPlans.free.buttonColor} mt-auto`}
-                onClick={onGetStarted}
+                onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                {currentPlans.free.buttonText}
+                Create Account
               </Button>
             </CardContent>
           </Card>
@@ -259,7 +259,7 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
                   <span className="text-5xl" style={{ fontWeight: 700 }}>
                     {currentPlans.pro.price}
                   </span>
-                  <span className="text-gray-500 text-lg">USD</span>
+                  <span className="text-gray-500 text-lg">INR</span>
                 </div>
                 <p className="text-gray-600 mb-4">{currentPlans.pro.period}</p>
                 <div className="text-sm mb-2">
@@ -287,10 +287,10 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
 
               <Button
                 className={`w-full ${currentPlans.pro.buttonColor} mt-auto`}
-                onClick={onGetStarted}
+                onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                {currentPlans.pro.buttonText}
+                Create Account
               </Button>
             </CardContent>
           </Card>
@@ -306,7 +306,7 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
                   <span className="text-5xl" style={{ fontWeight: 700 }}>
                     {currentPlans.platinum.price}
                   </span>
-                  <span className="text-gray-500 text-lg">USD</span>
+                  <span className="text-gray-500 text-lg">INR</span>
                 </div>
                 <p className="text-gray-600 mb-4">{currentPlans.platinum.period}</p>
                 <div className="text-sm mb-2">
@@ -334,10 +334,10 @@ export function PricingPage({ onGetStarted, onBackToHome }) {
 
               <Button
                 className={`w-full ${currentPlans.platinum.buttonColor} mt-auto`}
-                onClick={onGetStarted}
+                onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                {currentPlans.platinum.buttonText}
+                Create Account
               </Button>
             </CardContent>
           </Card>

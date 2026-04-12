@@ -3,73 +3,51 @@ import { Switch } from "./ui/switch";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { MessageSquare, Mail, Gift, Plus, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
-export function Automations() {
+const iconMap = {
+  MessageSquare,
+  Mail,
+  Gift,
+  Zap,
+};
+
+const defaultSummary = {
+  autoRepliesToday: 0,
+  averageResponseTime: "0 sec",
+  timeSaved: "0 hrs",
+  timeSavedLabel: "Create your first rule to start saving time",
+};
+
+const defaultTip = {
+  title: "No automations yet",
+  body: "Create your first automation rule to start replying faster inside InstaLead.",
+};
+
+function mapTemplate(template, index) {
+  return {
+    id: template.id || `${index + 1}`,
+    name: template.name,
+    description: template.description,
+    trigger: template.trigger,
+    response: template.response,
+    icon: iconMap[template.iconName || template.icon] || MessageSquare,
+    iconName: template.iconName || template.icon || "MessageSquare",
+    category: template.category,
+    enabled: Boolean(template.enabled),
+  };
+}
+
+export function Automations({ summary, initialTemplates, tip }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [templates, setTemplates] = useState([
-    {
-      id: "1",
-      name: "Price Inquiry",
-      description: "Auto-respond when users ask about pricing",
-      trigger: "Price, cost, kitne ka, how much",
-      response: "Thanks for your interest! 🎉 Check our catalog: bit.ly/shop-link. DM 'BUY' to place order!",
-      icon: MessageSquare,
-      category: "Sales",
-      enabled: true,
-    },
-    {
-      id: "2",
-      name: "Lead Magnet",
-      description: "Collect emails for free guides",
-      trigger: "Guide, free, download, ebook",
-      response: "Great! 📚 Share your email and I'll send the free guide instantly.",
-      icon: Gift,
-      category: "Lead Gen",
-      enabled: true,
-    },
-    {
-      id: "3",
-      name: "Availability Check",
-      description: "Respond to stock inquiries",
-      trigger: "Available, stock, in stock",
-      response: "Yes! ✅ It's in stock. DM 'ORDER' with your size/variant to proceed.",
-      icon: MessageSquare,
-      category: "Sales",
-      enabled: false,
-    },
-    {
-      id: "4",
-      name: "Customer Support",
-      description: "Handle common support questions",
-      trigger: "Help, support, issue, problem",
-      response: "We're here to help! 💬 Please describe your issue and we'll get back to you in 2 hours.",
-      icon: Mail,
-      category: "Support",
-      enabled: true,
-    },
-    {
-      id: "5",
-      name: "Shipping Info",
-      description: "Answer shipping questions",
-      trigger: "Shipping, delivery, when will I get",
-      response: "We ship pan-India! 🚚 Delivery in 3-5 days. Free shipping on orders above ₹499.",
-      icon: MessageSquare,
-      category: "Sales",
-      enabled: false,
-    },
-    {
-      id: "6",
-      name: "Discount Inquiry",
-      description: "Share current offers",
-      trigger: "Discount, offer, sale, coupon",
-      response: "Yes! 🎊 Use code INSTA20 for 20% off. Valid till this Sunday!",
-      icon: Gift,
-      category: "Sales",
-      enabled: true,
-    },
-  ]);
+  const [templates, setTemplates] = useState(() =>
+    (initialTemplates || []).map(mapTemplate)
+  );
+
+  useEffect(() => {
+    setTemplates((initialTemplates || []).map(mapTemplate));
+  }, [initialTemplates]);
 
   const toggleTemplate = (id) => {
     setTemplates((prev) =>
@@ -78,20 +56,17 @@ export function Automations() {
   };
 
   const handleCreateAutomation = (automation) => {
-    const iconMap = {
-      MessageSquare,
-      Mail,
-      Gift,
-      Zap,
-    };
-
     const newTemplate = {
-      id: (templates.length + 1).toString(),
-      name: automation.name,
-      description: automation.description,
-      trigger: automation.trigger,
-      response: automation.response,
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `automation-${Date.now()}`,
+      name: automation.name.trim(),
+      description: automation.description.trim(),
+      trigger: automation.trigger.trim(),
+      response: automation.response.trim(),
       icon: iconMap[automation.icon] || MessageSquare,
+      iconName: automation.icon,
       category: automation.category,
       enabled: true,
     };
@@ -100,6 +75,14 @@ export function Automations() {
   };
 
   const enabledCount = templates.filter((t) => t.enabled).length;
+  const stats = {
+    ...defaultSummary,
+    ...summary,
+  };
+  const tipContent = {
+    ...defaultTip,
+    ...tip,
+  };
 
   return (
     <>
@@ -131,19 +114,19 @@ export function Automations() {
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-600 mb-1">Auto-Replies Today</p>
-            <p className="text-3xl" style={{ fontWeight: 700 }}>142</p>
-            <p className="text-sm text-gray-600 mt-1">Avg response: 8 sec</p>
+            <p className="text-3xl" style={{ fontWeight: 700 }}>{stats.autoRepliesToday}</p>
+            <p className="text-sm text-gray-600 mt-1">Avg response: {stats.averageResponseTime}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-600 mb-1">Time Saved</p>
-            <p className="text-3xl" style={{ fontWeight: 700 }}>3.2 hrs</p>
-            <p className="text-sm text-gray-600 mt-1">Just today</p>
+            <p className="text-3xl" style={{ fontWeight: 700 }}>{stats.timeSaved}</p>
+            <p className="text-sm text-gray-600 mt-1">{stats.timeSavedLabel}</p>
           </div>
         </div>
 
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {templates.map((template) => {
+          {templates.length > 0 ? templates.map((template) => {
             const Icon = template.icon;
             
             return (
@@ -212,15 +195,32 @@ export function Automations() {
                 </CardContent>
               </Card>
             );
-          })}
+          }) : (
+            <Card className="border border-dashed border-gray-300 bg-white md:col-span-2">
+              <CardContent className="py-12 text-center">
+                <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
+                  No automation rules yet
+                </h3>
+                <p className="text-gray-600 mb-5">
+                  Create your first automation to start handling common Instagram replies automatically.
+                </p>
+                <Button
+                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Automation
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Info Banner */}
         <div className="mt-8 bg-gradient-to-r from-blue-50 to-orange-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>💡 Pro Tip</h3>
+          <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>💡 {tipContent.title}</h3>
           <p className="text-gray-700">
-            Templates work best when combined. Enable "Price Inquiry" + "Discount Inquiry" to maximize
-            conversions. The more specific your triggers, the better your response rate.
+            {tipContent.body}
           </p>
         </div>
       </div>

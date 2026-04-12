@@ -1,12 +1,17 @@
 import { Home, Zap, Users, BarChart3, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 
-export function DashboardSidebar({ activeView, onViewChange, onLogout }) {
+export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome, owner }) {
   const navItems = [
     { id: "leads", icon: Users, label: "Lead Center" },
     { id: "automations", icon: Zap, label: "Automations" },
     { id: "performance", icon: BarChart3, label: "Post Performance" },
   ];
+  const displayOwner = {
+    name: owner?.name || "Rahul Kumar",
+    plan: owner?.plan || "Growth Plan",
+    avatarInitials: owner?.avatarInitials || "RK",
+  };
 
   return (
     <div className="w-64 h-screen bg-[#f8fafc] border-r border-[#e2e8f0] flex flex-col">
@@ -23,7 +28,7 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout }) {
         <div className="space-y-1">
           {/* Home Button */}
           <button
-            onClick={onLogout}
+            onClick={onGoHome || onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-700 hover:bg-[#f1f5f9] mb-2"
           >
             <Home className="w-5 h-5" />
@@ -57,11 +62,11 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout }) {
       <div className="p-4 border-t border-[#e2e8f0]">
         <div className="flex items-center gap-3 mb-3 px-2">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563eb] to-[#f97316] flex items-center justify-center text-white" style={{ fontWeight: 600 }}>
-            RK
+            {displayOwner.avatarInitials}
           </div>
           <div className="flex-1">
-            <p style={{ fontWeight: 500 }}>Rahul Kumar</p>
-            <p className="text-sm text-gray-500">Growth Plan</p>
+            <p style={{ fontWeight: 500 }}>{displayOwner.name}</p>
+            <p className="text-sm text-gray-500">{displayOwner.plan}</p>
           </div>
         </div>
         <Button

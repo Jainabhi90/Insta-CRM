@@ -16,10 +16,31 @@ export function CreateAutomationModal({ onClose, onSave }) {
     category: "Sales",
     icon: "MessageSquare",
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+
+    const payload = {
+      ...formData,
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      trigger: formData.trigger.trim(),
+      response: formData.response.trim(),
+    };
+
+    if (!payload.name || !payload.description || !payload.trigger || !payload.response) {
+      setErrorMessage("Complete all fields before creating the automation.");
+      return;
+    }
+
+    if (payload.response.length < 10) {
+      setErrorMessage("Add a fuller reply so the automation is actually useful.");
+      return;
+    }
+
+    setErrorMessage("");
+    onSave(payload);
     onClose();
   };
 
@@ -49,6 +70,11 @@ export function CreateAutomationModal({ onClose, onSave }) {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {errorMessage ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="name">Automation Name</Label>
               <Input
@@ -56,7 +82,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 type="text"
                 placeholder="e.g., Order Confirmation"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  setErrorMessage("");
+                  setFormData({ ...formData, name: e.target.value });
+                }}
                 required
               />
             </div>
@@ -68,7 +97,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 type="text"
                 placeholder="e.g., Respond to order confirmation requests"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => {
+                  setErrorMessage("");
+                  setFormData({ ...formData, description: e.target.value });
+                }}
                 required
               />
             </div>
@@ -78,7 +110,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value) => {
+                    setErrorMessage("");
+                    setFormData({ ...formData, category: value });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -95,7 +130,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 <Label htmlFor="icon">Icon</Label>
                 <Select
                   value={formData.icon}
-                  onValueChange={(value) => setFormData({ ...formData, icon: value })}
+                  onValueChange={(value) => {
+                    setErrorMessage("");
+                    setFormData({ ...formData, icon: value });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -118,7 +156,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 type="text"
                 placeholder="e.g., order, status, tracking, shipped"
                 value={formData.trigger}
-                onChange={(e) => setFormData({ ...formData, trigger: e.target.value })}
+                onChange={(e) => {
+                  setErrorMessage("");
+                  setFormData({ ...formData, trigger: e.target.value });
+                }}
                 required
               />
               <p className="text-sm text-gray-500">
@@ -132,7 +173,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 id="response"
                 placeholder="e.g., Thanks for reaching out! Your order is on the way. Track it here: [tracking-link]"
                 value={formData.response}
-                onChange={(e) => setFormData({ ...formData, response: e.target.value })}
+                onChange={(e) => {
+                  setErrorMessage("");
+                  setFormData({ ...formData, response: e.target.value });
+                }}
                 rows={4}
                 required
               />

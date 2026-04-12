@@ -3,75 +3,6 @@ import { Badge } from "./ui/badge";
 import { Eye, Users, MessageSquare, Heart, Share2 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
-const mockPosts = [
-  {
-    id: "1",
-    thumbnail: "https://images.unsplash.com/photo-1647004693489-ff8bf278edc0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbnN0YWdyYW0lMjBwb3N0JTIwc2tpbmNhcmUlMjBiZWF1dHl8ZW58MXx8fHwxNzcwNDYwNzE2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "Best skincare routine for Indian skin 🌟",
-    views: 15420,
-    likes: 2847,
-    comments: 156,
-    shares: 89,
-    engagement: 3092,
-    postedAt: "2 days ago",
-  },
-  {
-    id: "2",
-    thumbnail: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2NpYWwlMjBtZWRpYSUyMG1hcmtldGluZyUyMGJ1c2luZXNzfGVufDF8fHx8MTc3MDM3MjI5OHww&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "5 digital marketing tips that actually work 💡",
-    views: 12340,
-    likes: 1923,
-    comments: 89,
-    shares: 45,
-    engagement: 2057,
-    postedAt: "4 days ago",
-  },
-  {
-    id: "3",
-    thumbnail: "https://images.unsplash.com/photo-1691096674730-2b5fb28b726f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9kdWN0JTIwcGhvdG9ncmFwaHklMjBlY29tbWVyY2V8ZW58MXx8fHwxNzcwNDYwNzE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "New product launch! Limited stock ⚡",
-    views: 18750,
-    likes: 3621,
-    comments: 203,
-    shares: 134,
-    engagement: 3958,
-    postedAt: "1 week ago",
-  },
-  {
-    id: "4",
-    thumbnail: "https://images.unsplash.com/photo-1672327114747-261be18f4907?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwcGhvdG9ncmFwaHklMjBpbmRpYW58ZW58MXx8fHwxNzcwNDYwNzE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "Summer collection 2026 🌺",
-    views: 9870,
-    likes: 1456,
-    comments: 67,
-    shares: 32,
-    engagement: 1555,
-    postedAt: "1 week ago",
-  },
-  {
-    id: "5",
-    thumbnail: "https://images.unsplash.com/photo-1669743281584-b9125947f9ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmb29kJTIwcGhvdG9ncmFwaHklMjByZXN0YXVyYW50fGVufDF8fHx8MTc3MDQzNjExMXww&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "Weekend special menu! Order now 🍜",
-    views: 7650,
-    likes: 1234,
-    comments: 45,
-    shares: 28,
-    engagement: 1307,
-    postedAt: "2 weeks ago",
-  },
-  {
-    id: "6",
-    thumbnail: "https://images.unsplash.com/photo-1589451431369-f569890dfd84?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwd29ya291dCUyMG1vdGl2YXRpb258ZW58MXx8fHwxNzcwMzg2ODczfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    caption: "Transform your body in 30 days 💪",
-    views: 6540,
-    likes: 987,
-    comments: 34,
-    shares: 19,
-    engagement: 1040,
-    postedAt: "2 weeks ago",
-  },
-];
-
 function formatNumber(num) {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + "M";
@@ -82,14 +13,38 @@ function formatNumber(num) {
   return num.toString();
 }
 
-export function PostPerformance() {
-  const totalViews = mockPosts.reduce((sum, post) => sum + post.views, 0);
-  const totalLikes = mockPosts.reduce((sum, post) => sum + post.likes, 0);
-  const totalComments = mockPosts.reduce((sum, post) => sum + post.comments, 0);
-  const avgEngagementRate = (
-    (mockPosts.reduce((sum, post) => sum + (post.engagement / post.views) * 100, 0) /
-      mockPosts.length)
-  ).toFixed(1);
+const defaultInsight = {
+  title: "No post data yet",
+  body: "Your backend has not synced any Instagram post analytics into the CRM yet.",
+  note: "Once posts are stored in your database, this section will show live reach and engagement.",
+};
+
+export function PostPerformance({ summary, posts, insight }) {
+  const performancePosts = posts || [];
+  const totalViews = performancePosts.reduce((sum, post) => sum + post.views, 0);
+  const totalLikes = performancePosts.reduce((sum, post) => sum + post.likes, 0);
+  const totalComments = performancePosts.reduce((sum, post) => sum + post.comments, 0);
+  const avgEngagementRate =
+    performancePosts.length > 0
+      ? (
+          performancePosts.reduce((sum, post) => sum + (post.engagement / post.views) * 100, 0) /
+          performancePosts.length
+        ).toFixed(1)
+      : "0.0";
+  const summaryCards = {
+    totalViews: formatNumber(totalViews),
+    totalLikes: formatNumber(totalLikes),
+    totalComments: totalComments.toString(),
+    averageEngagement: `${avgEngagementRate}%`,
+    likesTrend: "+23% vs last month",
+    commentsTrend: "+18% growth",
+    engagementLabel: "Industry avg: 3.5%",
+    ...summary,
+  };
+  const insightContent = {
+    ...defaultInsight,
+    ...insight,
+  };
 
   return (
     <div className="p-8">
@@ -107,7 +62,7 @@ export function PostPerformance() {
             <Eye className="w-5 h-5 text-[#2563eb]" />
             <p className="text-sm text-gray-600">Total Views</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{formatNumber(totalViews)}</p>
+          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalViews}</p>
           <p className="text-sm text-gray-600 mt-1">Last 30 days</p>
         </div>
         
@@ -116,8 +71,8 @@ export function PostPerformance() {
             <Heart className="w-5 h-5 text-red-500" />
             <p className="text-sm text-gray-600">Total Likes</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{formatNumber(totalLikes)}</p>
-          <p className="text-sm text-green-600 mt-1">+23% vs last month</p>
+          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalLikes}</p>
+          <p className="text-sm text-green-600 mt-1">{summaryCards.likesTrend}</p>
         </div>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -125,8 +80,8 @@ export function PostPerformance() {
             <MessageSquare className="w-5 h-5 text-[#f97316]" />
             <p className="text-sm text-gray-600">Total Comments</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{totalComments}</p>
-          <p className="text-sm text-green-600 mt-1">+18% growth</p>
+          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalComments}</p>
+          <p className="text-sm text-green-600 mt-1">{summaryCards.commentsTrend}</p>
         </div>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -134,14 +89,14 @@ export function PostPerformance() {
             <Users className="w-5 h-5 text-green-600" />
             <p className="text-sm text-gray-600">Avg Engagement</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{avgEngagementRate}%</p>
-          <p className="text-sm text-gray-600 mt-1">Industry avg: 3.5%</p>
+          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.averageEngagement}</p>
+          <p className="text-sm text-gray-600 mt-1">{summaryCards.engagementLabel}</p>
         </div>
       </div>
 
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockPosts.map((post) => (
+        {performancePosts.length > 0 ? performancePosts.map((post) => (
           <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow border-2 border-gray-100">
             <div className="relative">
               <ImageWithFallback
@@ -202,17 +157,28 @@ export function PostPerformance() {
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <Card className="border border-dashed border-gray-300 bg-white lg:col-span-3">
+            <CardContent className="py-12 text-center">
+              <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
+                No synced posts yet
+              </h3>
+              <p className="text-gray-600">
+                Post analytics will appear here after your backend stores Instagram post performance.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Insights Banner */}
       <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>📊 Smart Insight</h3>
+        <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>📊 {insightContent.title}</h3>
         <p className="text-gray-700 mb-2">
-          Your "Product Launch" posts generate <strong>2.5x higher engagement</strong> than other content.
+          {insightContent.body}
         </p>
         <p className="text-gray-600 text-sm">
-          Consider creating more product-focused content with compelling visuals to maximize reach and interactions.
+          {insightContent.note}
         </p>
       </div>
     </div>
