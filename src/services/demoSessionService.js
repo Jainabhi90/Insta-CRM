@@ -1,8 +1,9 @@
 import { normalizeOwner } from "../adapters/ownerAdapter"
 import { normalizeUsername, validateAccountCredentials, validateLoginCredentials } from "../lib/authValidation"
 
-const USERS_STORAGE_KEY = "instalead.demo.users"
-const SESSION_STORAGE_KEY = "instalead.demo.session"
+const DEMO_STORAGE_VERSION = "v2"
+const USERS_STORAGE_KEY = `instalead.demo.users.${DEMO_STORAGE_VERSION}`
+const SESSION_STORAGE_KEY = `instalead.demo.session.${DEMO_STORAGE_VERSION}`
 
 function readStorage(key, fallbackValue) {
   if (typeof window === "undefined") {

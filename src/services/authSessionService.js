@@ -3,7 +3,11 @@ import { signInWithPassword } from "../api/auth/credentialAuthApi"
 import { bootstrapInstagramSession } from "../api/auth/sessionBootstrapApi"
 import { getCurrentSession, logoutCurrentSession } from "../api/auth/sessionApi"
 import { ApiError, canUseDemoFallback, isDemoFallbackEnabled } from "../api/core/apiClient"
-import { buildDemoInstagramCallbackUrl, getInstagramRedirectUri } from "../lib/instagramAuthConfig"
+import {
+  buildDemoInstagramCallbackUrl,
+  buildInstagramAuthorizeUrl,
+  getInstagramRedirectUri,
+} from "../lib/instagramAuthConfig"
 import { clearDemoSession, getStoredDemoSession, loginDemoUser } from "./demoSessionService"
 import {
   clearPendingSignupCredentials,
@@ -92,8 +96,19 @@ export async function loginWithCredentials({ identifier, password }) {
 
 export async function startInstagramSignup({ username, password }) {
   const redirectUri = getInstagramRedirectUri()
+  const authorizeUrl = buildInstagramAuthorizeUrl()
 
   if (isDemoFallbackEnabled()) {
+    if (authorizeUrl) {
+      savePendingSignupCredentials({ username, password })
+
+      return {
+        type: "redirect",
+        source: "instagram",
+        url: authorizeUrl,
+      }
+    }
+
     savePendingSignupCredentials({ username, password })
 
     return {
@@ -123,6 +138,16 @@ export async function startInstagramSignup({ username, password }) {
   } catch (error) {
     if (!canUseDemoFallback(error)) {
       throw error
+    }
+
+    if (authorizeUrl) {
+      savePendingSignupCredentials({ username, password })
+
+      return {
+        type: "redirect",
+        source: "instagram",
+        url: authorizeUrl,
+      }
     }
 
     savePendingSignupCredentials({ username, password })

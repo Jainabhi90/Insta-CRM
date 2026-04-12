@@ -1,4 +1,4 @@
-const SIGNUP_CREDENTIALS_STORAGE_KEY = "instalead.signup.credentials"
+const SIGNUP_CREDENTIALS_STORAGE_KEY = "instalead.signup.credentials.v2"
 
 function isValidCredentialPayload(payload) {
   return Boolean(payload?.username && payload?.password)
