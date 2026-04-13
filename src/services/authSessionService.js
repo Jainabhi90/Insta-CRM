@@ -95,68 +95,24 @@ export async function loginWithCredentials({ identifier, password }) {
 }
 
 export async function startInstagramSignup({ username, password }) {
-  const redirectUri = getInstagramRedirectUri()
   const authorizeUrl = buildInstagramAuthorizeUrl()
 
-  if (isDemoFallbackEnabled()) {
-    if (authorizeUrl) {
-      savePendingSignupCredentials({ username, password })
-
-      return {
-        type: "redirect",
-        source: "instagram",
-        url: authorizeUrl,
-      }
-    }
-
+  if (authorizeUrl) {
     savePendingSignupCredentials({ username, password })
 
     return {
       type: "redirect",
-      source: "demo",
-      url: buildDemoInstagramCallbackUrl(),
+      source: "instagram",
+      url: authorizeUrl,
     }
   }
 
-  try {
-    const response = await bootstrapInstagramSession({
-      redirectUri,
-      intent: "signup",
-    })
+  savePendingSignupCredentials({ username, password })
 
-    if (!response?.authorizeUrl) {
-      throw new Error("The backend did not return an Instagram authorize URL.")
-    }
-
-    savePendingSignupCredentials({ username, password })
-
-    return {
-      type: "redirect",
-      source: "backend",
-      url: response.authorizeUrl,
-    }
-  } catch (error) {
-    if (!canUseDemoFallback(error)) {
-      throw error
-    }
-
-    if (authorizeUrl) {
-      savePendingSignupCredentials({ username, password })
-
-      return {
-        type: "redirect",
-        source: "instagram",
-        url: authorizeUrl,
-      }
-    }
-
-    savePendingSignupCredentials({ username, password })
-
-    return {
-      type: "redirect",
-      source: "demo",
-      url: buildDemoInstagramCallbackUrl(),
-    }
+  return {
+    type: "redirect",
+    source: "demo",
+    url: buildDemoInstagramCallbackUrl(),
   }
 }
 

@@ -1,13 +1,13 @@
 const DEFAULT_INSTAGRAM_CLIENT_ID = "3306198099545111"
 const DEFAULT_INSTAGRAM_SCOPE =
-  "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish"
+  "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights"
 
 export function getInstagramRedirectUri() {
   if (typeof window === "undefined") {
     return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || ""
   }
 
-  return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || `${window.location.origin}/dashboard`
+  return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || "https://insta-crm.vercel.app/auth/callback"
 }
 
 export function buildInstagramAuthorizeUrl() {
