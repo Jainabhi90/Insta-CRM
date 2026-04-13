@@ -12,6 +12,9 @@ import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { readInstagramCallbackParams } from "./lib/instagramCallback";
 import { validateAccountCredentials, validateLoginCredentials } from "./lib/authValidation";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import DeleteData from "./pages/DeleteData";
 import {
   loginWithCredentials,
   logoutSession,
@@ -31,37 +34,36 @@ function hasActiveSession(session) {
 
 function getCurrentRoute() {
   if (typeof window === "undefined") {
-    return {
-      page: "landing",
-      search: "",
-    };
+    return { page: "landing", search: "" };
   }
 
-  if (window.location.pathname === "/pricing") {
-    return {
-      page: "pricing",
-      search: window.location.search,
-    };
+  const path = window.location.pathname;
+
+  if (path === "/pricing") {
+    return { page: "pricing", search: window.location.search };
   }
 
-  if (window.location.pathname === "/dashboard") {
-    return {
-      page: "dashboard",
-      search: window.location.search,
-    };
+  if (path === "/dashboard") {
+    return { page: "dashboard", search: window.location.search };
   }
 
-  if (window.location.pathname === "/auth/callback") {
-    return {
-      page: "dashboard",
-      search: window.location.search,
-    };
+  if (path === "/auth/callback") {
+    return { page: "dashboard", search: window.location.search };
   }
 
-  return {
-    page: "landing",
-    search: window.location.search,
-  };
+  if (path === "/privacy") {
+    return { page: "privacy", search: window.location.search };
+  }
+
+  if (path === "/terms") {
+    return { page: "terms", search: window.location.search };
+  }
+
+  if (path === "/delete-data") {
+    return { page: "delete-data", search: window.location.search };
+  }
+
+  return { page: "landing", search: window.location.search };
 }
 
 function getStoredTheme() {
@@ -363,46 +365,53 @@ export default function App() {
   }, [route.page, route.search]);
 
   if (route.page !== "dashboard") {
-    return (
-      <>
-        {route.page === "pricing" ? (
-          <PricingPage
-            onGetStarted={handleGetStarted}
-            onBackToHome={handleBackToHome}
-            onLogin={openLoginModal}
-            onCreateAccount={openSignupModal}
-          />
-        ) : isDarkTheme ? (
-          <DarkLandingPage
-            onGetStarted={handleGetStarted}
-            onLogin={openLoginModal}
-            onCreateAccount={openSignupModal}
-            onGoToPricing={handleGoToPricing}
-            onToggleTheme={handleToggleTheme}
-          />
-        ) : (
-          <LandingPage
-            onGetStarted={handleGetStarted}
-            onLogin={openLoginModal}
-            onCreateAccount={openSignupModal}
-            onGoToPricing={handleGoToPricing}
-            onToggleTheme={handleToggleTheme}
-          />
-        )}
-        {showAuthModal && (
-          <AuthModal
-            onClose={closeAuthModal}
-            onLogin={handleLogin}
-            onStartSignup={handleStartSignup}
-            initialMode={authMode}
-            pendingAction={pendingAction}
-            errorMessage={authError}
-            onModeChange={() => setAuthError("")}
-          />
-        )}
-      </>
-    );
-  }
+  return (
+    <>
+      {route.page === "privacy" ? (
+        <Privacy />
+      ) : route.page === "terms" ? (
+        <Terms />
+      ) : route.page === "delete-data" ? (
+        <DeleteData />
+      ) : route.page === "pricing" ? (
+        <PricingPage
+          onGetStarted={handleGetStarted}
+          onBackToHome={handleBackToHome}
+          onLogin={openLoginModal}
+          onCreateAccount={openSignupModal}
+        />
+      ) : isDarkTheme ? (
+        <DarkLandingPage
+          onGetStarted={handleGetStarted}
+          onLogin={openLoginModal}
+          onCreateAccount={openSignupModal}
+          onGoToPricing={handleGoToPricing}
+          onToggleTheme={handleToggleTheme}
+        />
+      ) : (
+        <LandingPage
+          onGetStarted={handleGetStarted}
+          onLogin={openLoginModal}
+          onCreateAccount={openSignupModal}
+          onGoToPricing={handleGoToPricing}
+          onToggleTheme={handleToggleTheme}
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={closeAuthModal}
+          onLogin={handleLogin}
+          onStartSignup={handleStartSignup}
+          initialMode={authMode}
+          pendingAction={pendingAction}
+          errorMessage={authError}
+          onModeChange={() => setAuthError("")}
+        />
+      )}
+    </>
+  );
+}
 
   if (isDashboardLoading || (!hasRestoredSession && !session && !workspace)) {
     return <DashboardLoadingState />;
