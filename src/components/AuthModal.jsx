@@ -116,7 +116,7 @@ export function AuthModal({
             ) : null}
 
             {mode === "login" ? (
-              <form className="flex flex-col gap-4 min-h-full" onSubmit={handleLoginSubmit}>
+              <form className="flex flex-col gap-4" onSubmit={handleLoginSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-identifier">Username</Label>
@@ -157,7 +157,7 @@ export function AuthModal({
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] mt-auto"
+                  className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white"
                   disabled={isBusy}
                 >
                   {isLoginLoading ? (
@@ -171,7 +171,7 @@ export function AuthModal({
                 </Button>
               </form>
             ) : (
-              <form className="flex flex-col gap-4 min-h-full" onSubmit={handleSignupSubmit}>
+              <form className="flex flex-col gap-4" onSubmit={handleSignupSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-username">Username</Label>
@@ -225,7 +225,7 @@ export function AuthModal({
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-sm hover:shadow-md bg-[#0095f6] hover:bg-[#0095f6]/90 mt-auto"
+                  className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-sm hover:shadow-md bg-[#2563eb] hover:bg-[#1d4ed8] text-white"
                   disabled={isBusy}
                 >
                   {isSignupLoading ? (
