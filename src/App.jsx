@@ -47,10 +47,19 @@ function getCurrentRoute() {
     return { page: "dashboard", search: window.location.search };
   }
 
-  if (path === "/auth/callback") {
-    return { page: "dashboard", search: window.location.search };
+<<<<<<< HEAD
+  if (window.location.pathname === "/auth/callback") {
+    return {
+      page: "dashboard",
+      search: window.location.search,
+    };
   }
 
+  return {
+    page: "landing",
+    search: window.location.search,
+  };
+=======
   if (path === "/privacy") {
     return { page: "privacy", search: window.location.search };
   }
@@ -64,6 +73,7 @@ function getCurrentRoute() {
   }
 
   return { page: "landing", search: window.location.search };
+>>>>>>> Abhi
 }
 
 function getStoredTheme() {
@@ -365,53 +375,53 @@ export default function App() {
   }, [route.page, route.search]);
 
   if (route.page !== "dashboard") {
-  return (
-    <>
-      {route.page === "privacy" ? (
-        <Privacy />
-      ) : route.page === "terms" ? (
-        <Terms />
-      ) : route.page === "delete-data" ? (
-        <DeleteData />
-      ) : route.page === "pricing" ? (
-        <PricingPage
-          onGetStarted={handleGetStarted}
-          onBackToHome={handleBackToHome}
-          onLogin={openLoginModal}
-          onCreateAccount={openSignupModal}
-        />
-      ) : isDarkTheme ? (
-        <DarkLandingPage
-          onGetStarted={handleGetStarted}
-          onLogin={openLoginModal}
-          onCreateAccount={openSignupModal}
-          onGoToPricing={handleGoToPricing}
-          onToggleTheme={handleToggleTheme}
-        />
-      ) : (
-        <LandingPage
-          onGetStarted={handleGetStarted}
-          onLogin={openLoginModal}
-          onCreateAccount={openSignupModal}
-          onGoToPricing={handleGoToPricing}
-          onToggleTheme={handleToggleTheme}
-        />
-      )}
+    return (
+      <>
+        {route.page === "privacy" ? (
+          <Privacy />
+        ) : route.page === "terms" ? (
+          <Terms />
+        ) : route.page === "delete-data" ? (
+          <DeleteData />
+        ) : route.page === "pricing" ? (
+          <PricingPage
+            onGetStarted={handleGetStarted}
+            onBackToHome={handleBackToHome}
+            onLogin={openLoginModal}
+            onCreateAccount={openSignupModal}
+          />
+        ) : isDarkTheme ? (
+          <DarkLandingPage
+            onGetStarted={handleGetStarted}
+            onLogin={openLoginModal}
+            onCreateAccount={openSignupModal}
+            onGoToPricing={handleGoToPricing}
+            onToggleTheme={handleToggleTheme}
+          />
+        ) : (
+          <LandingPage
+            onGetStarted={handleGetStarted}
+            onLogin={openLoginModal}
+            onCreateAccount={openSignupModal}
+            onGoToPricing={handleGoToPricing}
+            onToggleTheme={handleToggleTheme}
+          />
+        )}
 
-      {showAuthModal && (
-        <AuthModal
-          onClose={closeAuthModal}
-          onLogin={handleLogin}
-          onStartSignup={handleStartSignup}
-          initialMode={authMode}
-          pendingAction={pendingAction}
-          errorMessage={authError}
-          onModeChange={() => setAuthError("")}
-        />
-      )}
-    </>
-  );
-}
+        {showAuthModal && (
+          <AuthModal
+            onClose={closeAuthModal}
+            onLogin={handleLogin}
+            onStartSignup={handleStartSignup}
+            initialMode={authMode}
+            pendingAction={pendingAction}
+            errorMessage={authError}
+            onModeChange={() => setAuthError("")}
+          />
+        )}
+      </>
+    );
+  }
 
   if (isDashboardLoading || (!hasRestoredSession && !session && !workspace)) {
     return <DashboardLoadingState />;
