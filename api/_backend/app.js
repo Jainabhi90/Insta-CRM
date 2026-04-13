@@ -84,4 +84,11 @@ app.use((error, req, res, next) => {
   })
 })
 
+app.use((req, res) => {
+  res.status(404).json({
+    ok: false,
+    message: `No API route matched ${req.method} ${req.originalUrl}`,
+  })
+})
+
 module.exports = app
