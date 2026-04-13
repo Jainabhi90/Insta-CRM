@@ -1,10 +1,10 @@
 const SIGNUP_CREDENTIALS_STORAGE_KEY = "instalead.signup.credentials.v2"
 
 function isValidCredentialPayload(payload) {
-  return Boolean(payload?.username && payload?.password)
+  return Boolean((payload?.email || payload?.username) && payload?.password)
 }
 
-export function savePendingSignupCredentials({ username, password }) {
+export function savePendingSignupCredentials({ email, password }) {
   if (typeof window === "undefined") {
     return
   }
@@ -12,7 +12,7 @@ export function savePendingSignupCredentials({ username, password }) {
   window.sessionStorage.setItem(
     SIGNUP_CREDENTIALS_STORAGE_KEY,
     JSON.stringify({
-      username: username.trim(),
+      email: email.trim().toLowerCase(),
       password,
       savedAt: new Date().toISOString(),
     }),
@@ -35,7 +35,7 @@ export function consumePendingSignupCredentials() {
     const payload = JSON.parse(rawValue)
     return isValidCredentialPayload(payload)
       ? {
-          username: payload.username.trim(),
+          email: (payload.email || payload.username).trim().toLowerCase(),
           password: payload.password,
         }
       : null

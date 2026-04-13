@@ -1,13 +1,29 @@
-const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,32}$/
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 8
 
-export function normalizeUsername(username) {
-  return (username || "").trim()
+export function normalizeEmail(email) {
+  return (email || "").trim().toLowerCase()
 }
 
-export function validateLoginCredentials({ identifier, password }) {
-  if (!identifier?.trim()) {
-    return "Enter your username to continue."
+export function getDisplayNameFromEmail(email) {
+  const emailPrefix = normalizeEmail(email).split("@")[0] || "Instagram User"
+
+  return emailPrefix
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+export function validateLoginCredentials({ identifier, email, password }) {
+  const normalizedEmail = normalizeEmail(email || identifier)
+
+  if (!normalizedEmail) {
+    return "Enter your email to continue."
+  }
+
+  if (!EMAIL_PATTERN.test(normalizedEmail)) {
+    return "Enter a valid email address."
   }
 
   if (!password?.trim()) {
@@ -17,15 +33,15 @@ export function validateLoginCredentials({ identifier, password }) {
   return ""
 }
 
-export function validateAccountCredentials({ username, password }) {
-  const normalizedUsername = normalizeUsername(username)
+export function validateAccountCredentials({ email, password }) {
+  const normalizedEmail = normalizeEmail(email)
 
-  if (!normalizedUsername) {
-    return "Choose a username to finish setting up your account."
+  if (!normalizedEmail) {
+    return "Enter your email to create your account."
   }
 
-  if (!USERNAME_PATTERN.test(normalizedUsername)) {
-    return "Use 3-32 characters with letters, numbers, dots, hyphens, or underscores."
+  if (!EMAIL_PATTERN.test(normalizedEmail)) {
+    return "Enter a valid email address."
   }
 
   if (!password?.trim()) {

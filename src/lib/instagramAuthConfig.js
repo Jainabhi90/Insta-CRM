@@ -7,7 +7,7 @@ export function getInstagramRedirectUri() {
     return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || ""
   }
 
-  return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || "https://insta-crm.vercel.app/auth/callback"
+  return import.meta.env.VITE_INSTAGRAM_REDIRECT_URI || `${window.location.origin}/auth/callback`
 }
 
 export function buildInstagramAuthorizeUrl() {

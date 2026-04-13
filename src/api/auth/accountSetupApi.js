@@ -10,7 +10,7 @@ import { apiRequest } from "../core/apiClient"
 //
 // Backend expectation:
 // 1. Read the pending Instagram-connected owner from the secure session/cookie.
-// 2. Save the chosen username/password in your users table.
+// 2. Save the chosen email/password in your users table.
 // 3. Mark onboarding complete and promote the session to a normal app session.
 export function completeAccountSetup(payload) {
   return apiRequest("/api/auth/account/setup", {

@@ -107,7 +107,7 @@ export async function finishInstagramLogin(callbackParams) {
     code: callbackParams.code,
     state: callbackParams.state,
     redirectUri: getInstagramRedirectUri(),
-    username: pendingCredentials.username,
+    email: pendingCredentials.email,
     password: pendingCredentials.password,
   }
 

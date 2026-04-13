@@ -51,8 +51,10 @@ export async function restoreExistingSession() {
 }
 
 export async function loginWithCredentials({ identifier, password }) {
+  const normalizedEmail = identifier.trim().toLowerCase()
   const payload = {
-    identifier: identifier.trim(),
+    identifier: normalizedEmail,
+    email: normalizedEmail,
     password,
   }
 
@@ -94,11 +96,11 @@ export async function loginWithCredentials({ identifier, password }) {
   }
 }
 
-export async function startInstagramSignup({ username, password }) {
+export async function startInstagramSignup({ email, password }) {
   const authorizeUrl = buildInstagramAuthorizeUrl()
 
   if (authorizeUrl) {
-    savePendingSignupCredentials({ username, password })
+    savePendingSignupCredentials({ email, password })
 
     return {
       type: "redirect",
@@ -107,7 +109,7 @@ export async function startInstagramSignup({ username, password }) {
     }
   }
 
-  savePendingSignupCredentials({ username, password })
+  savePendingSignupCredentials({ email, password })
 
   return {
     type: "redirect",

@@ -20,7 +20,7 @@ export function AuthModal({
     password: "",
   });
   const [signupForm, setSignupForm] = useState({
-    username: "",
+    email: "",
     password: "",
   });
 
@@ -50,7 +50,7 @@ export function AuthModal({
       password: "",
     });
     setSignupForm({
-      username: "",
+      email: "",
       password: "",
     });
   }, [initialMode]);
@@ -78,8 +78,8 @@ export function AuthModal({
             </CardTitle>
             <CardDescription className="text-gray-500 mt-2">
               {mode === "login"
-                ? "Sign in with your username and password to open your dashboard."
-                : "Choose your username and password first. Then we will send you to Instagram to finish connecting your business account."}
+                ? "Sign in with your email and password to open your dashboard."
+                : "Choose your email and password first. Then we will send you to Instagram to finish connecting your business account."}
             </CardDescription>
           </CardHeader>
 
@@ -119,11 +119,11 @@ export function AuthModal({
               <form className="flex flex-col gap-4" onSubmit={handleLoginSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-identifier">Username</Label>
+                    <Label htmlFor="login-identifier">Email</Label>
                     <Input
                       id="login-identifier"
-                      type="text"
-                      placeholder="Enter your username"
+                      type="email"
+                      placeholder="Enter your email"
                       value={loginForm.identifier}
                       onChange={(event) =>
                         setLoginForm((currentValue) => ({
@@ -133,7 +133,7 @@ export function AuthModal({
                       }
                       disabled={isBusy}
                       required
-                      autoComplete="username"
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -174,23 +174,21 @@ export function AuthModal({
               <form className="flex flex-col gap-4" onSubmit={handleSignupSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-username">Username</Label>
+                    <Label htmlFor="signup-email">Email</Label>
                     <Input
-                      id="signup-username"
-                      type="text"
-                      placeholder="Choose your username"
-                      value={signupForm.username}
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter your Gmail or work email"
+                      value={signupForm.email}
                       onChange={(event) =>
                         setSignupForm((currentValue) => ({
                           ...currentValue,
-                          username: event.target.value,
+                          email: event.target.value,
                         }))
                       }
                       disabled={isBusy}
                       required
-                      minLength={3}
-                      maxLength={32}
-                      autoComplete="username"
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -218,7 +216,7 @@ export function AuthModal({
                       Signup flow
                     </p>
                     <p className="text-sm text-blue-800 mt-1">
-                      We save these credentials only across the Instagram redirect, then the backend combines them with the OAuth code in one secure callback request.
+                      We save these credentials only across the Instagram redirect, then the backend combines your email, password, and Instagram code in one secure callback request.
                     </p>
                   </div>
                 </div>

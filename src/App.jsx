@@ -51,6 +51,13 @@ function getCurrentRoute() {
     };
   }
 
+  if (window.location.pathname === "/auth/callback") {
+    return {
+      page: "dashboard",
+      search: window.location.search,
+    };
+  }
+
   return {
     page: "landing",
     search: window.location.search,
@@ -489,7 +496,7 @@ function DashboardAccessGate({ errorMessage, onBackHome, onLogin, onCreateAccoun
             Access Your Dashboard
           </CardTitle>
           <CardDescription className="text-gray-500">
-            Returning users can sign in with username and password. New users should create their account first, then connect Instagram during signup.
+            Returning users can sign in with email and password. New users should create their account first, then connect Instagram during signup.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
