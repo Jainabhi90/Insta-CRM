@@ -57,7 +57,7 @@
       },
       "scripts": {
             "dev": "vite",
-            "dev:api": "node api/_backend/local.js",
+          "dev:api": "node backend/local.js",
             "build": "vite build"
       }
 }
