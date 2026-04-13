@@ -47,19 +47,13 @@ function getCurrentRoute() {
     return { page: "dashboard", search: window.location.search };
   }
 
-<<<<<<< HEAD
-  if (window.location.pathname === "/auth/callback") {
+  if (path === "/auth/callback") {
     return {
       page: "dashboard",
       search: window.location.search,
     };
   }
 
-  return {
-    page: "landing",
-    search: window.location.search,
-  };
-=======
   if (path === "/privacy") {
     return { page: "privacy", search: window.location.search };
   }
@@ -73,7 +67,6 @@ function getCurrentRoute() {
   }
 
   return { page: "landing", search: window.location.search };
->>>>>>> Abhi
 }
 
 function getStoredTheme() {
