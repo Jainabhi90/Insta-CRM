@@ -13,6 +13,15 @@ function getRedirectUri(redirectUriFromClient) {
   return redirectUriFromClient || config.instagram.redirectUri
 }
 
+function assertInstagramAuthorizeConfig(redirectUri) {
+  if (!config.instagram.clientId || !redirectUri) {
+    throw new InstagramAuthError(
+      "Instagram login configuration is incomplete. Set INSTAGRAM_CLIENT_ID and INSTAGRAM_REDIRECT_URI.",
+      { status: 500 },
+    )
+  }
+}
+
 function assertInstagramConfig(redirectUri) {
   if (!config.instagram.clientId || !config.instagram.clientSecret || !redirectUri) {
     throw new InstagramAuthError(
@@ -103,6 +112,30 @@ async function exchangeShortLivedForLongLivedToken({ shortLivedAccessToken }) {
   }
 }
 
+function buildInstagramAuthorizeUrl({
+  redirectUri,
+  state,
+  forceReauth = true,
+  scope = config.instagram.scope,
+}) {
+  const resolvedRedirectUri = getRedirectUri(redirectUri)
+  assertInstagramAuthorizeConfig(resolvedRedirectUri)
+
+  const params = new URLSearchParams({
+    client_id: config.instagram.clientId,
+    redirect_uri: resolvedRedirectUri,
+    response_type: "code",
+    scope,
+    state,
+  })
+
+  if (forceReauth) {
+    params.set("force_reauth", "true")
+  }
+
+  return `https://www.instagram.com/oauth/authorize?${params.toString()}`
+}
+
 async function exchangeCodeForLongLivedToken({ code, redirectUri }) {
   const shortLivedToken = await exchangeCodeForShortLivedToken({ code, redirectUri })
   const longLivedToken = await exchangeShortLivedForLongLivedToken({
@@ -126,5 +159,6 @@ async function exchangeCodeForLongLivedToken({ code, redirectUri }) {
 
 module.exports = {
   InstagramAuthError,
+  buildInstagramAuthorizeUrl,
   exchangeCodeForLongLivedToken,
 }

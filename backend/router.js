@@ -1,9 +1,13 @@
 const express = require("express")
+const crypto = require("crypto")
 const { connectToDatabase } = require("./db")
 const Owner = require("./models/Owner")
 const ApiCall = require("./models/ApiCall")
-const { hashPassword, verifyPassword } = require("./services/passwordService")
-const { exchangeCodeForLongLivedToken } = require("./services/instagramAuthService")
+const { hashPassword } = require("./services/passwordService")
+const {
+  buildInstagramAuthorizeUrl,
+  exchangeCodeForLongLivedToken,
+} = require("./services/instagramAuthService")
 const { sendPrivateReply } = require("./services/instagramMessagingService")
 const {
   readSessionToken,
@@ -17,12 +21,35 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase()
 }
 
+function buildSyntheticEmail(instagramUserId) {
+  const normalizedInstagramUserId = String(instagramUserId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+
+  return `ig_${normalizedInstagramUserId}@instalead.local`
+}
+
+function buildOwnerDisplayName(owner) {
+  if (owner.instagramUsername) {
+    return `@${String(owner.instagramUsername).replace(/^@/, "")}`
+  }
+
+  if (owner.instagramUserId) {
+    return `Instagram ${owner.instagramUserId}`
+  }
+
+  return owner.email || "Instagram Account"
+}
+
 function buildOwnerResponse(owner) {
   return {
     id: owner._id.toString(),
+    name: buildOwnerDisplayName(owner),
     email: owner.email,
     instagramUserId: owner.instagramUserId,
     instagramUsername: owner.instagramUsername,
+    instagramHandle: owner.instagramUsername ? `@${owner.instagramUsername}` : "",
     instagramConnected: Boolean(owner.longLivedAccessToken),
     tokenExpiresAt: owner.tokenExpiresAt,
     connectedAt: owner.instagramConnectedAt,
@@ -30,35 +57,15 @@ function buildOwnerResponse(owner) {
 }
 
 function validateCallbackPayload(payload) {
-  const email = normalizeEmail(payload?.email || payload?.identifier || payload?.username)
-  const password = String(payload?.password || "")
   const code = String(payload?.code || "").trim()
-
-  if (!email) {
-    return "Email is required."
-  }
-
-  if (!password.trim()) {
-    return "Password is required."
-  }
+  const state = String(payload?.state || "").trim()
 
   if (!code) {
     return "Instagram authorization code is required."
   }
 
-  return ""
-}
-
-function validateLoginPayload(payload) {
-  const email = normalizeEmail(payload?.email || payload?.identifier)
-  const password = String(payload?.password || "")
-
-  if (!email) {
-    return "Email is required."
-  }
-
-  if (!password.trim()) {
-    return "Password is required."
+  if (!state) {
+    return "Instagram login state is required."
   }
 
   return ""
@@ -120,6 +127,40 @@ async function requireAuthenticatedOwner(req, res, next) {
 const router = express.Router()
 
 router.post(
+  "/auth/session/bootstrap",
+  asyncHandler(async (req, res) => {
+    await connectToDatabase()
+
+    const redirectUri = String(req.body.redirectUri || "").trim()
+    const forceReauth = req.body.forceReauth !== false
+    const state = `instalead-auth-${crypto.randomBytes(18).toString("hex")}`
+    const authorizeUrl = buildInstagramAuthorizeUrl({
+      redirectUri,
+      state,
+      forceReauth,
+    })
+
+    await ApiCall.create({
+      requestType: "signup_init",
+      status: "received",
+      state,
+      redirectUri,
+      requestPayload: {
+        redirectUri,
+        forceReauth,
+      },
+    })
+
+    return res.status(200).json({
+      ok: true,
+      action: "redirect",
+      state,
+      authorizeUrl,
+    })
+  }),
+)
+
+router.post(
   "/auth/instagram/callback",
   asyncHandler(async (req, res) => {
     const validationError = validateCallbackPayload(req.body)
@@ -133,41 +174,33 @@ router.post(
 
     await connectToDatabase()
 
-    const email = normalizeEmail(req.body.email || req.body.identifier || req.body.username)
-    const password = String(req.body.password || "")
     const authorizationCode = String(req.body.code || "").trim()
     const state = String(req.body.state || "").trim()
-    const redirectUri = String(req.body.redirectUri || "").trim()
+    let redirectUri = String(req.body.redirectUri || "").trim()
+    const bootstrapCall = await ApiCall.findOne({
+      requestType: "signup_init",
+      state,
+      status: "received",
+    }).sort({ createdAt: -1 })
 
-    const existingOwner = await Owner.findOne({ email })
-    let passwordHash = existingOwner?.passwordHash || ""
-
-    if (existingOwner) {
-      const passwordMatches = await verifyPassword(password, existingOwner.passwordHash)
-
-      if (!passwordMatches) {
-        return res.status(401).json({
-          authenticated: false,
-          message: "Email already exists, but the password does not match.",
-        })
-      }
-    } else {
-      passwordHash = await hashPassword(password)
+    if (!bootstrapCall) {
+      return res.status(400).json({
+        authenticated: false,
+        message: "No pending Instagram login was found for this session. Please try again.",
+      })
     }
+
+    redirectUri = redirectUri || String(bootstrapCall.redirectUri || "").trim()
 
     const apiCall = await ApiCall.create({
       requestType: "instagram_callback",
       status: "received",
-      email,
-      passwordHash,
       authorizationCode,
       state,
       redirectUri,
       requestPayload: {
-        email,
         state,
         redirectUri,
-        receivedPasswordLength: password.length,
       },
     })
 
@@ -177,18 +210,31 @@ router.post(
         redirectUri,
       })
 
-      const owner =
-        existingOwner ||
-        new Owner({
-          email,
-          passwordHash,
-        })
+      const instagramUserId = String(exchangeResult.instagramUserId || "").trim()
 
-      owner.passwordHash = passwordHash
+      if (!instagramUserId) {
+        throw new Error("Instagram did not return a stable account ID for this login.")
+      }
+
+      let owner = await Owner.findOne({ instagramUserId })
+      const ownerExists = Boolean(owner)
+      const syntheticEmail = buildSyntheticEmail(instagramUserId)
+      const syntheticPasswordHash =
+        owner?.passwordHash || (await hashPassword(`instagram-only:${instagramUserId}`))
+
+      if (!owner) {
+        owner = new Owner({
+          email: syntheticEmail,
+          passwordHash: syntheticPasswordHash,
+        })
+      }
+
+      owner.email = owner.email || syntheticEmail
+      owner.passwordHash = owner.passwordHash || syntheticPasswordHash
       owner.authorizationCode = exchangeResult.authorizationCode
       owner.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
       owner.longLivedAccessToken = exchangeResult.longLivedAccessToken
-      owner.instagramUserId = exchangeResult.instagramUserId
+      owner.instagramUserId = instagramUserId
       owner.tokenType = exchangeResult.tokenType
       owner.tokenExpiresAt = exchangeResult.tokenExpiresAt
       owner.permissions = exchangeResult.permissions
@@ -200,11 +246,24 @@ router.post(
       await owner.save()
       setSessionCookie(res, owner)
 
+      if (bootstrapCall) {
+        bootstrapCall.status = "completed"
+        bootstrapCall.ownerId = owner._id
+        bootstrapCall.instagramUserId = instagramUserId
+        bootstrapCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
+        bootstrapCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
+        bootstrapCall.responsePayload = {
+          authorizeCompletedAt: new Date().toISOString(),
+          callbackApiCallId: apiCall._id.toString(),
+        }
+        await bootstrapCall.save()
+      }
+
       apiCall.status = "completed"
       apiCall.ownerId = owner._id
       apiCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
       apiCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
-      apiCall.instagramUserId = exchangeResult.instagramUserId
+      apiCall.instagramUserId = instagramUserId
       apiCall.responsePayload = {
         tokenType: exchangeResult.tokenType,
         tokenExpiresAt: exchangeResult.tokenExpiresAt,
@@ -212,7 +271,7 @@ router.post(
       }
       await apiCall.save()
 
-      return res.status(existingOwner ? 200 : 201).json({
+      return res.status(ownerExists ? 200 : 201).json({
         authenticated: true,
         authStatus: "authenticated",
         owner: buildOwnerResponse(owner),
@@ -222,6 +281,16 @@ router.post(
         },
       })
     } catch (error) {
+      if (bootstrapCall) {
+        bootstrapCall.status = "failed"
+        bootstrapCall.errorMessage = error.message
+        bootstrapCall.responsePayload = {
+          status: error.status || 500,
+          data: error.data || null,
+        }
+        await bootstrapCall.save()
+      }
+
       apiCall.status = "failed"
       apiCall.errorMessage = error.message
       apiCall.responsePayload = {
@@ -237,43 +306,9 @@ router.post(
 router.post(
   "/auth/login",
   asyncHandler(async (req, res) => {
-    const validationError = validateLoginPayload(req.body)
-
-    if (validationError) {
-      return res.status(400).json({
-        authenticated: false,
-        message: validationError,
-      })
-    }
-
-    await connectToDatabase()
-
-    const email = normalizeEmail(req.body.email || req.body.identifier)
-    const password = String(req.body.password || "")
-    const owner = await Owner.findOne({ email })
-
-    if (!owner) {
-      return res.status(401).json({
-        authenticated: false,
-        message: "Invalid email or password.",
-      })
-    }
-
-    const passwordMatches = await verifyPassword(password, owner.passwordHash)
-
-    if (!passwordMatches) {
-      return res.status(401).json({
-        authenticated: false,
-        message: "Invalid email or password.",
-      })
-    }
-
-    setSessionCookie(res, owner)
-
-    return res.status(200).json({
-      authenticated: true,
-      owner: buildOwnerResponse(owner),
-      userExists: true,
+    return res.status(410).json({
+      authenticated: false,
+      message: "Email/password login is no longer supported. Use Instagram login.",
     })
   }),
 )

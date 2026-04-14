@@ -5,7 +5,7 @@ const apiCallSchema = new mongoose.Schema(
   {
     requestType: {
       type: String,
-      enum: ["instagram_callback", "comment_webhook", "private_reply"],
+      enum: ["signup_init", "instagram_callback", "comment_webhook", "private_reply"],
       default: "instagram_callback",
     },
     status: {
@@ -30,6 +30,7 @@ const apiCallSchema = new mongoose.Schema(
     state: {
       type: String,
       default: "",
+      index: true,
     },
     redirectUri: {
       type: String,

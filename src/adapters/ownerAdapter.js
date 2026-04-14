@@ -1,16 +1,30 @@
 import { formatHandle, getInitials, pickValue } from "./backendPayloadUtils"
 
 export function normalizeOwner(rawOwner, fallbackOwner = {}) {
+  const instagramUserId = pickValue(
+    rawOwner,
+    ["instagramUserId", "instagram_user_id", "accountId", "account_id"],
+    fallbackOwner.instagramUserId || "",
+  )
+
+  const instagramUsername = pickValue(
+    rawOwner,
+    ["instagramUsername", "instagram_username", "instagramHandle", "instagram_handle", "username", "handle"],
+    fallbackOwner.instagramUsername || fallbackOwner.instagramHandle || "",
+  )
+
   const name = pickValue(
     rawOwner,
     ["name", "full_name", "owner_name", "display_name"],
-    fallbackOwner.name || "Instagram Account",
+    fallbackOwner.name ||
+      (instagramUsername ? `@${String(instagramUsername).replace(/^@/, "")}` : "") ||
+      (instagramUserId ? `Instagram ${instagramUserId}` : "Instagram Account"),
   )
 
   const handle = pickValue(
     rawOwner,
-    ["instagramHandle", "instagram_handle", "username", "handle"],
-    fallbackOwner.instagramHandle || "instagram_account",
+    ["instagramHandle", "instagram_handle", "instagramUsername", "instagram_username", "username", "handle"],
+    instagramUsername || fallbackOwner.instagramHandle || "instagram_account",
   )
 
   const plan = pickValue(
@@ -29,6 +43,8 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     id,
     name,
     instagramHandle: formatHandle(handle, fallbackOwner.instagramHandle),
+    instagramUserId,
+    instagramUsername: String(instagramUsername || "").replace(/^@/, ""),
     plan,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
   }

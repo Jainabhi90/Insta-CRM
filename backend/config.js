@@ -34,6 +34,9 @@ const config = {
     clientId: process.env.INSTAGRAM_CLIENT_ID || "",
     clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
     redirectUri: process.env.INSTAGRAM_REDIRECT_URI || "",
+    scope:
+      process.env.INSTAGRAM_SCOPE ||
+      "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights",
   },
 }
 

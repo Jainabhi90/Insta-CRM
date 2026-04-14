@@ -2,7 +2,6 @@ import { normalizeOwner } from "../adapters/ownerAdapter"
 import {
   getDisplayNameFromEmail,
   normalizeEmail,
-  validateAccountCredentials,
   validateLoginCredentials,
 } from "../lib/authValidation"
 
@@ -63,6 +62,8 @@ function buildSessionPayload(user) {
       id: user.id,
       name: user.name || getDisplayNameFromEmail(user.email) || user.email,
       instagram_handle: user.instagramHandle,
+      instagramUserId: user.instagramUserId,
+      instagramUsername: user.instagramUsername,
       plan: user.plan,
     }),
   }
@@ -99,19 +100,21 @@ async function hashPassword(password) {
   return String(hash)
 }
 
-function createDemoInstagramProfileFromCode(code, email) {
+function createDemoInstagramProfileFromCode(code) {
   const normalizedCode = (code || `${Date.now()}`)
     .replace(/[^a-zA-Z0-9]/g, "")
     .toLowerCase()
     .slice(-6)
 
   const suffix = normalizedCode || `${Date.now()}`.slice(-4)
-  const normalizedEmail = normalizeEmail(email)
 
   return {
     id: `demo-${Date.now()}`,
-    name: getDisplayNameFromEmail(normalizedEmail) || `Instagram Creator ${suffix}`,
+    name: `Instagram Creator ${suffix}`,
     instagramHandle: `creator_${suffix}`,
+    instagramUsername: `creator_${suffix}`,
+    instagramUserId: `demo_ig_${suffix}`,
+    email: `demo+${suffix}@instalead.local`,
     plan: "Growth Plan",
   }
 }
@@ -146,27 +149,30 @@ export function getStoredDemoSession() {
   return buildSessionPayload(storedUser)
 }
 
-export async function completeDemoInstagramSignup({ code, email, password }) {
-  const validationError = validateAccountCredentials({ email, password })
-
-  if (validationError) {
-    throw new Error(validationError)
+export async function completeDemoInstagramSignup({ code }) {
+  if (!code) {
+    throw new Error("Instagram authorization code is required.")
   }
 
-  const normalizedEmail = normalizeEmail(email)
   const users = getStoredUsers()
+  const instagramProfile = createDemoInstagramProfileFromCode(code)
+  const existingUser = users.find(
+    (user) => user.instagramUserId && user.instagramUserId === instagramProfile.instagramUserId,
+  )
 
-  if (users.some((user) => userMatchesEmail(user, normalizedEmail))) {
-    throw new Error("This email is already registered.")
+  if (existingUser) {
+    persistSession(existingUser.id)
+    return buildSessionPayload(existingUser)
   }
 
-  const instagramProfile = createDemoInstagramProfileFromCode(code, normalizedEmail)
   const newUser = {
     id: instagramProfile.id,
-    email: normalizedEmail,
+    email: instagramProfile.email,
     name: instagramProfile.name,
     instagramHandle: instagramProfile.instagramHandle,
-    passwordHash: await hashPassword(password),
+    instagramUsername: instagramProfile.instagramUsername,
+    instagramUserId: instagramProfile.instagramUserId,
+    passwordHash: "",
     plan: instagramProfile.plan,
     createdAt: new Date().toISOString(),
   }

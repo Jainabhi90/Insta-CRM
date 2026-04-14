@@ -58,6 +58,7 @@
       "scripts": {
             "dev": "vite",
           "dev:api": "node backend/local.js",
-            "build": "vite build"
+            "build": "vite build",
+            "test:workflow": "node scripts/workflow-smoke.mjs"
       }
 }

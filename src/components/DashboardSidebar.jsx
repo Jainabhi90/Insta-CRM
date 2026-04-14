@@ -11,6 +11,8 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome,
     name: owner?.name || "Rahul Kumar",
     plan: owner?.plan || "Growth Plan",
     avatarInitials: owner?.avatarInitials || "RK",
+    instagramHandle: owner?.instagramHandle || "",
+    instagramUserId: owner?.instagramUserId || "",
   };
 
   return (
@@ -66,7 +68,10 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome,
           </div>
           <div className="flex-1">
             <p style={{ fontWeight: 500 }}>{displayOwner.name}</p>
-            <p className="text-sm text-gray-500">{displayOwner.plan}</p>
+            <p className="text-sm text-gray-500">{displayOwner.instagramHandle || displayOwner.plan}</p>
+            {displayOwner.instagramUserId ? (
+              <p className="text-xs text-gray-400 mt-1">IG ID: {displayOwner.instagramUserId}</p>
+            ) : null}
           </div>
         </div>
         <Button

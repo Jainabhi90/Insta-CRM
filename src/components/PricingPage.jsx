@@ -164,7 +164,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
               Log In
             </Button>
             <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onCreateAccount || onGetStarted}>
-              Create Account
+              Connect Instagram
             </Button>
           </nav>
         </div>
@@ -238,7 +238,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                 onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                Create Account
+                Connect Instagram
               </Button>
             </CardContent>
           </Card>
@@ -290,7 +290,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                 onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                Create Account
+                Connect Instagram
               </Button>
             </CardContent>
           </Card>
@@ -337,7 +337,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                 onClick={onCreateAccount || onGetStarted}
                 size="lg"
               >
-                Create Account
+                Connect Instagram
               </Button>
             </CardContent>
           </Card>
