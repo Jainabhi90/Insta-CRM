@@ -9,7 +9,7 @@ export function savePendingSignupCredentials({ email, password }) {
     return
   }
 
-  window.sessionStorage.setItem(
+  window.localStorage.setItem(
     SIGNUP_CREDENTIALS_STORAGE_KEY,
     JSON.stringify({
       email: email.trim().toLowerCase(),
@@ -24,8 +24,8 @@ export function consumePendingSignupCredentials() {
     return null
   }
 
-  const rawValue = window.sessionStorage.getItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
-  window.sessionStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  const rawValue = window.localStorage.getItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  window.localStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
 
   if (!rawValue) {
     return null
@@ -49,5 +49,5 @@ export function clearPendingSignupCredentials() {
     return
   }
 
-  window.sessionStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  window.localStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
 }
