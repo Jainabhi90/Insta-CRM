@@ -1,9 +1,25 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { X, Instagram, Loader2 } from "lucide-react";
+
+const loginSchema = z.object({
+  identifier: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+const signupSchema = z.object({
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(32, "Username cannot exceed 32 characters"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters"),
+});
 
 export function AuthModal({
   onClose,
@@ -15,13 +31,25 @@ export function AuthModal({
   errorMessage,
 }) {
   const [mode, setMode] = useState(initialMode);
-  const [loginForm, setLoginForm] = useState({
-    identifier: "",
-    password: "",
+  
+  const {
+    register: loginRegister,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors },
+    reset: resetLogin
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { identifier: "", password: "" }
   });
-  const [signupForm, setSignupForm] = useState({
-    username: "",
-    password: "",
+
+  const {
+    register: signupRegister,
+    handleSubmit: handleSignupSubmit,
+    formState: { errors: signupErrors },
+    reset: resetSignup
+  } = useForm({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { username: "", password: "" }
   });
 
   const isSignupLoading = pendingAction === "signup_instagram";
@@ -31,29 +59,23 @@ export function AuthModal({
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
     onModeChange?.(nextMode);
+    resetLogin();
+    resetSignup();
   };
 
-  const handleLoginSubmit = (event) => {
-    event.preventDefault();
-    onLogin(loginForm);
+  const onValidLogin = (data) => {
+    onLogin(data);
   };
 
-  const handleSignupSubmit = (event) => {
-    event.preventDefault();
-    onStartSignup(signupForm);
+  const onValidSignup = (data) => {
+    onStartSignup(data);
   };
 
   useEffect(() => {
     setMode(initialMode);
-    setLoginForm({
-      identifier: "",
-      password: "",
-    });
-    setSignupForm({
-      username: "",
-      password: "",
-    });
-  }, [initialMode]);
+    resetLogin();
+    resetSignup();
+  }, [initialMode, resetLogin, resetSignup]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 p-4 overflow-y-auto">
@@ -116,7 +138,7 @@ export function AuthModal({
             ) : null}
 
             {mode === "login" ? (
-              <form className="flex flex-col gap-4" onSubmit={handleLoginSubmit}>
+              <form className="flex flex-col gap-4" onSubmit={handleLoginSubmit(onValidLogin)}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-identifier">Username</Label>
@@ -124,17 +146,13 @@ export function AuthModal({
                       id="login-identifier"
                       type="text"
                       placeholder="Enter your username"
-                      value={loginForm.identifier}
-                      onChange={(event) =>
-                        setLoginForm((currentValue) => ({
-                          ...currentValue,
-                          identifier: event.target.value,
-                        }))
-                      }
+                      {...loginRegister("identifier")}
                       disabled={isBusy}
-                      required
                       autoComplete="username"
                     />
+                    {loginErrors.identifier && (
+                      <p className="text-sm text-red-500 mt-1 font-medium">{loginErrors.identifier.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
@@ -142,17 +160,13 @@ export function AuthModal({
                       id="login-password"
                       type="password"
                       placeholder="Enter your password"
-                      value={loginForm.password}
-                      onChange={(event) =>
-                        setLoginForm((currentValue) => ({
-                          ...currentValue,
-                          password: event.target.value,
-                        }))
-                      }
+                      {...loginRegister("password")}
                       disabled={isBusy}
-                      required
                       autoComplete="current-password"
                     />
+                    {loginErrors.password && (
+                      <p className="text-sm text-red-500 mt-1 font-medium">{loginErrors.password.message}</p>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -171,7 +185,7 @@ export function AuthModal({
                 </Button>
               </form>
             ) : (
-              <form className="flex flex-col gap-4" onSubmit={handleSignupSubmit}>
+              <form className="flex flex-col gap-4" onSubmit={handleSignupSubmit(onValidSignup)}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-username">Username</Label>
@@ -179,19 +193,13 @@ export function AuthModal({
                       id="signup-username"
                       type="text"
                       placeholder="Choose your username"
-                      value={signupForm.username}
-                      onChange={(event) =>
-                        setSignupForm((currentValue) => ({
-                          ...currentValue,
-                          username: event.target.value,
-                        }))
-                      }
+                      {...signupRegister("username")}
                       disabled={isBusy}
-                      required
-                      minLength={3}
-                      maxLength={32}
                       autoComplete="username"
                     />
+                    {signupErrors.username && (
+                      <p className="text-sm text-red-500 mt-1 font-medium">{signupErrors.username.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
@@ -199,18 +207,13 @@ export function AuthModal({
                       id="signup-password"
                       type="password"
                       placeholder="Create a secure password"
-                      value={signupForm.password}
-                      onChange={(event) =>
-                        setSignupForm((currentValue) => ({
-                          ...currentValue,
-                          password: event.target.value,
-                        }))
-                      }
+                      {...signupRegister("password")}
                       disabled={isBusy}
-                      required
-                      minLength={8}
                       autoComplete="new-password"
                     />
+                    {signupErrors.password && (
+                      <p className="text-sm text-red-500 mt-1 font-medium">{signupErrors.password.message}</p>
+                    )}
                   </div>
 
                   <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">

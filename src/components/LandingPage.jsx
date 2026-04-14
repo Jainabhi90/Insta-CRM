@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Sun } from "lucide-react";
+import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Sun, Star } from "lucide-react";
 
 export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme }) {
   const scrollToSection = (id) => {
@@ -81,6 +81,35 @@ export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPric
             >
               Login
             </Button>
+          </div>
+          
+          <div className="flex items-center justify-center gap-4 mt-12 animate-fade-in pt-8 border-t border-gray-100">
+            <div className="flex -space-x-4">
+              {[
+                "https://randomuser.me/api/portraits/men/32.jpg",
+                "https://randomuser.me/api/portraits/women/44.jpg",
+                "https://randomuser.me/api/portraits/men/68.jpg",
+                "https://randomuser.me/api/portraits/women/65.jpg",
+                "https://randomuser.me/api/portraits/men/22.jpg",
+              ].map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Creator ${i + 1}`}
+                  className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover"
+                />
+              ))}
+            </div>
+            <div className="text-left">
+              <div className="flex gap-1 mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                ))}
+              </div>
+              <span className="text-sm font-medium text-gray-600 block">
+                Trusted by 500+ Indian creators
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -214,6 +243,56 @@ export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPric
                     <span className="text-sm text-gray-700">Engagement insights</span>
                   </li>
                 </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="container mx-auto px-4 py-20 bg-blue-50/50">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl text-center mb-12" style={{ fontWeight: 600 }}>
+            Don't just take our word for it
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border border-blue-100 shadow-md hover:shadow-lg transition-shadow bg-white">
+              <CardContent className="pt-8">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg text-gray-700 mb-6 italic leading-relaxed">
+                  "Before InstaLead, I was spending minimum 3 hours a day just DMing links to my courses. Now the bot does it instantly. My sales increased by 40% in two weeks because nobody has to wait."
+                </p>
+                <div className="flex items-center gap-4">
+                  <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Priya S." className="w-14 h-14 rounded-full border-2 border-blue-100" />
+                  <div>
+                    <p className="font-semibold text-gray-900 text-lg">Priya S.</p>
+                    <p className="text-sm text-[#2563eb] font-medium">Fitness Coach, 120k followers</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border border-blue-100 shadow-md hover:shadow-lg transition-shadow bg-white">
+              <CardContent className="pt-8">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg text-gray-700 mb-6 italic leading-relaxed">
+                  "I tried ManyChat but it was simply too complex and incredibly expensive for what I needed. InstaLead took 5 minutes to set up and the lead scoring completely changed how I prioritize agency calls."
+                </p>
+                <div className="flex items-center gap-4">
+                  <img src="https://randomuser.me/api/portraits/men/46.jpg" alt="Rahul M." className="w-14 h-14 rounded-full border-2 border-blue-100" />
+                  <div>
+                    <p className="font-semibold text-gray-900 text-lg">Rahul M.</p>
+                    <p className="text-sm text-[#2563eb] font-medium">Marketing Agency Founder</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
