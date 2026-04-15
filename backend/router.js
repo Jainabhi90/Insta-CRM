@@ -427,7 +427,8 @@ router.get(
     if (hasConnectedInstagram(owner)) {
       const inbox = await listInstagramInbox(owner.longLivedAccessToken, {
         conversationLimit: 8,
-        messagesPerConversation: 4,
+        messagesPerConversation: 0,
+        messageFetchLimit: 0,
       })
 
       return res.status(200).json({
@@ -499,6 +500,7 @@ router.get(
     const inbox = await listInstagramInbox(owner.longLivedAccessToken, {
       conversationLimit: 8,
       messagesPerConversation: 5,
+      messageFetchLimit: 2,
     })
 
     return res.status(200).json({

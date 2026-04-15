@@ -195,13 +195,15 @@ export async function loadAuthenticatedWorkspace() {
 
   const fallbackWorkspace = createWorkspaceModel(owner)
   const warnings = []
-  const [campaignResult, dmLogResult, automationResult, commentResult, inboxResult] = await Promise.allSettled([
+  const [campaignResult, automationResult, commentResult, inboxResult] = await Promise.allSettled([
     getCampaigns(),
-    getDmLogs(),
     getAutomations(),
     getInstagramComments(),
     getInstagramInbox(),
   ])
+
+  const dmLogResult =
+    inboxResult.status === "fulfilled" ? inboxResult : await getDmLogFallbackResult()
 
   const performance = resolveWorkspaceSection({
     label: "Campaign analytics",
@@ -268,5 +270,20 @@ export async function loadAuthenticatedWorkspace() {
       inboxSummary: inbox.summary,
     },
     warnings,
+  }
+}
+
+async function getDmLogFallbackResult() {
+  try {
+    const dmLogs = await getDmLogs()
+    return {
+      status: "fulfilled",
+      value: dmLogs,
+    }
+  } catch (error) {
+    return {
+      status: "rejected",
+      reason: error,
+    }
   }
 }

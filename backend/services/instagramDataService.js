@@ -94,6 +94,32 @@ function selectRecipientId(conversation, selfUserId) {
   return String(otherParticipant?.id || "")
 }
 
+function normalizeConversationParticipants(conversation) {
+  return Array.isArray(conversation?.participants?.data)
+    ? conversation.participants.data.map((participant) => ({
+        id: String(participant?.id || ""),
+        username: String(participant?.username || ""),
+      }))
+    : []
+}
+
+function buildBaseConversation(conversation, selfUserId) {
+  const participants = normalizeConversationParticipants(conversation)
+  const updatedTime = conversation?.updated_time || null
+
+  return {
+    id: String(conversation?.id || ""),
+    updatedTime,
+    participants,
+    participantCount: participants.length,
+    recipientId: selectRecipientId({ participants }, selfUserId),
+    latestMessagePreview: "",
+    latestMessageAt: updatedTime,
+    latestSenderUsername: "",
+    messages: [],
+  }
+}
+
 async function getInstagramProfile(accessToken) {
   const data = await instagramRequest("me", accessToken, {
     query: {
@@ -180,6 +206,9 @@ async function listInstagramComments(accessToken, options = {}) {
 async function listInstagramInbox(accessToken, options = {}) {
   const conversationLimit = options.conversationLimit || 8
   const messagesPerConversation = options.messagesPerConversation || 5
+  const messageFetchLimit = Number.isFinite(Number(options.messageFetchLimit))
+    ? Math.max(0, Number(options.messageFetchLimit))
+    : 2
   const profile = await getInstagramProfile(accessToken)
   const conversationPayload = await instagramRequest("me/conversations", accessToken, {
     query: {
@@ -190,7 +219,13 @@ async function listInstagramInbox(accessToken, options = {}) {
 
   const rawConversations = await Promise.all(
     (Array.isArray(conversationPayload?.data) ? conversationPayload.data : []).map(
-      async (conversation) => {
+      async (conversation, index) => {
+        const baseConversation = buildBaseConversation(conversation, profile.instagramUserId)
+
+        if (messagesPerConversation <= 0 || index >= messageFetchLimit) {
+          return baseConversation
+        }
+
         try {
           const messagesPayload = await instagramRequest(`${conversation.id}/messages`, accessToken, {
             query: {
@@ -198,13 +233,6 @@ async function listInstagramInbox(accessToken, options = {}) {
               limit: messagesPerConversation,
             },
           })
-
-          const participants = Array.isArray(conversation?.participants?.data)
-            ? conversation.participants.data.map((participant) => ({
-                id: String(participant?.id || ""),
-                username: String(participant?.username || ""),
-              }))
-            : []
 
           const messages = (Array.isArray(messagesPayload?.data) ? messagesPayload.data : []).map(
             (message) => ({
@@ -220,30 +248,40 @@ async function listInstagramInbox(accessToken, options = {}) {
           const latestMessage = messages[0] || null
 
           return {
-            id: String(conversation?.id || ""),
-            updatedTime: conversation?.updated_time || latestMessage?.createdTime || null,
-            participants,
-            participantCount: participants.length,
-            recipientId: selectRecipientId({ participants }, profile.instagramUserId),
-            latestMessagePreview: latestMessage?.text || "",
-            latestMessageAt: latestMessage?.createdTime || conversation?.updated_time || null,
+            ...baseConversation,
+            updatedTime: baseConversation.updatedTime || latestMessage?.createdTime || null,
+            latestMessagePreview: latestMessage?.text || baseConversation.latestMessagePreview,
+            latestMessageAt: latestMessage?.createdTime || baseConversation.latestMessageAt || null,
             latestSenderUsername: latestMessage?.senderUsername || "",
             messages,
           }
-        } catch {
-          return null
+        } catch (error) {
+          return {
+            ...baseConversation,
+            latestMessagePreview:
+              error?.status === 403
+                ? "Message preview temporarily unavailable."
+                : baseConversation.latestMessagePreview,
+            messageLoadError: error?.message || "",
+          }
         }
       },
     ),
   )
 
-  const conversations = rawConversations.filter(Boolean)
+  const conversations = rawConversations
+    .filter((conversation) => Boolean(conversation?.id))
+    .sort((leftConversation, rightConversation) => {
+      const leftTime = new Date(leftConversation?.latestMessageAt || leftConversation?.updatedTime || 0).getTime()
+      const rightTime = new Date(rightConversation?.latestMessageAt || rightConversation?.updatedTime || 0).getTime()
+      return rightTime - leftTime
+    })
 
   return {
     conversations,
     summary: {
       totalConversations: conversations.length,
-      latestActivityAt: conversations[0]?.updatedTime || null,
+      latestActivityAt: conversations[0]?.latestMessageAt || conversations[0]?.updatedTime || null,
       accountUsername: profile.instagramUsername,
     },
   }
