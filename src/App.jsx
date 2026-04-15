@@ -451,10 +451,20 @@ export default function App() {
           />
         )}
         {activeView === "dm-inbox" && (
-          <DmInbox conversations={workspace.leads || []} />
+          <DmInbox
+            conversations={workspace.inbox || []}
+            summary={workspace.inboxSummary}
+            onRefresh={handleRefreshInstagram}
+            onSendReply={handleSendInstagramReply}
+          />
         )}
         {activeView === "comments" && (
-          <CommentsInbox comments={workspace.comments || []} />
+          <CommentsInbox
+            comments={workspace.comments || []}
+            summary={workspace.commentSummary}
+            onRefresh={handleRefreshInstagram}
+            onSendReply={handleSendInstagramReply}
+          />
         )}
         {activeView === "automations" && (
           <Automations

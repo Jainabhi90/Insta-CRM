@@ -1,42 +1,23 @@
-import { Inbox, RefreshCw } from "lucide-react";
+import { Inbox, Loader2, RefreshCw, Send } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import { sendPrivateReply } from "../api/instagram/privateReplyApi";
 
-function formatDateTime(value) {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not available";
-  }
-
-  return date.toLocaleString();
-}
-
-function formatLastInteraction(value) {
-  if (!value) {
-    return "Recently";
-  }
-
-  if (typeof value === "string" && value.toLowerCase().includes("ago")) {
-    return value;
-  }
-
-  return formatDateTime(value);
+function buildDefaultSummary(conversations) {
+  return {
+    totalConversations: conversations.length,
+    latestActivityLabel: conversations.length > 0 ? "Recently updated" : "No recent DMs yet",
+    accountUsername: "",
+  };
 }
 
 export function DmInbox({
   conversations = [],
+  summary,
   onRefresh,
-  isRefreshing = false,
-  errorMessage = "",
-  lastSyncedAt = null,
   onSendReply,
 }) {
   const normalizedConversations = useMemo(
@@ -52,6 +33,15 @@ export function DmInbox({
   const [replyText, setReplyText] = useState("");
   const [replyStatus, setReplyStatus] = useState({ type: "", message: "" });
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const inboxSummary = useMemo(
+    () => ({
+      ...buildDefaultSummary(normalizedConversations),
+      ...(summary || {}),
+    }),
+    [normalizedConversations, summary],
+  );
 
   const selectedConversation = useMemo(() => {
     if (!selectedConversationId) {
@@ -70,6 +60,30 @@ export function DmInbox({
     setReplyStatus({ type: "", message: "" });
   };
 
+  const handleRefresh = useCallback(async () => {
+    if (typeof onRefresh !== "function") {
+      return;
+    }
+
+    setReplyStatus({ type: "", message: "" });
+    setIsRefreshing(true);
+
+    try {
+      await onRefresh();
+      setReplyStatus({
+        type: "success",
+        message: "Instagram inbox was refreshed from the backend.",
+      });
+    } catch (error) {
+      setReplyStatus({
+        type: "error",
+        message: error?.message || "Instagram inbox could not be refreshed right now.",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefresh]);
+
   const handleSendReply = useCallback(async () => {
     const trimmedReply = replyText.trim();
 
@@ -83,19 +97,26 @@ export function DmInbox({
       return;
     }
 
+    if (!selectedConversation.canReply || !selectedConversation.recipientId) {
+      setReplyStatus({
+        type: "error",
+        message: "This conversation cannot receive a direct reply from the dashboard.",
+      });
+      return;
+    }
+
     setIsSendingReply(true);
     setReplyStatus({ type: "", message: "" });
 
     try {
       if (typeof onSendReply === "function") {
         await onSendReply({
-          conversation: selectedConversation,
+          recipientId: selectedConversation.recipientId,
           text: trimmedReply,
         });
       } else {
-        // Use backend API to send the reply
         await sendPrivateReply({
-          commentId: selectedConversation.id || selectedConversation._rowId,
+          recipientId: selectedConversation.recipientId,
           text: trimmedReply,
         });
       }
@@ -105,6 +126,10 @@ export function DmInbox({
         message: `Reply sent to ${selectedConversation.handle || "conversation"}. Check your Instagram inbox.`,
       });
       setReplyText("");
+
+      if (typeof onRefresh === "function") {
+        await onRefresh();
+      }
     } catch (error) {
       setReplyStatus({
         type: "error",
@@ -113,7 +138,7 @@ export function DmInbox({
     } finally {
       setIsSendingReply(false);
     }
-  }, [selectedConversation, replyText, onSendReply]);
+  }, [onRefresh, onSendReply, replyText, selectedConversation]);
 
   return (
     <div className="p-8">
@@ -125,13 +150,17 @@ export function DmInbox({
           <p className="text-gray-600">
             Review incoming conversations and validate direct-message read flow.
           </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Last synced: {formatDateTime(lastSyncedAt)}
-          </p>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+            <span>{inboxSummary.totalConversations} conversations</span>
+            <span>Latest activity: {inboxSummary.latestActivityLabel}</span>
+            {inboxSummary.accountUsername ? (
+              <span>Connected account: @{inboxSummary.accountUsername}</span>
+            ) : null}
+          </div>
         </div>
         <Button
           variant="outline"
-          onClick={onRefresh}
+          onClick={handleRefresh}
           disabled={isRefreshing || typeof onRefresh !== "function"}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -139,9 +168,15 @@ export function DmInbox({
         </Button>
       </div>
 
-      {errorMessage ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 mb-6">
-          {errorMessage}
+      {replyStatus.message ? (
+        <div
+          className={`rounded-lg px-4 py-3 text-sm mb-6 ${
+            replyStatus.type === "success"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {replyStatus.message}
         </div>
       ) : null}
 
@@ -164,19 +199,19 @@ export function DmInbox({
                       {conversation.handle || "Instagram user"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Last message: {formatLastInteraction(conversation.lastInteraction)}
+                      Last message: {conversation.latestMessageLabel || "Recently"}
                     </p>
                   </div>
                   <Badge variant="outline">DM</Badge>
                 </div>
 
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  {conversation.sourcePost || "Conversation preview unavailable."}
+                  {conversation.latestMessagePreview || "Conversation preview unavailable."}
                 </p>
 
                 <div className="mt-3 text-xs text-gray-500 flex flex-wrap gap-4">
-                  <span>Lead score: {conversation.leadScore ?? "N/A"}</span>
-                  <span>Interactions: {conversation.interactions ?? "N/A"}</span>
+                  <span>Participants: {conversation.participantCount ?? 0}</span>
+                  <span>Reply ready: {conversation.canReply ? "Yes" : "No"}</span>
                 </div>
               </div>
             ))}
@@ -190,7 +225,7 @@ export function DmInbox({
               No synced DM conversations yet
             </h3>
             <p className="text-gray-600 max-w-xl mx-auto">
-              This inbox is ready for live Instagram DM conversation data. Once backend DM sync is connected, conversations will appear here for review.
+              Live Instagram DM conversations will appear here once the connected business account has readable inbox activity.
             </p>
           </div>
         )}
@@ -214,9 +249,31 @@ export function DmInbox({
         </div>
 
         <div className="mb-4">
+          <p className="text-xs text-gray-500 mb-2">Recent messages</p>
+          <div className="space-y-2">
+            {selectedConversation?.messages?.length ? (
+              selectedConversation.messages.slice(0, 4).map((message) => (
+                <div key={message.id} className="rounded-lg bg-gray-50 p-3">
+                  <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
+                    <span>{message.senderUsername || "instagram_user"}</span>
+                    <span>{message.relativeTime || "Recently"}</span>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                    {message.text || "[No text content]"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+                No message thread is available for the selected conversation yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-4">
           <p className="text-xs text-gray-500 mb-2">Message</p>
-          <textarea
-            className="w-full min-h-[120px] rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
+          <Textarea
             placeholder="Type your DM reply..."
             value={replyText}
             onChange={(event) => setReplyText(event.target.value)}
@@ -239,10 +296,25 @@ export function DmInbox({
         <Button
           className="bg-[#2563eb] hover:bg-[#1d4ed8]"
           onClick={handleSendReply}
-          disabled={isSendingReply || !selectedConversation}
+          disabled={isSendingReply || !selectedConversation || !selectedConversation?.canReply}
         >
-          {isSendingReply ? "Sending..." : "Send Reply"}
+          {isSendingReply ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4 mr-2" />
+              Send Reply
+            </>
+          )}
         </Button>
+        {selectedConversation && !selectedConversation.canReply ? (
+          <p className="mt-3 text-xs text-gray-500">
+            Reply is available for 1:1 conversations only.
+          </p>
+        ) : null}
       </div>
     </div>
   );
