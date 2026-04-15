@@ -17,6 +17,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
 import { sendInstagramReply } from "./api/instagram/replyApi";
+import { getInstagramComments } from "./api/instagram/commentsApi";
+import { getInstagramInbox } from "./api/instagram/inboxApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -27,6 +29,8 @@ import {
   loadAuthenticatedWorkspace,
 } from "./services/dashboardWorkspaceService";
 import { ensureDemoPreviewSession } from "./services/demoSessionService";
+import { buildCommentWorkspace } from "./adapters/commentAdapter";
+import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 
@@ -261,6 +265,40 @@ export default function App() {
     await refreshWorkspace();
   };
 
+  const handleRefreshComments = async () => {
+    const commentPayload = await getInstagramComments();
+    const nextCommentsWorkspace = buildCommentWorkspace(commentPayload);
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            comments: nextCommentsWorkspace.comments,
+            commentSummary: nextCommentsWorkspace.summary,
+          }
+        : currentWorkspace,
+    );
+
+    return nextCommentsWorkspace;
+  };
+
+  const handleRefreshInbox = async () => {
+    const inboxPayload = await getInstagramInbox();
+    const nextInboxWorkspace = buildInboxWorkspace(inboxPayload);
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            inbox: nextInboxWorkspace.conversations,
+            inboxSummary: nextInboxWorkspace.summary,
+          }
+        : currentWorkspace,
+    );
+
+    return nextInboxWorkspace;
+  };
+
   const handleSendInstagramReply = async (payload) => {
     const result = await sendInstagramReply(payload);
     await refreshWorkspace();
@@ -454,7 +492,7 @@ export default function App() {
           <DmInbox
             conversations={workspace.inbox || []}
             summary={workspace.inboxSummary}
-            onRefresh={handleRefreshInstagram}
+            onRefresh={handleRefreshInbox}
             onSendReply={handleSendInstagramReply}
           />
         )}
@@ -462,7 +500,7 @@ export default function App() {
           <CommentsInbox
             comments={workspace.comments || []}
             summary={workspace.commentSummary}
-            onRefresh={handleRefreshInstagram}
+            onRefresh={handleRefreshComments}
             onSendReply={handleSendInstagramReply}
           />
         )}
