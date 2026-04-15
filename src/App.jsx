@@ -6,6 +6,8 @@ import { PricingPage } from "./components/PricingPage";
 import { AuthModal } from "./components/AuthModal";
 import { DashboardSidebar } from "./components/DashboardSidebar";
 import { LeadCenter } from "./components/LeadCenter";
+import { CommentsInbox } from "./components/CommentsInbox";
+import { DmInbox } from "./components/DmInbox";
 import { Automations } from "./components/Automations";
 import { PostPerformance } from "./components/PostPerformance";
 import { Button } from "./components/ui/button";
@@ -24,6 +26,7 @@ import {
   finishInstagramLogin,
   loadAuthenticatedWorkspace,
 } from "./services/dashboardWorkspaceService";
+import { ensureDemoPreviewSession } from "./services/demoSessionService";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 
@@ -327,9 +330,29 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (route.page === "dashboard") {
-      hydrateDashboard(route.search);
-    }
+    let isMounted = true;
+
+    const loadDashboardRoute = async () => {
+      if (route.page !== "dashboard") {
+        return;
+      }
+
+      const params = new URLSearchParams(route.search || "");
+
+      if (params.get("devPreview") === "1") {
+        ensureDemoPreviewSession();
+      }
+
+      if (isMounted) {
+        await hydrateDashboard(route.search);
+      }
+    };
+
+    loadDashboardRoute();
+
+    return () => {
+      isMounted = false;
+    };
   }, [route.page, route.search]);
 
   if (route.page !== "dashboard") {
@@ -413,6 +436,7 @@ export default function App() {
         owner={session.owner}
       />
       <main className="flex-1 overflow-y-auto">
+        <DashboardConnectionStrip owner={session.owner} />
         {workspaceWarnings.length > 0 ? <DashboardNotices warnings={workspaceWarnings} /> : null}
         {activeView === "leads" && (
           <LeadCenter
@@ -425,6 +449,12 @@ export default function App() {
             onRefreshInstagram={handleRefreshInstagram}
             onSendReply={handleSendInstagramReply}
           />
+        )}
+        {activeView === "dm-inbox" && (
+          <DmInbox conversations={workspace.leads || []} />
+        )}
+        {activeView === "comments" && (
+          <CommentsInbox comments={workspace.comments || []} />
         )}
         {activeView === "automations" && (
           <Automations
@@ -443,6 +473,54 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+function DashboardConnectionStrip({ owner }) {
+  const connected = Boolean(owner?.instagramConnected)
+  const statusLabel = connected ? "Instagram Connected" : "Instagram Not Connected"
+  const statusClassName = connected
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : "border-red-200 bg-red-50 text-red-900"
+
+  const accountLabel = owner?.instagramHandle || owner?.name || "Instagram account"
+  const tokenExpiry = owner?.tokenExpiresAt
+    ? new Date(owner.tokenExpiresAt).toLocaleString()
+    : "Not available"
+  const connectedAt = owner?.connectedAt
+    ? new Date(owner.connectedAt).toLocaleString()
+    : "Not available"
+
+  return (
+    <div className="p-6 pb-0">
+      <div className={`rounded-xl border p-4 ${statusClassName}`}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide" style={{ fontWeight: 600 }}>
+              Account Status
+            </p>
+            <h2 className="text-lg" style={{ fontWeight: 700 }}>
+              {statusLabel}
+            </h2>
+            <p className="text-sm mt-1" style={{ fontWeight: 500 }}>
+              Connected account: {accountLabel}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 text-sm md:text-right">
+            <p>
+              <span style={{ fontWeight: 600 }}>Instagram User ID:</span>{" "}
+              {owner?.instagramUserId || "Not available"}
+            </p>
+            <p>
+              <span style={{ fontWeight: 600 }}>Connected At:</span> {connectedAt}
+            </p>
+            <p>
+              <span style={{ fontWeight: 600 }}>Token Expires:</span> {tokenExpiry}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function DashboardLoadingState() {

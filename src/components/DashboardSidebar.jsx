@@ -1,9 +1,11 @@
-import { Home, Zap, Users, BarChart3, LogOut } from "lucide-react";
+import { Home, Zap, Users, BarChart3, LogOut, MessageCircle, Inbox } from "lucide-react";
 import { Button } from "./ui/button";
 
 export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome, owner }) {
   const navItems = [
     { id: "leads", icon: Users, label: "Lead Center" },
+    { id: "dm-inbox", icon: Inbox, label: "DM Inbox" },
+    { id: "comments", icon: MessageCircle, label: "Comments" },
     { id: "automations", icon: Zap, label: "Automations" },
     { id: "performance", icon: BarChart3, label: "Post Performance" },
   ];
