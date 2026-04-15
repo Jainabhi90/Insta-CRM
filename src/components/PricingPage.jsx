@@ -24,7 +24,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           "Inbox Starters",
         ],
         buttonText: "Get Started for Free",
-        buttonColor: "bg-[#2563eb] hover:bg-[#1d4ed8]",
+        buttonColor: "bg-theme-primary hover:bg-theme-primary-hover",
         popular: false,
       },
       pro: {
@@ -52,7 +52,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           "Priority Support",
         ],
         buttonText: "Upgrade to Pro",
-        buttonColor: "bg-[#f97316] hover:bg-[#ea580c]",
+        buttonColor: "bg-theme-accent hover:bg-theme-accent-hover",
         popular: true,
       },
       platinum: {
@@ -90,7 +90,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           "Inbox Starters",
         ],
         buttonText: "Get Started for Free",
-        buttonColor: "bg-[#2563eb] hover:bg-[#1d4ed8]",
+        buttonColor: "bg-theme-primary hover:bg-theme-primary-hover",
         popular: false,
       },
       pro: {
@@ -118,7 +118,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           "Priority Support",
         ],
         buttonText: "Upgrade to Pro",
-        buttonColor: "bg-[#f97316] hover:bg-[#ea580c]",
+        buttonColor: "bg-theme-accent hover:bg-theme-accent-hover",
         popular: true,
       },
       platinum: {
@@ -149,21 +149,20 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
       <header className="border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <button onClick={onBackToHome} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#2563eb] to-[#f97316] rounded-lg" />
-            <span className="text-xl" style={{ fontWeight: 600 }}>InstaLead</span>
+            <div className="w-8 h-8 bg-gradient-to-br from-theme-primary to-theme-accent rounded-lg" />
+            <span className="text-xl font-semibold">InstaLead</span>
           </button>
           <nav className="flex items-center gap-6">
             <button 
               onClick={onBackToHome}
-              className="text-gray-600 hover:text-[#2563eb] transition-colors"
-              style={{ fontWeight: 500 }}
+              className="text-gray-600 hover:text-theme-primary transition-colors font-medium"
             >
               Home
             </button>
             <Button variant="outline" onClick={onLogin || onGetStarted}>
               Log In
             </Button>
-            <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onCreateAccount || onGetStarted}>
+            <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram
             </Button>
           </nav>
@@ -177,23 +176,21 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           <div className="bg-gray-100 rounded-lg p-1 flex gap-1">
             <button
               onClick={() => setBillingCycle("monthly")}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-6 py-2 rounded-md transition-colors font-medium ${
                 billingCycle === "monthly"
-                  ? "bg-[#2563eb] text-white"
+                  ? "bg-theme-primary text-white"
                   : "bg-transparent text-gray-700 hover:text-gray-900"
               }`}
-              style={{ fontWeight: 500 }}
             >
               Monthly Pricing
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-6 py-2 rounded-md transition-colors font-medium ${
                 billingCycle === "yearly"
-                  ? "bg-[#2563eb] text-white"
+                  ? "bg-theme-primary text-white"
                   : "bg-transparent text-gray-700 hover:text-gray-900"
               }`}
-              style={{ fontWeight: 500 }}
             >
               Yearly Pricing
             </button>
@@ -206,11 +203,11 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           <Card className="border-2 border-gray-200 hover:shadow-lg transition-shadow flex flex-col">
             <CardContent className="pt-8 pb-8 flex flex-col flex-1">
               <div className="mb-6">
-                <h3 className="text-2xl mb-3" style={{ fontWeight: 600, color: "#2563eb" }}>
+                <h3 className="text-2xl mb-3 font-semibold text-theme-primary">
                   {currentPlans.free.name}
                 </h3>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl" style={{ fontWeight: 700 }}>
+                  <span className="text-5xl font-bold">
                     {currentPlans.free.price}
                   </span>
                 </div>
@@ -222,11 +219,11 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
               </div>
 
               <div className="mb-6 flex-1">
-                <p className="mb-3" style={{ fontWeight: 600 }}>Free includes:</p>
+                <p className="mb-3 font-semibold">Free includes:</p>
                 <ul className="space-y-2">
                   {currentPlans.free.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-[#2563eb] mt-0.5 flex-shrink-0" />
+                      <Check className="w-5 h-5 text-theme-primary mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-gray-700">{feature}</span>
                     </li>
                   ))}
@@ -244,19 +241,19 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           </Card>
 
           {/* Pro Plan */}
-          <Card className="border-2 border-[#f97316] hover:shadow-xl transition-shadow relative bg-gradient-to-b from-orange-50/50 to-white flex flex-col">
+          <Card className="border-2 border-theme-accent hover:shadow-xl transition-shadow relative bg-gradient-to-b from-orange-50/50 to-white flex flex-col">
             {currentPlans.pro.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f97316] text-white px-4 py-1 rounded-full text-sm">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-theme-accent text-white px-4 py-1 rounded-full text-sm">
                 Popular
               </div>
             )}
             <CardContent className="pt-8 pb-8 flex flex-col flex-1">
               <div className="mb-6">
-                <h3 className="text-2xl mb-3" style={{ fontWeight: 600, color: "#f97316" }}>
+                <h3 className="text-2xl mb-3 font-semibold text-theme-accent">
                   {currentPlans.pro.name}
                 </h3>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl" style={{ fontWeight: 700 }}>
+                  <span className="text-5xl font-bold">
                     {currentPlans.pro.price}
                   </span>
                   <span className="text-gray-500 text-lg">INR</span>
@@ -273,10 +270,10 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                   {currentPlans.pro.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                       {feature.includes("Everything in") ? (
-                        <span className="text-sm" style={{ fontWeight: 600 }}>{feature}</span>
+                        <span className="text-sm font-semibold">{feature}</span>
                       ) : (
                         <>
-                          <Check className="w-5 h-5 text-[#f97316] mt-0.5 flex-shrink-0" />
+                          <Check className="w-5 h-5 text-theme-accent mt-0.5 flex-shrink-0" />
                           <span className="text-sm text-gray-700">{feature}</span>
                         </>
                       )}
@@ -299,11 +296,11 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
           <Card className="border-2 border-gray-300 hover:shadow-lg transition-shadow flex flex-col">
             <CardContent className="pt-8 pb-8 flex flex-col flex-1">
               <div className="mb-6">
-                <h3 className="text-2xl mb-3" style={{ fontWeight: 600, color: "#374151" }}>
+                <h3 className="text-2xl mb-3 font-semibold text-[#374151]">
                   {currentPlans.platinum.name}
                 </h3>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl" style={{ fontWeight: 700 }}>
+                  <span className="text-5xl font-bold">
                     {currentPlans.platinum.price}
                   </span>
                   <span className="text-gray-500 text-lg">INR</span>
@@ -320,7 +317,7 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                   {currentPlans.platinum.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                       {feature.includes("Everything in") ? (
-                        <span className="text-sm" style={{ fontWeight: 600 }}>{feature}</span>
+                        <span className="text-sm font-semibold">{feature}</span>
                       ) : (
                         <>
                           <Check className="w-5 h-5 text-gray-700 mt-0.5 flex-shrink-0" />

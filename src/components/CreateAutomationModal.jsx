@@ -182,7 +182,7 @@ export function CreateAutomationModal({ onClose, onSave }) {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="flex-1 bg-theme-primary hover:bg-theme-primary-hover"
               >
                 Create Automation
               </Button>
