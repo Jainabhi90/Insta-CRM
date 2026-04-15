@@ -113,9 +113,11 @@ export function LeadCenter({
   const [replyStatus, setReplyStatus] = useState({ type: "", message: "" });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [replyingTarget, setReplyingTarget] = useState("");
+  
   const leadRows = leads || [];
   const commentItems = comments || [];
   const inboxItems = inbox || [];
+  
   const leadSummary = {
     ...defaultSummary,
     ...summary,
@@ -202,8 +204,6 @@ export function LeadCenter({
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl mb-2 font-semibold" >Lead Command Center</h1>
-        <p className="text-gray-600">Your real-time lead dashboard. Focus on hot leads first.</p>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl mb-2 font-semibold">Lead Command Center</h1>
