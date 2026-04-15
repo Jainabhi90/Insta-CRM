@@ -39,12 +39,6 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     fallbackOwner.id || "owner-session",
   )
 
-  const instagramUserId = pickValue(
-    rawOwner,
-    ["instagramUserId", "instagram_user_id", "ig_user_id"],
-    fallbackOwner.instagramUserId || "",
-  )
-
   const tokenExpiresAt = pickValue(
     rawOwner,
     ["tokenExpiresAt", "token_expires_at"],
