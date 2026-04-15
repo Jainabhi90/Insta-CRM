@@ -11,12 +11,13 @@ import { PostPerformance } from "./components/PostPerformance";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { readInstagramCallbackParams } from "./lib/instagramCallback";
-import { validateAccountCredentials, validateLoginCredentials } from "./lib/authValidation";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import DeleteData from "./pages/DeleteData";
 import {
-  loginWithCredentials,
   logoutSession,
   restoreExistingSession,
-  startInstagramSignup,
+  startInstagramLogin,
 } from "./services/authSessionService";
 import {
   finishInstagramLogin,
@@ -31,30 +32,39 @@ function hasActiveSession(session) {
 
 function getCurrentRoute() {
   if (typeof window === "undefined") {
-    return {
-      page: "landing",
-      search: "",
-    };
+    return { page: "landing", search: "" };
   }
 
-  if (window.location.pathname === "/pricing") {
-    return {
-      page: "pricing",
-      search: window.location.search,
-    };
+  const path = window.location.pathname;
+
+  if (path === "/pricing") {
+    return { page: "pricing", search: window.location.search };
   }
 
-  if (window.location.pathname === "/dashboard") {
+  if (path === "/dashboard") {
+    return { page: "dashboard", search: window.location.search };
+  }
+
+  if (path === "/auth/callback") {
     return {
       page: "dashboard",
       search: window.location.search,
     };
   }
 
-  return {
-    page: "landing",
-    search: window.location.search,
-  };
+  if (path === "/privacy") {
+    return { page: "privacy", search: window.location.search };
+  }
+
+  if (path === "/terms") {
+    return { page: "terms", search: window.location.search };
+  }
+
+  if (path === "/delete-data") {
+    return { page: "delete-data", search: window.location.search };
+  }
+
+  return { page: "landing", search: window.location.search };
 }
 
 function getStoredTheme() {
@@ -72,7 +82,6 @@ export default function App() {
   const [workspaceWarnings, setWorkspaceWarnings] = useState([]);
   const [activeView, setActiveView] = useState("leads");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
   const [isDarkTheme, setIsDarkTheme] = useState(() => getStoredTheme());
   const [pendingAction, setPendingAction] = useState("");
   const [authError, setAuthError] = useState("");
@@ -92,7 +101,7 @@ export default function App() {
     setShowAuthModal(false);
   };
 
-  const openSignupModal = () => {
+  const openInstagramModal = () => {
     if (pendingAction) {
       return;
     }
@@ -102,10 +111,13 @@ export default function App() {
       return;
     }
 
-    setAuthMode("signup");
     setAuthError("");
     setDashboardError("");
     setShowAuthModal(true);
+  };
+
+  const openSignupModal = () => {
+    openInstagramModal();
   };
 
   const hydrateDashboard = async (search = window.location.search) => {
@@ -162,19 +174,7 @@ export default function App() {
   };
 
   const openLoginModal = () => {
-    if (pendingAction) {
-      return;
-    }
-
-    if (hasActiveSession(session)) {
-      navigate("/dashboard");
-      return;
-    }
-
-    setAuthMode("login");
-    setAuthError("");
-    setDashboardError("");
-    setShowAuthModal(true);
+    openInstagramModal();
   };
 
   const handleGetStarted = () => {
@@ -187,63 +187,20 @@ export default function App() {
       return;
     }
 
-    openSignupModal();
+    openInstagramModal();
   };
 
-  const handleLogin = async (credentials) => {
+  const handleInstagramAuth = async () => {
     if (pendingAction) {
       return;
     }
 
-    const validationError = validateLoginCredentials(credentials);
-
-    if (validationError) {
-      setAuthError(validationError);
-      return;
-    }
-
-    setPendingAction("login");
-    setAuthError("");
-
-    try {
-      const result = await loginWithCredentials(credentials);
-
-      setShowAuthModal(false);
-
-      if (result.session) {
-        setSession(result.session);
-      }
-
-      if (window.location.pathname !== "/dashboard") {
-        navigate("/dashboard");
-      } else {
-        await hydrateDashboard(window.location.search);
-      }
-    } catch (error) {
-      setAuthError(error.message || "Unable to sign in.");
-    } finally {
-      setPendingAction("");
-    }
-  };
-
-  const handleStartSignup = async (credentials) => {
-    if (pendingAction) {
-      return;
-    }
-
-    const validationError = validateAccountCredentials(credentials);
-
-    if (validationError) {
-      setAuthError(validationError);
-      return;
-    }
-
-    setPendingAction("signup_instagram");
+    setPendingAction("instagram_auth");
     setAuthError("");
     setDashboardError("");
 
     try {
-      const result = await startInstagramSignup(credentials);
+      const result = await startInstagramLogin();
 
       if (result.type === "redirect") {
         setShowAuthModal(false);
@@ -257,7 +214,6 @@ export default function App() {
         await hydrateDashboard(window.location.search);
       }
     } catch (error) {
-      setAuthMode("signup");
       setAuthError(error.message || "Unable to connect Instagram right now.");
       setShowAuthModal(true);
     } finally {
@@ -358,7 +314,13 @@ export default function App() {
   if (route.page !== "dashboard") {
     return (
       <>
-        {route.page === "pricing" ? (
+        {route.page === "privacy" ? (
+          <Privacy />
+        ) : route.page === "terms" ? (
+          <Terms />
+        ) : route.page === "delete-data" ? (
+          <DeleteData />
+        ) : route.page === "pricing" ? (
           <PricingPage
             onGetStarted={handleGetStarted}
             onBackToHome={handleBackToHome}
@@ -382,15 +344,13 @@ export default function App() {
             onToggleTheme={handleToggleTheme}
           />
         )}
+
         {showAuthModal && (
           <AuthModal
             onClose={closeAuthModal}
-            onLogin={handleLogin}
-            onStartSignup={handleStartSignup}
-            initialMode={authMode}
+            onConnectInstagram={handleInstagramAuth}
             pendingAction={pendingAction}
             errorMessage={authError}
-            onModeChange={() => setAuthError("")}
           />
         )}
       </>
@@ -407,22 +367,15 @@ export default function App() {
         <DashboardAccessGate
           errorMessage={dashboardError}
           onBackHome={handleBackToHome}
-          onLogin={openLoginModal}
-          onCreateAccount={openSignupModal}
+          onConnectInstagram={openInstagramModal}
           pendingAction={pendingAction}
         />
         {showAuthModal && (
           <AuthModal
             onClose={closeAuthModal}
-            onLogin={handleLogin}
-            onStartSignup={handleStartSignup}
-            initialMode={authMode}
+            onConnectInstagram={handleInstagramAuth}
             pendingAction={pendingAction}
             errorMessage={authError || dashboardError}
-            onModeChange={() => {
-              setAuthError("");
-              setDashboardError("");
-            }}
           />
         )}
       </>
@@ -473,8 +426,8 @@ function DashboardLoadingState() {
   );
 }
 
-function DashboardAccessGate({ errorMessage, onBackHome, onLogin, onCreateAccount, pendingAction }) {
-  const isConnecting = pendingAction === "signup_instagram";
+function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pendingAction }) {
+  const isConnecting = pendingAction === "instagram_auth";
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -489,7 +442,7 @@ function DashboardAccessGate({ errorMessage, onBackHome, onLogin, onCreateAccoun
             Access Your Dashboard
           </CardTitle>
           <CardDescription className="text-gray-500">
-            Returning users can sign in with username and password. New users should create their account first, then connect Instagram during signup.
+            Login with Instagram to open your owner dashboard. If this account already exists, we refresh the saved token and take you back inside.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -500,7 +453,7 @@ function DashboardAccessGate({ errorMessage, onBackHome, onLogin, onCreateAccoun
           ) : null}
           <Button
             className="w-full bg-[#2563eb] hover:bg-[#1d4ed8]"
-            onClick={onCreateAccount}
+            onClick={onConnectInstagram}
             disabled={Boolean(pendingAction)}
           >
             {isConnecting ? (
@@ -509,11 +462,8 @@ function DashboardAccessGate({ errorMessage, onBackHome, onLogin, onCreateAccoun
                 Opening Instagram
               </>
             ) : (
-              "Create Account"
+              "Login With Instagram"
             )}
-          </Button>
-          <Button variant="outline" className="w-full" onClick={onLogin} disabled={Boolean(pendingAction)}>
-            Sign In
           </Button>
           <Button variant="outline" className="w-full" onClick={onBackHome} disabled={Boolean(pendingAction)}>
             Back To Home

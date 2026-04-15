@@ -49,11 +49,21 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2015',
+    target: 'esnext',
     outDir: 'dist',
   },
   server: {
     port: 3000,
     open: true,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/metadata': {
+        target: process.env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
   },
 });

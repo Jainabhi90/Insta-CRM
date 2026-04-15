@@ -1,18 +1,18 @@
 const SIGNUP_CREDENTIALS_STORAGE_KEY = "instalead.signup.credentials.v2"
 
 function isValidCredentialPayload(payload) {
-  return Boolean(payload?.username && payload?.password)
+  return Boolean((payload?.email || payload?.username) && payload?.password)
 }
 
-export function savePendingSignupCredentials({ username, password }) {
+export function savePendingSignupCredentials({ email, password }) {
   if (typeof window === "undefined") {
     return
   }
 
-  window.sessionStorage.setItem(
+  window.localStorage.setItem(
     SIGNUP_CREDENTIALS_STORAGE_KEY,
     JSON.stringify({
-      username: username.trim(),
+      email: email.trim().toLowerCase(),
       password,
       savedAt: new Date().toISOString(),
     }),
@@ -24,8 +24,8 @@ export function consumePendingSignupCredentials() {
     return null
   }
 
-  const rawValue = window.sessionStorage.getItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
-  window.sessionStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  const rawValue = window.localStorage.getItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  window.localStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
 
   if (!rawValue) {
     return null
@@ -35,7 +35,7 @@ export function consumePendingSignupCredentials() {
     const payload = JSON.parse(rawValue)
     return isValidCredentialPayload(payload)
       ? {
-          username: payload.username.trim(),
+          email: (payload.email || payload.username).trim().toLowerCase(),
           password: payload.password,
         }
       : null
@@ -49,5 +49,5 @@ export function clearPendingSignupCredentials() {
     return
   }
 
-  window.sessionStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
+  window.localStorage.removeItem(SIGNUP_CREDENTIALS_STORAGE_KEY)
 }

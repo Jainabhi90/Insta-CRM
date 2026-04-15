@@ -1,5 +1,9 @@
 import { normalizeOwner } from "../adapters/ownerAdapter"
-import { normalizeUsername, validateAccountCredentials, validateLoginCredentials } from "../lib/authValidation"
+import {
+  getDisplayNameFromEmail,
+  normalizeEmail,
+  validateLoginCredentials,
+} from "../lib/authValidation"
 
 const DEMO_STORAGE_VERSION = "v2"
 const USERS_STORAGE_KEY = `instalead.demo.users.${DEMO_STORAGE_VERSION}`
@@ -24,10 +28,6 @@ function writeStorage(key, value) {
   }
 
   window.localStorage.setItem(key, JSON.stringify(value))
-}
-
-function normalizeEmail(email) {
-  return (email || "").trim().toLowerCase()
 }
 
 function slugify(value) {
@@ -60,8 +60,10 @@ function buildSessionPayload(user) {
     source: "demo",
     owner: normalizeOwner({
       id: user.id,
-      name: user.name || user.username,
+      name: user.name || getDisplayNameFromEmail(user.email) || user.email,
       instagram_handle: user.instagramHandle,
+      instagramUserId: user.instagramUserId,
+      instagramUsername: user.instagramUsername,
       plan: user.plan,
     }),
   }
@@ -70,11 +72,10 @@ function buildSessionPayload(user) {
 function getLookupCandidates(user) {
   const email = user.email ? normalizeEmail(user.email) : ""
   const emailPrefix = email ? email.split("@")[0] : ""
-  const username = (user.username || "").trim().toLowerCase()
   const instagramHandle = (user.instagramHandle || "").replace(/^@/, "").toLowerCase()
   const normalizedName = slugify(user.name).replace(/_/g, "")
 
-  return [username, email, emailPrefix, instagramHandle, normalizedName].filter(Boolean)
+  return [email, emailPrefix, instagramHandle, normalizedName].filter(Boolean)
 }
 
 async function hashPassword(password) {
@@ -99,28 +100,28 @@ async function hashPassword(password) {
   return String(hash)
 }
 
-function createDemoInstagramProfileFromCode(code, username) {
+function createDemoInstagramProfileFromCode(code) {
   const normalizedCode = (code || `${Date.now()}`)
     .replace(/[^a-zA-Z0-9]/g, "")
     .toLowerCase()
     .slice(-6)
 
   const suffix = normalizedCode || `${Date.now()}`.slice(-4)
-  const normalizedUsername = normalizeUsername(username)
 
   return {
     id: `demo-${Date.now()}`,
-    name: normalizedUsername || `Instagram Creator ${suffix}`,
+    name: `Instagram Creator ${suffix}`,
     instagramHandle: `creator_${suffix}`,
+    instagramUsername: `creator_${suffix}`,
+    instagramUserId: `demo_ig_${suffix}`,
+    email: `demo+${suffix}@instalead.local`,
     plan: "Growth Plan",
   }
 }
 
-function userMatchesUsername(user, normalizedUsername) {
-  const currentUsername = (user.username || "").trim().toLowerCase()
-  const emailPrefix = user.email ? normalizeEmail(user.email).split("@")[0] : ""
-
-  return [currentUsername, emailPrefix].filter(Boolean).includes(normalizedUsername)
+function userMatchesEmail(user, normalizedEmail) {
+  const currentEmail = normalizeEmail(user.email)
+  return currentEmail === normalizedEmail
 }
 
 export function clearDemoSession() {
@@ -148,28 +149,30 @@ export function getStoredDemoSession() {
   return buildSessionPayload(storedUser)
 }
 
-export async function completeDemoInstagramSignup({ code, username, password }) {
-  const validationError = validateAccountCredentials({ username, password })
-
-  if (validationError) {
-    throw new Error(validationError)
+export async function completeDemoInstagramSignup({ code }) {
+  if (!code) {
+    throw new Error("Instagram authorization code is required.")
   }
 
-  const trimmedUsername = normalizeUsername(username)
-  const normalizedUsername = trimmedUsername.toLowerCase()
   const users = getStoredUsers()
+  const instagramProfile = createDemoInstagramProfileFromCode(code)
+  const existingUser = users.find(
+    (user) => user.instagramUserId && user.instagramUserId === instagramProfile.instagramUserId,
+  )
 
-  if (users.some((user) => userMatchesUsername(user, normalizedUsername))) {
-    throw new Error("This username is already taken.")
+  if (existingUser) {
+    persistSession(existingUser.id)
+    return buildSessionPayload(existingUser)
   }
 
-  const instagramProfile = createDemoInstagramProfileFromCode(code, trimmedUsername)
   const newUser = {
     id: instagramProfile.id,
-    username: trimmedUsername,
+    email: instagramProfile.email,
     name: instagramProfile.name,
     instagramHandle: instagramProfile.instagramHandle,
-    passwordHash: await hashPassword(password),
+    instagramUsername: instagramProfile.instagramUsername,
+    instagramUserId: instagramProfile.instagramUserId,
+    passwordHash: "",
     plan: instagramProfile.plan,
     createdAt: new Date().toISOString(),
   }
@@ -180,21 +183,21 @@ export async function completeDemoInstagramSignup({ code, username, password }) 
   return buildSessionPayload(newUser)
 }
 
-export async function loginDemoUser({ identifier, password }) {
-  const validationError = validateLoginCredentials({ identifier, password })
+export async function loginDemoUser({ identifier, email, password }) {
+  const validationError = validateLoginCredentials({ identifier, email, password })
 
   if (validationError) {
     throw new Error(validationError)
   }
 
-  const normalizedIdentifier = identifier.trim().toLowerCase()
+  const normalizedIdentifier = normalizeEmail(email || identifier)
   const passwordHash = await hashPassword(password)
   const user = getStoredUsers().find((candidate) =>
     getLookupCandidates(candidate).includes(normalizedIdentifier),
   )
 
   if (!user || user.passwordHash !== passwordHash) {
-    throw new Error("Invalid username or password.")
+    throw new Error("Invalid email or password.")
   }
 
   persistSession(user.id)

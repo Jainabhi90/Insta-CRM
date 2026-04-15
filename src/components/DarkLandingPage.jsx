@@ -44,7 +44,7 @@ export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoTo
               Login
             </Button>
             <Button className="bg-[#2563eb] hover:bg-[#1d4ed8]" onClick={onCreateAccount || onGetStarted}>
-              Create Account
+              Connect Instagram
             </Button>
           </nav>
         </div>
@@ -71,7 +71,7 @@ export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoTo
               className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-6 text-lg"
               onClick={onCreateAccount || onGetStarted}
             >
-              Create Account
+              Connect Instagram
             </Button>
             <Button 
               size="lg" 
@@ -234,7 +234,7 @@ export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoTo
             className="bg-white text-[#2563eb] hover:bg-gray-100 px-8 py-6 text-lg"
             onClick={onCreateAccount || onGetStarted}
           >
-            Create Account
+            Connect Instagram
           </Button>
         </div>
       </section>
