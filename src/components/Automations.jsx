@@ -90,13 +90,13 @@ export function Automations({ summary, initialTemplates, tip }) {
         <div className="mb-8">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h1 className="text-3xl mb-2" style={{ fontWeight: 600 }}>Automation Playbook</h1>
+              <h1 className="text-3xl mb-2 font-semibold">Automation Playbook</h1>
               <p className="text-gray-600">
                 Simple templates to automate your Instagram replies. No flowcharts needed.
               </p>
             </div>
             <Button 
-              className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+              className="bg-theme-primary hover:bg-theme-primary-hover"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -109,17 +109,17 @@ export function Automations({ summary, initialTemplates, tip }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-600 mb-1">Active Automations</p>
-            <p className="text-3xl" style={{ fontWeight: 700 }}>{enabledCount}/{templates.length}</p>
+            <p className="text-3xl font-bold">{enabledCount}/{templates.length}</p>
             <p className="text-sm text-green-600 mt-1">Working 24/7</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-600 mb-1">Auto-Replies Today</p>
-            <p className="text-3xl" style={{ fontWeight: 700 }}>{stats.autoRepliesToday}</p>
+            <p className="text-3xl font-bold">{stats.autoRepliesToday}</p>
             <p className="text-sm text-gray-600 mt-1">Avg response: {stats.averageResponseTime}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-sm text-gray-600 mb-1">Time Saved</p>
-            <p className="text-3xl" style={{ fontWeight: 700 }}>{stats.timeSaved}</p>
+            <p className="text-3xl font-bold">{stats.timeSaved}</p>
             <p className="text-sm text-gray-600 mt-1">{stats.timeSavedLabel}</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ export function Automations({ summary, initialTemplates, tip }) {
                       <div
                         className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                           template.enabled
-                            ? "bg-[#2563eb] text-white"
+                            ? "bg-theme-primary text-white"
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
@@ -176,7 +176,7 @@ export function Automations({ summary, initialTemplates, tip }) {
                 <CardContent>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1" style={{ fontWeight: 500 }}>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">
                         When user says:
                       </p>
                       <div className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700">
@@ -184,7 +184,7 @@ export function Automations({ summary, initialTemplates, tip }) {
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1" style={{ fontWeight: 500 }}>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">
                         Auto-reply with:
                       </p>
                       <div className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700">
@@ -198,14 +198,14 @@ export function Automations({ summary, initialTemplates, tip }) {
           }) : (
             <Card className="border border-dashed border-gray-300 bg-white md:col-span-2">
               <CardContent className="py-12 text-center">
-                <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
+                <h3 className="text-lg text-gray-900 mb-2 font-semibold">
                   No automation rules yet
                 </h3>
                 <p className="text-gray-600 mb-5">
                   Create your first automation to start handling common Instagram replies automatically.
                 </p>
                 <Button
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="bg-theme-primary hover:bg-theme-primary-hover"
                   onClick={() => setShowCreateModal(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -218,7 +218,7 @@ export function Automations({ summary, initialTemplates, tip }) {
 
         {/* Info Banner */}
         <div className="mt-8 bg-gradient-to-r from-blue-50 to-orange-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>💡 {tipContent.title}</h3>
+          <h3 className="text-lg mb-2 font-semibold">💡 {tipContent.title}</h3>
           <p className="text-gray-700">
             {tipContent.body}
           </p>

@@ -35,7 +35,7 @@ export function AuthModal({
 
           <CardHeader className="text-center pb-3">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#2563eb] to-[#f97316] rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-theme-primary to-theme-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                 IL
               </div>
             </div>
@@ -54,7 +54,7 @@ export function AuthModal({
 
             <div className="space-y-4">
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
-                <p className="text-sm text-blue-900" style={{ fontWeight: 600 }}>
+                <p className="text-sm text-blue-900 font-semibold">
                   Instagram-only access
                 </p>
                 <p className="text-sm text-blue-800 mt-1">
@@ -63,7 +63,7 @@ export function AuthModal({
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
-                <p className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
+                <p className="text-sm text-gray-900 font-semibold">
                   What happens next
                 </p>
                 <ul className="mt-2 space-y-2 text-sm text-gray-600">
@@ -76,7 +76,7 @@ export function AuthModal({
               <Button
                 type="button"
                 onClick={onConnectInstagram}
-                className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-sm hover:shadow-md bg-[#2563eb] hover:bg-[#1d4ed8] text-white"
+                className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-sm hover:shadow-md bg-theme-primary hover:bg-theme-primary-hover text-white"
                 disabled={isBusy}
               >
                 {isConnecting ? (

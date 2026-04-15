@@ -1,5 +1,7 @@
-import { useState } from "react";
 import { Button } from "./ui/button";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -7,40 +9,43 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { X, MessageSquare, Mail, Gift, Zap } from "lucide-react";
 
+const automationSchema = z.object({
+  name: z.string().min(1, "Name is required").max(50, "Name is too long"),
+  description: z.string().min(1, "Description is required"),
+  trigger: z.string().min(1, "Trigger keyword is required"),
+  response: z.string().min(10, "Add a fuller reply so the automation is actually useful"),
+  category: z.string().min(1, "Category is required"),
+  icon: z.string().min(1, "Icon is required"),
+});
+
 export function CreateAutomationModal({ onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    trigger: "",
-    response: "",
-    category: "Sales",
-    icon: "MessageSquare",
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors }
+  } = useForm({
+    resolver: zodResolver(automationSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      trigger: "",
+      response: "",
+      category: "Sales",
+      icon: "MessageSquare",
+    }
   });
-  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const payload = {
-      ...formData,
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      trigger: formData.trigger.trim(),
-      response: formData.response.trim(),
+  const onValidSubmit = (payload) => {
+    const cleanedPayload = {
+      ...payload,
+      name: payload.name.trim(),
+      description: payload.description.trim(),
+      trigger: payload.trigger.trim(),
+      response: payload.response.trim(),
     };
 
-    if (!payload.name || !payload.description || !payload.trigger || !payload.response) {
-      setErrorMessage("Complete all fields before creating the automation.");
-      return;
-    }
-
-    if (payload.response.length < 10) {
-      setErrorMessage("Add a fuller reply so the automation is actually useful.");
-      return;
-    }
-
-    setErrorMessage("");
-    onSave(payload);
+    onSave(cleanedPayload);
     onClose();
   };
 
@@ -69,25 +74,16 @@ export function CreateAutomationModal({ onClose, onSave }) {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {errorMessage ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {errorMessage}
-              </div>
-            ) : null}
+          <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Automation Name</Label>
               <Input
                 id="name"
                 type="text"
                 placeholder="e.g., Order Confirmation"
-                value={formData.name}
-                onChange={(e) => {
-                  setErrorMessage("");
-                  setFormData({ ...formData, name: e.target.value });
-                }}
-                required
+                {...register("name")}
               />
+              {errors.name && <p className="text-sm text-red-500 font-medium">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -96,56 +92,54 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 id="description"
                 type="text"
                 placeholder="e.g., Respond to order confirmation requests"
-                value={formData.description}
-                onChange={(e) => {
-                  setErrorMessage("");
-                  setFormData({ ...formData, description: e.target.value });
-                }}
-                required
+                {...register("description")}
               />
+              {errors.description && <p className="text-sm text-red-500 font-medium">{errors.description.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => {
-                    setErrorMessage("");
-                    setFormData({ ...formData, category: value });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="Lead Gen">Lead Gen</SelectItem>
-                    <SelectItem value="Support">Support</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="category"
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sales">Sales</SelectItem>
+                        <SelectItem value="Lead Gen">Lead Gen</SelectItem>
+                        <SelectItem value="Support">Support</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.category && <p className="text-sm text-red-500 font-medium">{errors.category.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="icon">Icon</Label>
-                <Select
-                  value={formData.icon}
-                  onValueChange={(value) => {
-                    setErrorMessage("");
-                    setFormData({ ...formData, icon: value });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {icons.map((icon) => (
-                      <SelectItem key={icon.value} value={icon.value}>
-                        {icon.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="icon"
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {icons.map((icon) => (
+                          <SelectItem key={icon.value} value={icon.value}>
+                            {icon.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.icon && <p className="text-sm text-red-500 font-medium">{errors.icon.message}</p>}
               </div>
             </div>
 
@@ -155,13 +149,9 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 id="trigger"
                 type="text"
                 placeholder="e.g., order, status, tracking, shipped"
-                value={formData.trigger}
-                onChange={(e) => {
-                  setErrorMessage("");
-                  setFormData({ ...formData, trigger: e.target.value });
-                }}
-                required
+                {...register("trigger")}
               />
+              {errors.trigger && <p className="text-sm text-red-500 font-medium mt-1">{errors.trigger.message}</p>}
               <p className="text-sm text-gray-500">
                 Separate multiple keywords with commas
               </p>
@@ -172,14 +162,10 @@ export function CreateAutomationModal({ onClose, onSave }) {
               <Textarea
                 id="response"
                 placeholder="e.g., Thanks for reaching out! Your order is on the way. Track it here: [tracking-link]"
-                value={formData.response}
-                onChange={(e) => {
-                  setErrorMessage("");
-                  setFormData({ ...formData, response: e.target.value });
-                }}
+                {...register("response")}
                 rows={4}
-                required
               />
+              {errors.response && <p className="text-sm text-red-500 font-medium">{errors.response.message}</p>}
               <p className="text-sm text-gray-500">
                 This message will be sent automatically when triggers are detected
               </p>
@@ -196,7 +182,7 @@ export function CreateAutomationModal({ onClose, onSave }) {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8]"
+                className="flex-1 bg-theme-primary hover:bg-theme-primary-hover"
               >
                 Create Automation
               </Button>

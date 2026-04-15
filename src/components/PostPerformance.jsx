@@ -49,7 +49,7 @@ export function PostPerformance({ summary, posts, insight }) {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl mb-2" style={{ fontWeight: 600 }}>Post Performance</h1>
+        <h1 className="text-3xl mb-2 font-semibold">Post Performance</h1>
         <p className="text-gray-600">
           Track your Instagram posts performance with detailed analytics on views, engagement, and interactions.
         </p>
@@ -59,10 +59,10 @@ export function PostPerformance({ summary, posts, insight }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <Eye className="w-5 h-5 text-[#2563eb]" />
+            <Eye className="w-5 h-5 text-theme-primary" />
             <p className="text-sm text-gray-600">Total Views</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalViews}</p>
+          <p className="text-3xl font-bold">{summaryCards.totalViews}</p>
           <p className="text-sm text-gray-600 mt-1">Last 30 days</p>
         </div>
         
@@ -71,16 +71,16 @@ export function PostPerformance({ summary, posts, insight }) {
             <Heart className="w-5 h-5 text-red-500" />
             <p className="text-sm text-gray-600">Total Likes</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalLikes}</p>
+          <p className="text-3xl font-bold">{summaryCards.totalLikes}</p>
           <p className="text-sm text-green-600 mt-1">{summaryCards.likesTrend}</p>
         </div>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-[#f97316]" />
+            <MessageSquare className="w-5 h-5 text-theme-accent" />
             <p className="text-sm text-gray-600">Total Comments</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.totalComments}</p>
+          <p className="text-3xl font-bold">{summaryCards.totalComments}</p>
           <p className="text-sm text-green-600 mt-1">{summaryCards.commentsTrend}</p>
         </div>
         
@@ -89,7 +89,7 @@ export function PostPerformance({ summary, posts, insight }) {
             <Users className="w-5 h-5 text-green-600" />
             <p className="text-sm text-gray-600">Avg Engagement</p>
           </div>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{summaryCards.averageEngagement}</p>
+          <p className="text-3xl font-bold">{summaryCards.averageEngagement}</p>
           <p className="text-sm text-gray-600 mt-1">{summaryCards.engagementLabel}</p>
         </div>
       </div>
@@ -131,7 +131,7 @@ export function PostPerformance({ summary, posts, insight }) {
                 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <MessageSquare className="w-4 h-4 text-[#2563eb]" />
+                    <MessageSquare className="w-4 h-4 text-theme-primary" />
                   </div>
                   <span className="text-sm font-semibold text-gray-700">{post.comments}</span>
                   <p className="text-xs text-gray-500">Comments</p>
@@ -160,7 +160,7 @@ export function PostPerformance({ summary, posts, insight }) {
         )) : (
           <Card className="border border-dashed border-gray-300 bg-white lg:col-span-3">
             <CardContent className="py-12 text-center">
-              <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
+              <h3 className="text-lg text-gray-900 mb-2 font-semibold">
                 No synced posts yet
               </h3>
               <p className="text-gray-600">
@@ -173,7 +173,7 @@ export function PostPerformance({ summary, posts, insight }) {
 
       {/* Insights Banner */}
       <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg mb-2" style={{ fontWeight: 600 }}>📊 {insightContent.title}</h3>
+        <h3 className="text-lg mb-2 font-semibold">📊 {insightContent.title}</h3>
         <p className="text-gray-700 mb-2">
           {insightContent.body}
         </p>
