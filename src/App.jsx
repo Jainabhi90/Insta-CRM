@@ -14,6 +14,7 @@ import { readInstagramCallbackParams } from "./lib/instagramCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
+import { sendInstagramReply } from "./api/instagram/replyApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -120,6 +121,19 @@ export default function App() {
     openInstagramModal();
   };
 
+  const applyWorkspaceResult = (result) => {
+    setSession(result.session);
+    setWorkspace(result.workspace);
+    setWorkspaceWarnings(result.warnings || []);
+    setShowAuthModal(false);
+    setAuthError("");
+    setDashboardError(!result.session && result.warnings?.length ? result.warnings[0] : "");
+
+    if (!result.session) {
+      setActiveView("leads");
+    }
+  };
+
   const hydrateDashboard = async (search = window.location.search) => {
     const requestId = dashboardLoadSequence.current + 1;
     dashboardLoadSequence.current = requestId;
@@ -141,16 +155,7 @@ export default function App() {
         return;
       }
 
-      setSession(result.session);
-      setWorkspace(result.workspace);
-      setWorkspaceWarnings(result.warnings || []);
-      setShowAuthModal(false);
-      setAuthError("");
-      setDashboardError(!result.session && result.warnings?.length ? result.warnings[0] : "");
-
-      if (!result.session) {
-        setActiveView("leads");
-      }
+      applyWorkspaceResult(result);
     } catch (error) {
       if (requestId !== dashboardLoadSequence.current) {
         return;
@@ -171,6 +176,12 @@ export default function App() {
         setHasRestoredSession(true);
       }
     }
+  };
+
+  const refreshWorkspace = async () => {
+    const result = await loadAuthenticatedWorkspace();
+    applyWorkspaceResult(result);
+    return result;
   };
 
   const openLoginModal = () => {
@@ -241,6 +252,16 @@ export default function App() {
       setPendingAction("");
       navigate("/");
     }
+  };
+
+  const handleRefreshInstagram = async () => {
+    await refreshWorkspace();
+  };
+
+  const handleSendInstagramReply = async (payload) => {
+    const result = await sendInstagramReply(payload);
+    await refreshWorkspace();
+    return result;
   };
 
   const handleGoToPricing = () => {
@@ -394,7 +415,16 @@ export default function App() {
       <main className="flex-1 overflow-y-auto">
         {workspaceWarnings.length > 0 ? <DashboardNotices warnings={workspaceWarnings} /> : null}
         {activeView === "leads" && (
-          <LeadCenter summary={workspace.leadSummary} leads={workspace.leads} />
+          <LeadCenter
+            summary={workspace.leadSummary}
+            leads={workspace.leads}
+            comments={workspace.comments}
+            commentSummary={workspace.commentSummary}
+            inbox={workspace.inbox}
+            inboxSummary={workspace.inboxSummary}
+            onRefreshInstagram={handleRefreshInstagram}
+            onSendReply={handleSendInstagramReply}
+          />
         )}
         {activeView === "automations" && (
           <Automations

@@ -18,6 +18,19 @@ function buildEmptyLeadSummary() {
   }
 }
 
+function deriveConversationHandle(log, fallbackHandle) {
+  const participants = Array.isArray(log?.participants) ? log.participants : []
+  const participantUsername =
+    (participants.length > 1 ? participants.find((participant, index) => index > 0 && participant?.username) : null)
+      ?.username || participants.find((participant) => participant?.username)?.username
+
+  return (
+    pickValue(log, ["handle", "instagram_handle", "username", "user_handle"], "") ||
+    participantUsername ||
+    fallbackHandle
+  )
+}
+
 function getLeadBadgeSummary(leads, fallbackSummary) {
   const hotLeads = leads.filter((lead) => lead.leadScore >= 80).length
   const averageScore =
@@ -60,10 +73,11 @@ export function buildLeadWorkspace(dmLogPayload, fallbackWorkspace, options = {}
   const leadMap = new Map()
 
   dmLogs.forEach((log, index) => {
+    const fallbackLead = fallbackWorkspace.leads[index % fallbackWorkspace.leads.length]
     const handle = pickValue(
-      log,
+      { ...log, handle: deriveConversationHandle(log, fallbackLead.handle) },
       ["handle", "instagram_handle", "username", "user_handle"],
-      fallbackWorkspace.leads[index % fallbackWorkspace.leads.length].handle,
+      fallbackLead.handle,
     )
 
     const normalizedHandle = handle.startsWith("@") ? handle : `@${handle}`
@@ -80,15 +94,19 @@ export function buildLeadWorkspace(dmLogPayload, fallbackWorkspace, options = {}
       leadScore,
       sourcePost: pickValue(
         log,
-        ["source_post", "campaign_name", "post_caption", "campaignCaption"],
-        fallbackWorkspace.leads[index % fallbackWorkspace.leads.length].sourcePost,
+        ["source_post", "campaign_name", "post_caption", "campaignCaption", "latestMessagePreview"],
+        fallbackLead.sourcePost,
       ),
       interactions: 0,
     }
 
     nextLead.leadScore = Math.max(nextLead.leadScore, leadScore)
     nextLead.interactions += toNumber(
-      pickValue(log, ["interactions", "message_count", "messages_count"], 1),
+      pickValue(
+        log,
+        ["interactions", "message_count", "messages_count", "participantCount"],
+        Array.isArray(log?.messages) ? log.messages.length : 1,
+      ),
       1,
     )
     nextLead.lastInteraction = formatRelativeTime(
