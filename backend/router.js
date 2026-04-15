@@ -8,7 +8,7 @@ const {
   buildInstagramAuthorizeUrl,
   exchangeCodeForLongLivedToken,
 } = require("./services/instagramAuthService")
-const { sendPrivateReply } = require("./services/instagramMessagingService")
+const { sendInstagramReply } = require("./services/instagramMessagingService")
 const {
   readSessionToken,
   verifySessionToken,
@@ -16,10 +16,12 @@ const {
   clearSessionCookie,
 } = require("./services/sessionService")
 const { getOwnerScopedWorkspace } = require("./services/workspaceDataService")
-
-function normalizeEmail(email) {
-  return String(email || "").trim().toLowerCase()
-}
+const {
+  getInstagramProfile,
+  listInstagramComments,
+  listInstagramInbox,
+  listInstagramMedia,
+} = require("./services/instagramDataService")
 
 function buildSyntheticEmail(instagramUserId) {
   const normalizedInstagramUserId = String(instagramUserId || "")
@@ -51,6 +53,7 @@ function buildOwnerResponse(owner) {
     instagramUsername: owner.instagramUsername,
     instagramHandle: owner.instagramUsername ? `@${owner.instagramUsername}` : "",
     instagramConnected: Boolean(owner.longLivedAccessToken),
+    permissions: Array.isArray(owner.permissions) ? owner.permissions : [],
     tokenExpiresAt: owner.tokenExpiresAt,
     connectedAt: owner.instagramConnectedAt,
   }
@@ -72,16 +75,12 @@ function validateCallbackPayload(payload) {
 }
 
 function validatePrivateReplyPayload(payload) {
-  const lookupValue = String(payload?.ownerId || payload?.email || payload?.identifier || "").trim()
   const commentId = String(payload?.commentId || "").trim()
+  const recipientId = String(payload?.recipientId || "").trim()
   const text = String(payload?.text || "").trim()
 
-  if (!lookupValue) {
-    return "ownerId or email is required."
-  }
-
-  if (!commentId) {
-    return "commentId is required."
+  if (!commentId && !recipientId) {
+    return "commentId or recipientId is required."
   }
 
   if (!text) {
@@ -122,6 +121,36 @@ async function requireAuthenticatedOwner(req, res, next) {
 
   req.owner = owner
   next()
+}
+
+function hasConnectedInstagram(owner) {
+  return Boolean(owner?.longLivedAccessToken)
+}
+
+async function enrichOwnerProfile(owner) {
+  if (!hasConnectedInstagram(owner)) {
+    return owner
+  }
+
+  try {
+    const profile = await getInstagramProfile(owner.longLivedAccessToken)
+    const nextInstagramUserId = profile.instagramAccountId || profile.instagramUserId || owner.instagramUserId
+
+    if (
+      nextInstagramUserId !== owner.instagramUserId ||
+      profile.instagramUsername !== owner.instagramUsername
+    ) {
+      owner.instagramUserId = nextInstagramUserId
+      owner.instagramUsername = profile.instagramUsername || owner.instagramUsername
+      await owner.save()
+    }
+  } catch (error) {
+    if (!owner.instagramUsername) {
+      console.error("Instagram profile hydration failed:", error.message)
+    }
+  }
+
+  return owner
 }
 
 const router = express.Router()
@@ -209,18 +238,25 @@ router.post(
         code: authorizationCode,
         redirectUri,
       })
+      const profile = await getInstagramProfile(exchangeResult.longLivedAccessToken)
+      const identityCandidates = [
+        String(profile.instagramAccountId || "").trim(),
+        String(profile.instagramUserId || "").trim(),
+        String(exchangeResult.instagramUserId || "").trim(),
+      ].filter(Boolean)
 
-      const instagramUserId = String(exchangeResult.instagramUserId || "").trim()
-
-      if (!instagramUserId) {
+      if (identityCandidates.length === 0) {
         throw new Error("Instagram did not return a stable account ID for this login.")
       }
 
-      let owner = await Owner.findOne({ instagramUserId })
+      let owner = await Owner.findOne({
+        instagramUserId: { $in: identityCandidates },
+      })
       const ownerExists = Boolean(owner)
-      const syntheticEmail = buildSyntheticEmail(instagramUserId)
+      const canonicalInstagramUserId = identityCandidates[0]
+      const syntheticEmail = buildSyntheticEmail(canonicalInstagramUserId)
       const syntheticPasswordHash =
-        owner?.passwordHash || (await hashPassword(`instagram-only:${instagramUserId}`))
+        owner?.passwordHash || (await hashPassword(`instagram-only:${canonicalInstagramUserId}`))
 
       if (!owner) {
         owner = new Owner({
@@ -234,7 +270,8 @@ router.post(
       owner.authorizationCode = exchangeResult.authorizationCode
       owner.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
       owner.longLivedAccessToken = exchangeResult.longLivedAccessToken
-      owner.instagramUserId = instagramUserId
+      owner.instagramUserId = canonicalInstagramUserId
+      owner.instagramUsername = profile.instagramUsername || owner.instagramUsername
       owner.tokenType = exchangeResult.tokenType
       owner.tokenExpiresAt = exchangeResult.tokenExpiresAt
       owner.permissions = exchangeResult.permissions
@@ -249,12 +286,13 @@ router.post(
       if (bootstrapCall) {
         bootstrapCall.status = "completed"
         bootstrapCall.ownerId = owner._id
-        bootstrapCall.instagramUserId = instagramUserId
+        bootstrapCall.instagramUserId = canonicalInstagramUserId
         bootstrapCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
         bootstrapCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
         bootstrapCall.responsePayload = {
           authorizeCompletedAt: new Date().toISOString(),
           callbackApiCallId: apiCall._id.toString(),
+          instagramUsername: profile.instagramUsername,
         }
         await bootstrapCall.save()
       }
@@ -263,11 +301,12 @@ router.post(
       apiCall.ownerId = owner._id
       apiCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
       apiCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
-      apiCall.instagramUserId = instagramUserId
+      apiCall.instagramUserId = canonicalInstagramUserId
       apiCall.responsePayload = {
         tokenType: exchangeResult.tokenType,
         tokenExpiresAt: exchangeResult.tokenExpiresAt,
         permissions: exchangeResult.permissions,
+        instagramUsername: profile.instagramUsername,
       }
       await apiCall.save()
 
@@ -316,7 +355,7 @@ router.post(
 router.get(
   "/auth/session",
   asyncHandler(async (req, res) => {
-    const owner = await getAuthenticatedOwner(req)
+    const owner = await enrichOwnerProfile(await getAuthenticatedOwner(req))
 
     if (!owner) {
       return res.status(200).json({
@@ -348,6 +387,7 @@ router.get(
   "/owner/profile",
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
+    await enrichOwnerProfile(req.owner)
     return res.status(200).json(buildOwnerResponse(req.owner))
   }),
 )
@@ -356,10 +396,24 @@ router.get(
   "/campaigns",
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
-    const workspace = await getOwnerScopedWorkspace(req.owner)
+    const owner = await enrichOwnerProfile(req.owner)
+    let mediaItems = []
+
+    if (hasConnectedInstagram(owner)) {
+      mediaItems = await listInstagramMedia(owner.longLivedAccessToken, { limit: 8 })
+    }
+
+    if (mediaItems.length === 0) {
+      const workspace = await getOwnerScopedWorkspace(owner)
+      return res.status(200).json({
+        items: workspace.campaigns,
+        total: workspace.campaigns.length,
+      })
+    }
+
     return res.status(200).json({
-      items: workspace.campaigns,
-      total: workspace.campaigns.length,
+      items: mediaItems,
+      total: mediaItems.length,
     })
   }),
 )
@@ -368,7 +422,23 @@ router.get(
   "/dm-logs",
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
-    const workspace = await getOwnerScopedWorkspace(req.owner)
+    const owner = await enrichOwnerProfile(req.owner)
+
+    if (hasConnectedInstagram(owner)) {
+      const inbox = await listInstagramInbox(owner.longLivedAccessToken, {
+        conversationLimit: 8,
+        messagesPerConversation: 0,
+        messageFetchLimit: 0,
+      })
+
+      return res.status(200).json({
+        items: inbox.conversations,
+        total: inbox.conversations.length,
+        summary: inbox.summary,
+      })
+    }
+
+    const workspace = await getOwnerScopedWorkspace(owner)
     return res.status(200).json({
       items: workspace.dmLogs,
       total: workspace.dmLogs.length,
@@ -388,8 +458,62 @@ router.get(
   }),
 )
 
+router.get(
+  "/instagram/comments",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const owner = await enrichOwnerProfile(req.owner)
+
+    if (!hasConnectedInstagram(owner)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Connect an Instagram Business account before reading comments.",
+      })
+    }
+
+    const comments = await listInstagramComments(owner.longLivedAccessToken, {
+      mediaLimit: 6,
+      commentsPerMedia: 10,
+    })
+
+    return res.status(200).json({
+      items: comments.comments,
+      total: comments.comments.length,
+      summary: comments.summary,
+    })
+  }),
+)
+
+router.get(
+  "/instagram/inbox",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const owner = await enrichOwnerProfile(req.owner)
+
+    if (!hasConnectedInstagram(owner)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Connect an Instagram Business account before reading inbox conversations.",
+      })
+    }
+
+    const inbox = await listInstagramInbox(owner.longLivedAccessToken, {
+      conversationLimit: 8,
+      messagesPerConversation: 5,
+      messageFetchLimit: 2,
+    })
+
+    return res.status(200).json({
+      items: inbox.conversations,
+      total: inbox.conversations.length,
+      summary: inbox.summary,
+    })
+  }),
+)
+
 router.post(
   "/instagram/private-reply",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
     const validationError = validatePrivateReplyPayload(req.body)
 
@@ -400,20 +524,15 @@ router.post(
       })
     }
 
-    await connectToDatabase()
-
-    const lookupValue = String(req.body.ownerId || req.body.email || req.body.identifier || "").trim()
     const commentId = String(req.body.commentId || "").trim()
+    const recipientId = String(req.body.recipientId || "").trim()
     const text = String(req.body.text || "").trim()
-    const owner =
-      lookupValue.includes("@") || !lookupValue.match(/^[a-fA-F0-9]{24}$/)
-        ? await Owner.findOne({ email: normalizeEmail(lookupValue) })
-        : await Owner.findById(lookupValue)
+    const owner = await enrichOwnerProfile(req.owner)
 
-    if (!owner?.longLivedAccessToken || !owner.instagramUserId) {
+    if (!hasConnectedInstagram(owner)) {
       return res.status(404).json({
         ok: false,
-        message: "No connected Instagram owner found for that lookup value.",
+        message: "No connected Instagram owner found for this session.",
       })
     }
 
@@ -425,15 +544,16 @@ router.post(
       instagramUserId: owner.instagramUserId,
       requestPayload: {
         commentId,
+        recipientId,
         text,
       },
     })
 
     try {
-      const result = await sendPrivateReply({
-        instagramUserId: owner.instagramUserId,
+      const result = await sendInstagramReply({
         accessToken: owner.longLivedAccessToken,
-        commentId,
+        commentId: commentId || undefined,
+        recipientId: recipientId || undefined,
         text,
       })
 
@@ -444,6 +564,7 @@ router.post(
       return res.status(200).json({
         ok: true,
         owner: buildOwnerResponse(owner),
+        replyTarget: commentId ? "comment" : "dm",
         result,
       })
     } catch (error) {

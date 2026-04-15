@@ -1,59 +1,34 @@
-const { config } = require("../config")
 const { InstagramAuthError } = require("./instagramAuthService")
+const { instagramRequest } = require("./instagramDataService")
 
-async function parseMessagingResponse(response) {
-  const contentType = response.headers.get("content-type") || ""
+async function sendInstagramReply({ accessToken, commentId, recipientId, text }) {
+  const normalizedText = String(text || "").trim()
+  const normalizedCommentId = String(commentId || "").trim()
+  const normalizedRecipientId = String(recipientId || "").trim()
 
-  if (contentType.includes("application/json")) {
-    return response.json()
+  if (!accessToken || !normalizedText) {
+    throw new InstagramAuthError("accessToken and reply text are required.")
   }
 
-  const text = await response.text()
-
-  try {
-    return JSON.parse(text)
-  } catch {
-    return text ? { message: text } : {}
-  }
-}
-
-async function sendPrivateReply({ instagramUserId, accessToken, commentId, text }) {
-  if (!instagramUserId || !accessToken || !commentId || !text?.trim()) {
-    throw new InstagramAuthError("instagramUserId, accessToken, commentId, and text are required.")
+  if (!normalizedCommentId && !normalizedRecipientId) {
+    throw new InstagramAuthError("commentId or recipientId is required.")
   }
 
-  const endpoint = `https://graph.instagram.com/${config.meta.graphApiVersion}/${instagramUserId}/messages`
-  const response = await fetch(endpoint, {
+  const recipient = normalizedCommentId
+    ? { comment_id: normalizedCommentId }
+    : { id: normalizedRecipientId }
+
+  return instagramRequest("me/messages", accessToken, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      recipient: {
-        comment_id: commentId,
-      },
+    body: {
+      recipient,
       message: {
-        text: text.trim(),
+        text: normalizedText,
       },
-    }),
+    },
   })
-
-  const data = await parseMessagingResponse(response)
-
-  if (!response.ok) {
-    throw new InstagramAuthError(
-      data?.error?.message || data?.message || "Private reply send failed.",
-      {
-        status: response.status,
-        data,
-      },
-    )
-  }
-
-  return data
 }
 
 module.exports = {
-  sendPrivateReply,
+  sendInstagramReply,
 }

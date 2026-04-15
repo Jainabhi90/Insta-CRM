@@ -6,6 +6,8 @@ import { PricingPage } from "./components/PricingPage";
 import { AuthModal } from "./components/AuthModal";
 import { DashboardSidebar } from "./components/DashboardSidebar";
 import { LeadCenter } from "./components/LeadCenter";
+import { CommentsInbox } from "./components/CommentsInbox";
+import { DmInbox } from "./components/DmInbox";
 import { Automations } from "./components/Automations";
 import { PostPerformance } from "./components/PostPerformance";
 import { Button } from "./components/ui/button";
@@ -14,6 +16,9 @@ import { readInstagramCallbackParams } from "./lib/instagramCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
+import { sendInstagramReply } from "./api/instagram/replyApi";
+import { getInstagramComments } from "./api/instagram/commentsApi";
+import { getInstagramInbox } from "./api/instagram/inboxApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -23,6 +28,9 @@ import {
   finishInstagramLogin,
   loadAuthenticatedWorkspace,
 } from "./services/dashboardWorkspaceService";
+import { ensureDemoPreviewSession } from "./services/demoSessionService";
+import { buildCommentWorkspace } from "./adapters/commentAdapter";
+import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 
@@ -120,6 +128,19 @@ export default function App() {
     openInstagramModal();
   };
 
+  const applyWorkspaceResult = (result) => {
+    setSession(result.session);
+    setWorkspace(result.workspace);
+    setWorkspaceWarnings(result.warnings || []);
+    setShowAuthModal(false);
+    setAuthError("");
+    setDashboardError(!result.session && result.warnings?.length ? result.warnings[0] : "");
+
+    if (!result.session) {
+      setActiveView("leads");
+    }
+  };
+
   const hydrateDashboard = async (search = window.location.search) => {
     const requestId = dashboardLoadSequence.current + 1;
     dashboardLoadSequence.current = requestId;
@@ -141,16 +162,7 @@ export default function App() {
         return;
       }
 
-      setSession(result.session);
-      setWorkspace(result.workspace);
-      setWorkspaceWarnings(result.warnings || []);
-      setShowAuthModal(false);
-      setAuthError("");
-      setDashboardError(!result.session && result.warnings?.length ? result.warnings[0] : "");
-
-      if (!result.session) {
-        setActiveView("leads");
-      }
+      applyWorkspaceResult(result);
     } catch (error) {
       if (requestId !== dashboardLoadSequence.current) {
         return;
@@ -171,6 +183,12 @@ export default function App() {
         setHasRestoredSession(true);
       }
     }
+  };
+
+  const refreshWorkspace = async () => {
+    const result = await loadAuthenticatedWorkspace();
+    applyWorkspaceResult(result);
+    return result;
   };
 
   const openLoginModal = () => {
@@ -243,6 +261,50 @@ export default function App() {
     }
   };
 
+  const handleRefreshInstagram = async () => {
+    await refreshWorkspace();
+  };
+
+  const handleRefreshComments = async () => {
+    const commentPayload = await getInstagramComments();
+    const nextCommentsWorkspace = buildCommentWorkspace(commentPayload);
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            comments: nextCommentsWorkspace.comments,
+            commentSummary: nextCommentsWorkspace.summary,
+          }
+        : currentWorkspace,
+    );
+
+    return nextCommentsWorkspace;
+  };
+
+  const handleRefreshInbox = async () => {
+    const inboxPayload = await getInstagramInbox();
+    const nextInboxWorkspace = buildInboxWorkspace(inboxPayload);
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            inbox: nextInboxWorkspace.conversations,
+            inboxSummary: nextInboxWorkspace.summary,
+          }
+        : currentWorkspace,
+    );
+
+    return nextInboxWorkspace;
+  };
+
+  const handleSendInstagramReply = async (payload) => {
+    const result = await sendInstagramReply(payload);
+    await refreshWorkspace();
+    return result;
+  };
+
   const handleGoToPricing = () => {
     navigate("/pricing");
   };
@@ -306,9 +368,29 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (route.page === "dashboard") {
-      hydrateDashboard(route.search);
-    }
+    let isMounted = true;
+
+    const loadDashboardRoute = async () => {
+      if (route.page !== "dashboard") {
+        return;
+      }
+
+      const params = new URLSearchParams(route.search || "");
+
+      if (params.get("devPreview") === "1") {
+        ensureDemoPreviewSession();
+      }
+
+      if (isMounted) {
+        await hydrateDashboard(route.search);
+      }
+    };
+
+    loadDashboardRoute();
+
+    return () => {
+      isMounted = false;
+    };
   }, [route.page, route.search]);
 
   if (route.page !== "dashboard") {
@@ -392,9 +474,35 @@ export default function App() {
         owner={session.owner}
       />
       <main className="flex-1 overflow-y-auto">
+        <DashboardConnectionStrip owner={session.owner} />
         {workspaceWarnings.length > 0 ? <DashboardNotices warnings={workspaceWarnings} /> : null}
         {activeView === "leads" && (
-          <LeadCenter summary={workspace.leadSummary} leads={workspace.leads} />
+          <LeadCenter
+            summary={workspace.leadSummary}
+            leads={workspace.leads}
+            comments={workspace.comments}
+            commentSummary={workspace.commentSummary}
+            inbox={workspace.inbox}
+            inboxSummary={workspace.inboxSummary}
+            onRefreshInstagram={handleRefreshInstagram}
+            onSendReply={handleSendInstagramReply}
+          />
+        )}
+        {activeView === "dm-inbox" && (
+          <DmInbox
+            conversations={workspace.inbox || []}
+            summary={workspace.inboxSummary}
+            onRefresh={handleRefreshInbox}
+            onSendReply={handleSendInstagramReply}
+          />
+        )}
+        {activeView === "comments" && (
+          <CommentsInbox
+            comments={workspace.comments || []}
+            summary={workspace.commentSummary}
+            onRefresh={handleRefreshComments}
+            onSendReply={handleSendInstagramReply}
+          />
         )}
         {activeView === "automations" && (
           <Automations
@@ -413,6 +521,54 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+function DashboardConnectionStrip({ owner }) {
+  const connected = Boolean(owner?.instagramConnected)
+  const statusLabel = connected ? "Instagram Connected" : "Instagram Not Connected"
+  const statusClassName = connected
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : "border-red-200 bg-red-50 text-red-900"
+
+  const accountLabel = owner?.instagramHandle || owner?.name || "Instagram account"
+  const tokenExpiry = owner?.tokenExpiresAt
+    ? new Date(owner.tokenExpiresAt).toLocaleString()
+    : "Not available"
+  const connectedAt = owner?.connectedAt
+    ? new Date(owner.connectedAt).toLocaleString()
+    : "Not available"
+
+  return (
+    <div className="p-6 pb-0">
+      <div className={`rounded-xl border p-4 ${statusClassName}`}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide" style={{ fontWeight: 600 }}>
+              Account Status
+            </p>
+            <h2 className="text-lg" style={{ fontWeight: 700 }}>
+              {statusLabel}
+            </h2>
+            <p className="text-sm mt-1" style={{ fontWeight: 500 }}>
+              Connected account: {accountLabel}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 text-sm md:text-right">
+            <p>
+              <span style={{ fontWeight: 600 }}>Instagram User ID:</span>{" "}
+              {owner?.instagramUserId || "Not available"}
+            </p>
+            <p>
+              <span style={{ fontWeight: 600 }}>Connected At:</span> {connectedAt}
+            </p>
+            <p>
+              <span style={{ fontWeight: 600 }}>Token Expires:</span> {tokenExpiry}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function DashboardLoadingState() {

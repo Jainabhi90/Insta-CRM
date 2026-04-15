@@ -4,6 +4,8 @@ import { getOwnerProfile } from "../api/owner/ownerApi"
 import { getCampaigns } from "../api/campaigns/campaignApi"
 import { getDmLogs } from "../api/dmLogs/dmLogApi"
 import { getAutomations } from "../api/automations/automationApi"
+import { getInstagramComments } from "../api/instagram/commentsApi"
+import { getInstagramInbox } from "../api/instagram/inboxApi"
 import {
   ApiError,
   canUseDemoFallback,
@@ -11,7 +13,9 @@ import {
 } from "../api/core/apiClient"
 import { buildAutomationWorkspace } from "../adapters/automationAdapter"
 import { buildPerformanceWorkspace } from "../adapters/campaignAdapter"
+import { buildCommentWorkspace } from "../adapters/commentAdapter"
 import { buildLeadWorkspace } from "../adapters/dmLogAdapter"
+import { buildInboxWorkspace } from "../adapters/inboxAdapter"
 import { normalizeOwner, normalizeSession } from "../adapters/ownerAdapter"
 import { getInstagramRedirectUri } from "../lib/instagramAuthConfig"
 import { createWorkspaceModel } from "../lib/mockWorkspace"
@@ -34,6 +38,18 @@ function buildWorkspaceResponse(owner, session, warnings = []) {
       posts: fallbackWorkspace.posts,
       performanceSummary: fallbackWorkspace.performanceSummary,
       performanceInsight: fallbackWorkspace.performanceInsight,
+      comments: [],
+      commentSummary: {
+        totalComments: 0,
+        mediaReviewed: 0,
+        latestActivityLabel: "No recent comments yet",
+      },
+      inbox: [],
+      inboxSummary: {
+        totalConversations: 0,
+        latestActivityLabel: "No recent DMs yet",
+        accountUsername: owner?.instagramUsername || "",
+      },
     },
     warnings,
   }
@@ -179,11 +195,15 @@ export async function loadAuthenticatedWorkspace() {
 
   const fallbackWorkspace = createWorkspaceModel(owner)
   const warnings = []
-  const [campaignResult, dmLogResult, automationResult] = await Promise.allSettled([
+  const [campaignResult, automationResult, commentResult, inboxResult] = await Promise.allSettled([
     getCampaigns(),
-    getDmLogs(),
     getAutomations(),
+    getInstagramComments(),
+    getInstagramInbox(),
   ])
+
+  const dmLogResult =
+    inboxResult.status === "fulfilled" ? inboxResult : await getDmLogFallbackResult()
 
   const performance = resolveWorkspaceSection({
     label: "Campaign analytics",
@@ -212,6 +232,24 @@ export async function loadAuthenticatedWorkspace() {
     warnings,
   })
 
+  const comments = resolveWorkspaceSection({
+    label: "Instagram comments",
+    result: commentResult,
+    fallbackWorkspace,
+    buildLiveWorkspace: buildCommentWorkspace,
+    buildPreviewWorkspace: buildCommentWorkspace,
+    warnings,
+  })
+
+  const inbox = resolveWorkspaceSection({
+    label: "Instagram inbox",
+    result: inboxResult,
+    fallbackWorkspace,
+    buildLiveWorkspace: buildInboxWorkspace,
+    buildPreviewWorkspace: buildInboxWorkspace,
+    warnings,
+  })
+
   return {
     session: {
       ...session,
@@ -226,7 +264,26 @@ export async function loadAuthenticatedWorkspace() {
       posts: performance.posts,
       performanceSummary: performance.summary,
       performanceInsight: performance.insight,
+      comments: comments.comments,
+      commentSummary: comments.summary,
+      inbox: inbox.conversations,
+      inboxSummary: inbox.summary,
     },
     warnings,
+  }
+}
+
+async function getDmLogFallbackResult() {
+  try {
+    const dmLogs = await getDmLogs()
+    return {
+      status: "fulfilled",
+      value: dmLogs,
+    }
+  } catch (error) {
+    return {
+      status: "rejected",
+      reason: error,
+    }
   }
 }

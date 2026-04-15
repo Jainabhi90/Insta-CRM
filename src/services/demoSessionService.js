@@ -149,9 +149,47 @@ export function getStoredDemoSession() {
   return buildSessionPayload(storedUser)
 }
 
-export async function completeDemoInstagramSignup({ code }) {
-  if (!code) {
-    throw new Error("Instagram authorization code is required.")
+export function ensureDemoPreviewSession() {
+  if (typeof window === "undefined" || import.meta.env.PROD) {
+    return null
+  }
+
+  const existingSession = getStoredDemoSession()
+
+  if (existingSession) {
+    return existingSession
+  }
+
+  const previewEmail = "preview@instalead.local"
+  const users = getStoredUsers()
+  const existingUser = users.find((user) => userMatchesEmail(user, previewEmail))
+
+  if (existingUser) {
+    persistSession(existingUser.id)
+    return buildSessionPayload(existingUser)
+  }
+
+  const previewUser = {
+    id: `demo-preview-${Date.now()}`,
+    email: previewEmail,
+    name: "Preview Workspace",
+    instagramHandle: "preview_workspace",
+    passwordHash: "preview-session-only",
+    plan: "Growth Plan",
+    createdAt: new Date().toISOString(),
+  }
+
+  saveStoredUsers([...users, previewUser])
+  persistSession(previewUser.id)
+
+  return buildSessionPayload(previewUser)
+}
+
+export async function completeDemoInstagramSignup({ code, email, password }) {
+  const validationError = validateAccountCredentials({ email, password })
+
+  if (validationError) {
+    throw new Error(validationError)
   }
 
   const users = getStoredUsers()

@@ -32,14 +32,23 @@ export function toNumber(value, fallback = 0) {
 }
 
 export function getInitials(value) {
-  const parts = (value || "")
+  const normalizedValue = String(value || "")
+    .replace(/^@+/, "")
+    .trim()
+
+  const parts = normalizedValue
     .trim()
     .split(/\s+/)
+    .map((part) => part.replace(/[^a-z0-9]/gi, ""))
     .filter(Boolean)
     .slice(0, 2)
 
   if (parts.length === 0) {
     return "IG"
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
   }
 
   return parts.map((part) => part[0].toUpperCase()).join("")

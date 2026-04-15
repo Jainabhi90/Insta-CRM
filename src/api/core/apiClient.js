@@ -47,6 +47,7 @@ export async function apiRequest(path, options = {}) {
     method: options.method || "GET",
     credentials: "include",
     headers,
+    cache: options.cache || "no-store",
   }
 
   if (options.body !== undefined) {

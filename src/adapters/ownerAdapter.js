@@ -39,12 +39,33 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     fallbackOwner.id || "owner-session",
   )
 
+  const tokenExpiresAt = pickValue(
+    rawOwner,
+    ["tokenExpiresAt", "token_expires_at"],
+    fallbackOwner.tokenExpiresAt || null,
+  )
+
+  const connectedAt = pickValue(
+    rawOwner,
+    ["connectedAt", "instagramConnectedAt", "instagram_connected_at"],
+    fallbackOwner.connectedAt || null,
+  )
+
+  const explicitConnected = pickValue(rawOwner, ["instagramConnected", "instagram_connected"], null)
+  const instagramConnected =
+    explicitConnected === null
+      ? Boolean(instagramUserId || fallbackOwner.instagramConnected)
+      : Boolean(explicitConnected)
+
   return {
     id,
     name,
     instagramHandle: formatHandle(handle, fallbackOwner.instagramHandle),
     instagramUserId,
     instagramUsername: String(instagramUsername || "").replace(/^@/, ""),
+    instagramConnected,
+    tokenExpiresAt,
+    connectedAt,
     plan,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
   }
