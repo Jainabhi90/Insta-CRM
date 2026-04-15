@@ -49,6 +49,46 @@ export function LeadCenter({ summary, leads }) {
       <div className="mb-8">
         <h1 className="text-3xl mb-2 font-semibold" >Lead Command Center</h1>
         <p className="text-gray-600">Your real-time lead dashboard. Focus on hot leads first.</p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-3xl mb-2 font-semibold">Lead Command Center</h1>
+          <p className="text-gray-600">Your real-time lead dashboard. Focus on hot leads first.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-theme-primary/10 text-theme-primary hover:bg-theme-primary/20 border-transparent">
+            Live Instagram Data
+          </Badge>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="bg-white"
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Refreshing
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      {replyStatus.message ? (
+        <div
+          className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+            replyStatus.type === "success"
+              ? "border-theme-success/20 bg-theme-success/10 text-theme-success"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {replyStatus.message}
+        </div>
+      ) : null}
       </div>
 
       {/* Stats Cards */}
