@@ -1,7 +1,6 @@
-import { Home, Zap, Users, BarChart3, LogOut, MessageCircle, Inbox } from "lucide-react";
-import { Button } from "./ui/button";
+import { Zap, Users, BarChart3, MessageCircle, Inbox } from "lucide-react";
 
-export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome, owner }) {
+export function DashboardSidebar({ activeView, onViewChange }) {
   const navItems = [
     { id: "leads", icon: Users, label: "Lead Center" },
     { id: "dm-inbox", icon: Inbox, label: "DM Inbox" },
@@ -9,13 +8,6 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome,
     { id: "automations", icon: Zap, label: "Automations" },
     { id: "performance", icon: BarChart3, label: "Post Performance" },
   ];
-  const displayOwner = {
-    name: owner?.name || "Rahul Kumar",
-    plan: owner?.plan || "Growth Plan",
-    avatarInitials: owner?.avatarInitials || "RK",
-    instagramHandle: owner?.instagramHandle || "",
-    instagramUserId: owner?.instagramUserId || "",
-  };
 
   return (
     <div className="w-64 h-screen bg-[#f8fafc] border-r border-[#e2e8f0] flex flex-col">
@@ -30,15 +22,6 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome,
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <div className="space-y-1">
-          {/* Home Button */}
-          <button
-            onClick={onGoHome || onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-700 hover:bg-[#f1f5f9] mb-2"
-          >
-            <Home className="w-5 h-5" />
-            <span className="font-normal">Home</span>
-          </button>
-
           {/* Dashboard Views */}
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -61,30 +44,6 @@ export function DashboardSidebar({ activeView, onViewChange, onLogout, onGoHome,
           })}
         </div>
       </nav>
-
-      {/* User Section */}
-      <div className="p-4 border-t border-[#e2e8f0]">
-        <div className="flex items-center gap-3 mb-3 px-2">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-theme-primary to-theme-accent flex items-center justify-center text-white font-semibold">
-            {displayOwner.avatarInitials}
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">{displayOwner.name}</p>
-            <p className="text-sm text-gray-500">{displayOwner.instagramHandle || displayOwner.plan}</p>
-            {displayOwner.instagramUserId ? (
-              <p className="text-xs text-gray-400 mt-1">IG ID: {displayOwner.instagramUserId}</p>
-            ) : null}
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={onLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
-        </Button>
-      </div>
     </div>
   );
 }

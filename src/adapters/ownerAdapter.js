@@ -45,6 +45,25 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     fallbackOwner.tokenExpiresAt || null,
   )
 
+  const avatarUrl = pickValue(
+    rawOwner,
+    [
+      "avatarUrl",
+      "avatar_url",
+      "profilePicture",
+      "profile_picture",
+      "profilePictureUrl",
+      "profile_picture_url",
+      "pictureUrl",
+      "picture_url",
+      "imageUrl",
+      "image_url",
+      "profileImage",
+      "profile_image",
+    ],
+    fallbackOwner.avatarUrl || null,
+  )
+
   const connectedAt = pickValue(
     rawOwner,
     ["connectedAt", "instagramConnectedAt", "instagram_connected_at"],
@@ -67,6 +86,7 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     tokenExpiresAt,
     connectedAt,
     plan,
+    avatarUrl,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
   }
 }
