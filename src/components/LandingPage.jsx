@@ -9,6 +9,7 @@ export function LandingPage({
   onGoToPricing,
   onToggleTheme,
   onGoToGoogleLanding,
+  onLogout,
   isGoogleAuthenticated,
 }) {
   const scrollToSection = (id) => {
@@ -28,6 +29,12 @@ export function LandingPage({
             <span className="text-xl font-black">InstaLead</span>
           </div>
           <nav className="flex items-center gap-6">
+            <button
+              onClick={onGoToPricing}
+              className="text-gray-600 hover:text-theme-primary transition-colors font-medium"
+            >
+              Pricing
+            </button>
             {!isGoogleAuthenticated && (
               <>
                 <button
@@ -35,12 +42,6 @@ export function LandingPage({
                   className="text-gray-600 hover:text-theme-primary transition-colors font-medium"
                 >
                   Features
-                </button>
-                <button
-                  onClick={onGoToPricing}
-                  className="text-gray-600 hover:text-theme-primary transition-colors font-medium"
-                >
-                  Pricing
                 </button>
                 <button
                   onClick={onToggleTheme}
@@ -59,6 +60,11 @@ export function LandingPage({
                   Google Onboarding
                 </Button>
               </>
+            )}
+            {isGoogleAuthenticated && (
+              <Button variant="outline" onClick={onLogout}>
+                Logout
+              </Button>
             )}
             <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram

@@ -9,6 +9,7 @@ export function DarkLandingPage({
   onGoToPricing,
   onToggleTheme,
   onGoToGoogleLanding,
+  onLogout,
   isGoogleAuthenticated,
 }) {
   const scrollToSection = (id) => {
@@ -28,6 +29,12 @@ export function DarkLandingPage({
             <span className="text-xl font-semibold">InstaLead</span>
           </div>
           <nav className="flex items-center gap-6">
+            <button
+              onClick={onGoToPricing}
+              className="text-gray-400 hover:text-white transition-colors font-medium"
+            >
+              Pricing
+            </button>
             {!isGoogleAuthenticated && (
               <>
                 <button
@@ -35,12 +42,6 @@ export function DarkLandingPage({
                   className="text-gray-400 hover:text-white transition-colors font-medium"
                 >
                   Features
-                </button>
-                <button
-                  onClick={onGoToPricing}
-                  className="text-gray-400 hover:text-white transition-colors font-medium"
-                >
-                  Pricing
                 </button>
                 <button
                   onClick={onToggleTheme}
@@ -55,6 +56,11 @@ export function DarkLandingPage({
                   Google Onboarding
                 </Button>
               </>
+            )}
+            {isGoogleAuthenticated && (
+              <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800" onClick={onLogout}>
+                Logout
+              </Button>
             )}
             <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram

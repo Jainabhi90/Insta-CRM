@@ -362,6 +362,29 @@ export default function App() {
     navigate("/google-auth");
   };
 
+  const handleLandingLogout = async () => {
+    if (pendingAction) {
+      return;
+    }
+
+    setPendingAction("logout");
+    setSession(null);
+    setWorkspace(null);
+    setActiveView("leads");
+    setShowAuthModal(false);
+    setAuthError("");
+    setDashboardError("");
+    window.localStorage.removeItem(GOOGLE_AUTH_COMPLETED_KEY);
+    setHasGoogleLogin(false);
+
+    try {
+      await logoutSession();
+    } finally {
+      setPendingAction("");
+      navigate("/google-auth");
+    }
+  };
+
   const handleGoogleCallbackComplete = () => {
     window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
     setHasGoogleLogin(true);
@@ -493,6 +516,7 @@ export default function App() {
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
             onGoToGoogleLanding={handleGoToGoogleLanding}
+            onLogout={handleLandingLogout}
             isGoogleAuthenticated={hasGoogleLogin}
           />
         ) : (
@@ -503,6 +527,7 @@ export default function App() {
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
             onGoToGoogleLanding={handleGoToGoogleLanding}
+            onLogout={handleLandingLogout}
             isGoogleAuthenticated={hasGoogleLogin}
           />
         )}
