@@ -63,7 +63,7 @@
     "dev": "vite",
     "dev:api": "node backend/local.js",
     "build": "vite build",
-    "postbuild": "react-snap",
+    "build:snap": "vite build && react-snap",
     "test:workflow": "node scripts/workflow-smoke.mjs"
   },
   "reactSnap": {

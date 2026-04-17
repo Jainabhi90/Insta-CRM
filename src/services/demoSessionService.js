@@ -64,6 +64,7 @@ function buildSessionPayload(user) {
       instagram_handle: user.instagramHandle,
       instagramUserId: user.instagramUserId,
       instagramUsername: user.instagramUsername,
+      avatarUrl: user.avatarUrl,
       plan: user.plan,
     }),
   }
@@ -114,6 +115,7 @@ function createDemoInstagramProfileFromCode(code) {
     instagramHandle: `creator_${suffix}`,
     instagramUsername: `creator_${suffix}`,
     instagramUserId: `demo_ig_${suffix}`,
+    avatarUrl: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(`creator_${suffix}`)}&backgroundColor=2563eb,f97316,10b981,8b5cf6`,
     email: `demo+${suffix}@instalead.local`,
     plan: "Growth Plan",
   }
@@ -174,6 +176,7 @@ export function ensureDemoPreviewSession() {
     email: previewEmail,
     name: "Preview Workspace",
     instagramHandle: "preview_workspace",
+    avatarUrl: "https://api.dicebear.com/9.x/initials/svg?seed=preview_workspace&backgroundColor=2563eb,f97316,10b981,8b5cf6",
     passwordHash: "preview-session-only",
     plan: "Growth Plan",
     createdAt: new Date().toISOString(),
@@ -210,6 +213,7 @@ export async function completeDemoInstagramSignup({ code, email, password }) {
     instagramHandle: instagramProfile.instagramHandle,
     instagramUsername: instagramProfile.instagramUsername,
     instagramUserId: instagramProfile.instagramUserId,
+    avatarUrl: instagramProfile.avatarUrl,
     passwordHash: "",
     plan: instagramProfile.plan,
     createdAt: new Date().toISOString(),
