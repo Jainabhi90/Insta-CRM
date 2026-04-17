@@ -2,7 +2,15 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Moon } from "lucide-react";
 
-export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme, onGoToGoogleLanding }) {
+export function DarkLandingPage({
+  onGetStarted,
+  onLogin,
+  onCreateAccount,
+  onGoToPricing,
+  onToggleTheme,
+  onGoToGoogleLanding,
+  isGoogleAuthenticated,
+}) {
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -20,30 +28,34 @@ export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoTo
             <span className="text-xl font-semibold">InstaLead</span>
           </div>
           <nav className="flex items-center gap-6">
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="text-gray-400 hover:text-white transition-colors font-medium"
-            >
-              Features
-            </button>
-            <button 
-              onClick={onGoToPricing}
-              className="text-gray-400 hover:text-white transition-colors font-medium"
-            >
-              Pricing
-            </button>
-            <button
-              onClick={onToggleTheme}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <Moon className="w-5 h-5" />
-            </button>
-            <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800" onClick={onLogin}>
-              Login
-            </Button>
-            <Button variant="outline" className="border-theme-primary text-theme-primary hover:bg-blue-950" onClick={onGoToGoogleLanding}>
-              Google Onboarding
-            </Button>
+            {!isGoogleAuthenticated && (
+              <>
+                <button
+                  onClick={() => scrollToSection('features')}
+                  className="text-gray-400 hover:text-white transition-colors font-medium"
+                >
+                  Features
+                </button>
+                <button
+                  onClick={onGoToPricing}
+                  className="text-gray-400 hover:text-white transition-colors font-medium"
+                >
+                  Pricing
+                </button>
+                <button
+                  onClick={onToggleTheme}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <Moon className="w-5 h-5" />
+                </button>
+                <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800" onClick={onLogin}>
+                  Login
+                </Button>
+                <Button variant="outline" className="border-theme-primary text-theme-primary hover:bg-blue-950" onClick={onGoToGoogleLanding}>
+                  Google Onboarding
+                </Button>
+              </>
+            )}
             <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram
             </Button>
@@ -74,22 +86,26 @@ export function DarkLandingPage({ onGetStarted, onLogin, onCreateAccount, onGoTo
             >
               Connect Instagram
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="px-8 py-6 text-lg border-theme-primary text-theme-primary hover:bg-blue-950"
-              onClick={onLogin}
-            >
-              Login
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-8 py-6 text-lg border-theme-primary text-theme-primary hover:bg-blue-950"
-              onClick={onGoToGoogleLanding}
-            >
-              Continue with Google
-            </Button>
+            {!isGoogleAuthenticated && (
+              <>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="px-8 py-6 text-lg border-theme-primary text-theme-primary hover:bg-blue-950"
+                  onClick={onLogin}
+                >
+                  Login
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="px-8 py-6 text-lg border-theme-primary text-theme-primary hover:bg-blue-950"
+                  onClick={onGoToGoogleLanding}
+                >
+                  Continue with Google
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>

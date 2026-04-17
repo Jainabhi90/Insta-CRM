@@ -3059,3 +3059,85 @@ html {
 .from-theme-success { --tw-gradient-from: var(--color-theme-success); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
 .to-theme-success-light { --tw-gradient-to: var(--color-theme-success-light); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)); }
 .text-theme-success { color: var(--color-theme-success); }
+
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.03);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes soft-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hover-lift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+.animate-gentle-float {
+  animation: gentle-float 10s ease-in-out infinite;
+}
+
+.animate-gentle-float-delayed {
+  animation: gentle-float 12s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.animate-rise-in {
+  animation: rise-in 0.75s ease-out both;
+}
+
+.animate-rise-in-delay {
+  animation: rise-in 0.85s ease-out both;
+  animation-delay: 0.12s;
+}
+
+.animate-rise-in-delay-2 {
+  animation: rise-in 0.95s ease-out both;
+  animation-delay: 0.24s;
+}
+
+.animate-rise-in-delay-3 {
+  animation: rise-in 1.05s ease-out both;
+  animation-delay: 0.36s;
+}
+
+.animate-soft-pop {
+  animation: soft-pop 0.55s ease-out both;
+}
+
+.animate-hover-lift {
+  animation: hover-lift 8s ease-in-out infinite;
+}

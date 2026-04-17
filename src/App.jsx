@@ -45,6 +45,15 @@ import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 
 const THEME_STORAGE_KEY = "instalead.theme";
+const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
+
+function hasCompletedGoogleLogin() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(GOOGLE_AUTH_COMPLETED_KEY) === "true";
+}
 
 function hasActiveSession(session) {
   return Boolean(session?.owner);
@@ -52,10 +61,21 @@ function hasActiveSession(session) {
 
 function getCurrentRoute() {
   if (typeof window === "undefined") {
-    return { page: "landing", search: "" };
+    return { page: "google-landing", search: "" };
   }
 
   const path = window.location.pathname;
+
+  if (path === "/") {
+    return {
+      page: hasCompletedGoogleLogin() ? "landing" : "google-landing",
+      search: window.location.search,
+    };
+  }
+
+  if (path === "/insta-landing") {
+    return { page: "landing", search: window.location.search };
+  }
 
   if (path === "/pricing") {
     return { page: "pricing", search: window.location.search };
@@ -109,6 +129,7 @@ function getStoredTheme() {
 
 export default function App() {
   const [route, setRoute] = useState(() => getCurrentRoute());
+  const [hasGoogleLogin, setHasGoogleLogin] = useState(() => hasCompletedGoogleLogin());
   const [session, setSession] = useState(null);
   const [workspace, setWorkspace] = useState(null);
   const [activeView, setActiveView] = useState("leads");
@@ -342,11 +363,13 @@ export default function App() {
   };
 
   const handleGoogleCallbackComplete = () => {
-    navigate("/accounts", { replace: true });
+    window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
+    setHasGoogleLogin(true);
+    navigate("/insta-landing", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {
-    navigate("/", { replace: true });
+    navigate("/google-auth", { replace: true });
   };
 
   const handleBackToHome = () => {
@@ -450,7 +473,7 @@ export default function App() {
             onCreateAccount={openSignupModal}
           />
         ) : route.page === "google-landing" ? (
-          <GoogleLandingPage onBackToInstagramLanding={handleBackToHome} />
+          <GoogleLandingPage />
         ) : route.page === "google-callback" ? (
           <GoogleCallback
             onComplete={handleGoogleCallbackComplete}
@@ -470,6 +493,7 @@ export default function App() {
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
             onGoToGoogleLanding={handleGoToGoogleLanding}
+            isGoogleAuthenticated={hasGoogleLogin}
           />
         ) : (
           <LandingPage
@@ -479,6 +503,7 @@ export default function App() {
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
             onGoToGoogleLanding={handleGoToGoogleLanding}
+            isGoogleAuthenticated={hasGoogleLogin}
           />
         )}
 
