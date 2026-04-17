@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Sun, Star } from "lucide-react";
 
-export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme }) {
+export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme, onGoToGoogleLanding }) {
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -41,6 +41,9 @@ export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPric
             <Button variant="outline" onClick={onLogin}>
               Login
             </Button>
+            <Button variant="outline" className="border-theme-primary text-theme-primary hover:bg-blue-50" onClick={onGoToGoogleLanding}>
+              Google Onboarding
+            </Button>
             <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram
             </Button>
@@ -78,6 +81,14 @@ export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPric
               onClick={onLogin}
             >
               Login
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="px-8 py-6 text-lg border-theme-primary text-theme-primary hover:bg-blue-50"
+              onClick={onGoToGoogleLanding}
+            >
+              Continue with Google
             </Button>
           </div>
           

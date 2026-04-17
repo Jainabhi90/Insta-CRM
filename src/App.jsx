@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, LogOut, Repeat2 } from "lucide-react";
 import { LandingPage } from "./components/LandingPage";
 import { DarkLandingPage } from "./components/DarkLandingPage";
+import { GoogleLandingPage } from "./components/GoogleLandingPage";
 import { PricingPage } from "./components/PricingPage";
 import { AuthModal } from "./components/AuthModal";
 import { DashboardSidebar } from "./components/DashboardSidebar";
@@ -25,6 +26,8 @@ import { readInstagramCallbackParams } from "./lib/instagramCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
+import GoogleCallback from "./pages/GoogleCallback";
+import Accounts from "./pages/Accounts";
 import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
 import { getInstagramInbox } from "./api/instagram/inboxApi";
@@ -67,6 +70,18 @@ function getCurrentRoute() {
       page: "dashboard",
       search: window.location.search,
     };
+  }
+
+  if (path === "/google-auth") {
+    return { page: "google-landing", search: window.location.search };
+  }
+
+  if (path === "/auth/google/callback") {
+    return { page: "google-callback", search: window.location.search };
+  }
+
+  if (path === "/accounts") {
+    return { page: "accounts", search: window.location.search };
   }
 
   if (path === "/privacy") {
@@ -322,6 +337,18 @@ export default function App() {
     navigate("/pricing");
   };
 
+  const handleGoToGoogleLanding = () => {
+    navigate("/google-auth");
+  };
+
+  const handleGoogleCallbackComplete = () => {
+    navigate("/accounts", { replace: true });
+  };
+
+  const handleGoogleCallbackFailed = () => {
+    navigate("/", { replace: true });
+  };
+
   const handleBackToHome = () => {
     navigate("/");
   };
@@ -422,6 +449,19 @@ export default function App() {
             onLogin={openLoginModal}
             onCreateAccount={openSignupModal}
           />
+        ) : route.page === "google-landing" ? (
+          <GoogleLandingPage onBackToInstagramLanding={handleBackToHome} />
+        ) : route.page === "google-callback" ? (
+          <GoogleCallback
+            onComplete={handleGoogleCallbackComplete}
+            onFailed={handleGoogleCallbackFailed}
+          />
+        ) : route.page === "accounts" ? (
+          <Accounts
+            onConnectInstagram={openInstagramModal}
+            onOpenDashboard={() => navigate("/dashboard")}
+            onBackToHome={handleBackToHome}
+          />
         ) : isDarkTheme ? (
           <DarkLandingPage
             onGetStarted={handleGetStarted}
@@ -429,6 +469,7 @@ export default function App() {
             onCreateAccount={openSignupModal}
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
+            onGoToGoogleLanding={handleGoToGoogleLanding}
           />
         ) : (
           <LandingPage
@@ -437,6 +478,7 @@ export default function App() {
             onCreateAccount={openSignupModal}
             onGoToPricing={handleGoToPricing}
             onToggleTheme={handleToggleTheme}
+            onGoToGoogleLanding={handleGoToGoogleLanding}
           />
         )}
 
