@@ -68,7 +68,7 @@ function getCurrentRoute() {
 
   if (path === "/") {
     return {
-      page: hasCompletedGoogleLogin() ? "landing" : "google-landing",
+      page: "google-landing",
       search: window.location.search,
     };
   }
