@@ -250,7 +250,7 @@ export default function App() {
     openInstagramModal();
   };
 
-  const handleInstagramAuth = async () => {
+  const handleInstagramAuth = async (options) => {
     if (pendingAction) {
       return;
     }
@@ -260,7 +260,7 @@ export default function App() {
     setDashboardError("");
 
     try {
-      const result = await startInstagramLogin();
+      const result = await startInstagramLogin(options);
 
       if (result.type === "redirect") {
         setShowAuthModal(false);
@@ -504,7 +504,7 @@ export default function App() {
           />
         ) : route.page === "accounts" ? (
           <Accounts
-            onConnectInstagram={openInstagramModal}
+            onConnectInstagram={handleInstagramAuth}
             onOpenDashboard={() => navigate("/dashboard")}
             onBackToHome={handleBackToHome}
           />

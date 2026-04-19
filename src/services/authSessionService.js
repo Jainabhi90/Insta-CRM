@@ -35,7 +35,7 @@ export async function restoreExistingSession() {
   }
 }
 
-export async function startInstagramLogin() {
+export async function startInstagramLogin(options = {}) {
   if (isDemoFallbackEnabled()) {
     return {
       type: "redirect",
@@ -44,10 +44,17 @@ export async function startInstagramLogin() {
     }
   }
 
-  const response = await bootstrapInstagramSession({
+  const selectedInstagramAccountId = String(options?.selectedInstagramAccountId || "").trim()
+  const bootstrapPayload = {
     redirectUri: getInstagramRedirectUri(),
     forceReauth: import.meta.env.VITE_INSTAGRAM_FORCE_REAUTH !== "false",
-  })
+  }
+
+  if (selectedInstagramAccountId) {
+    bootstrapPayload.selectedInstagramAccountId = selectedInstagramAccountId
+  }
+
+  const response = await bootstrapInstagramSession(bootstrapPayload)
 
   if (response?.action === "redirect" && response?.authorizeUrl) {
     return {
