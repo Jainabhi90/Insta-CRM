@@ -113,9 +113,11 @@ export function LeadCenter({
   const [replyStatus, setReplyStatus] = useState({ type: "", message: "" });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [replyingTarget, setReplyingTarget] = useState("");
+  
   const leadRows = leads || [];
   const commentItems = comments || [];
   const inboxItems = inbox || [];
+  
   const leadSummary = {
     ...defaultSummary,
     ...summary,
@@ -201,7 +203,8 @@ export function LeadCenter({
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl mb-2 font-semibold">Lead Command Center</h1>
           <p className="text-gray-600">Your real-time lead dashboard. Focus on hot leads first.</p>
@@ -230,7 +233,7 @@ export function LeadCenter({
           </Button>
         </div>
       </div>
-
+      </div>
       {replyStatus.message ? (
         <div
           className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
@@ -242,6 +245,7 @@ export function LeadCenter({
           {replyStatus.message}
         </div>
       ) : null}
+
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">

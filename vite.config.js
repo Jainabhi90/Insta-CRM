@@ -49,7 +49,7 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext',
+    target: 'es2015',
     outDir: 'dist',
   },
   server: {
