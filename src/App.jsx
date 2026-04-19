@@ -450,7 +450,7 @@ export default function App() {
     setSession(normalizedSession);
     setWorkspace(null);
     setDashboardError("");
-    navigate("/accounts", { replace: true });
+    navigate("/insta-landing", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {

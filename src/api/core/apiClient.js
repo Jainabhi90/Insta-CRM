@@ -11,7 +11,17 @@ export class ApiError extends Error {
 }
 
 function buildUrl(path) {
-  return `${API_BASE_URL}${path}`
+  const normalizedPath = String(path || "").trim()
+
+  if (!API_BASE_URL) {
+    return normalizedPath
+  }
+
+  if (API_BASE_URL.endsWith("/api") && normalizedPath.startsWith("/api/")) {
+    return `${API_BASE_URL}${normalizedPath.slice(4)}`
+  }
+
+  return `${API_BASE_URL}${normalizedPath}`
 }
 
 export function isDemoFallbackEnabled() {
