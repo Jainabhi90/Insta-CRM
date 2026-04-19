@@ -599,11 +599,10 @@ export default function App() {
           />
         ) : route.page === "accounts" ? (
           <Accounts
-<<<<<<< HEAD
             gowner={session?.gowner}
             accounts={session?.accounts || []}
             pendingAction={pendingAction}
-            onConnectInstagram={openInstagramModal}
+            onConnectInstagram={handleInstagramAuth}
             onOpenDashboard={() => {
               if (session?.owner) {
                 navigate("/dashboard");
@@ -617,10 +616,6 @@ export default function App() {
               }
             }}
             onSelectAccount={handleSelectWorkspaceAccount}
-=======
-            onConnectInstagram={handleInstagramAuth}
-            onOpenDashboard={() => navigate("/dashboard")}
->>>>>>> 986d0ff5e81c81cef24e0e278adf51be8570bbb4
             onBackToHome={handleBackToHome}
           />
         ) : isDarkTheme ? (
@@ -670,8 +665,13 @@ export default function App() {
           gowner={session.gowner}
           accounts={session.accounts || []}
           pendingAction={pendingAction}
-          onConnectInstagram={openInstagramModal}
+          onConnectInstagram={handleInstagramAuth}
           onOpenDashboard={() => {
+            if (session?.owner) {
+              navigate("/dashboard");
+              return;
+            }
+
             const fallbackAccount = session?.accounts?.[0]?.id || "";
 
             if (fallbackAccount) {
@@ -681,7 +681,7 @@ export default function App() {
           onSelectAccount={handleSelectWorkspaceAccount}
           onBackToHome={handleBackToHome}
         />
-      )
+      );
     }
 
     return (
