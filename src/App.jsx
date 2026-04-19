@@ -320,7 +320,7 @@ export default function App() {
       await logoutSession();
     } finally {
       setPendingAction("");
-      navigate("/");
+      navigate("/insta-landing");
     }
   };
 
