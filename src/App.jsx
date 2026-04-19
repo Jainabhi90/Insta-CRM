@@ -159,11 +159,6 @@ export default function App() {
       return;
     }
 
-    if (hasGoogleLogin && window.location.pathname !== "/accounts") {
-      navigate("/accounts");
-      return;
-    }
-
     if (hasActiveSession(session)) {
       navigate("/dashboard");
       return;
@@ -397,7 +392,7 @@ export default function App() {
   const handleGoogleCallbackComplete = () => {
     window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
     setHasGoogleLogin(true);
-    navigate("/accounts", { replace: true });
+    navigate("/insta-landing", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {
