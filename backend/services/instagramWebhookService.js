@@ -1,4 +1,5 @@
 const { connectToDatabase } = require("../db")
+const IOwner = require("../models/IOwner")
 const Owner = require("../models/Owner")
 
 function extractCommentEvents(payload) {
@@ -50,9 +51,13 @@ async function processInstagramWebhookPayload(payload) {
   const eventResults = []
 
   for (const commentEvent of commentEvents) {
-    const owner = await Owner.findOne({
-      instagramUserId: commentEvent.instagramAccountId,
-    }).lean()
+    const owner =
+      (await IOwner.findOne({
+        instagramUserId: commentEvent.instagramAccountId,
+      }).lean()) ||
+      (await Owner.findOne({
+        instagramUserId: commentEvent.instagramAccountId,
+      }).lean())
 
     eventResults.push({
       ...commentEvent,

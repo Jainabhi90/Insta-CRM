@@ -6,3 +6,17 @@ import { apiRequest } from "../core/apiClient"
 export function getAutomations() {
   return apiRequest("/api/automations")
 }
+
+export function createAutomation(payload) {
+  return apiRequest("/api/automations", {
+    method: "POST",
+    body: payload,
+  })
+}
+
+export function updateAutomation(automationId, payload) {
+  return apiRequest(`/api/automations/${automationId}`, {
+    method: "PATCH",
+    body: payload,
+  })
+}

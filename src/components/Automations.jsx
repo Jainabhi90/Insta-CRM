@@ -39,39 +39,102 @@ function mapTemplate(template, index) {
   };
 }
 
-export function Automations({ summary, initialTemplates, tip }) {
+export function Automations({
+  summary,
+  initialTemplates,
+  tip,
+  availablePosts = [],
+  onCreateAutomation,
+  onToggleAutomation,
+}) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [templates, setTemplates] = useState(() =>
     (initialTemplates || []).map(mapTemplate)
   );
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [isSaving, setIsSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState("");
 
   useEffect(() => {
     setTemplates((initialTemplates || []).map(mapTemplate));
   }, [initialTemplates]);
 
-  const toggleTemplate = (id) => {
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, enabled: !t.enabled } : t))
-    );
+  const toggleTemplate = async (id) => {
+    const currentTemplate = templates.find((template) => template.id === id);
+
+    if (!currentTemplate) {
+      return;
+    }
+
+    const nextEnabled = !currentTemplate.enabled;
+    setStatus({ type: "", message: "" });
+    setTogglingId(id);
+
+    try {
+      if (typeof onToggleAutomation === "function") {
+        const updatedTemplate = await onToggleAutomation(id, nextEnabled);
+        setTemplates((prev) =>
+          prev.map((template) =>
+            template.id === id ? mapTemplate(updatedTemplate, 0) : template,
+          ),
+        );
+      } else {
+        setTemplates((prev) =>
+          prev.map((template) =>
+            template.id === id ? { ...template, enabled: nextEnabled } : template,
+          ),
+        );
+      }
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error?.message || "Automation toggle failed.",
+      });
+    } finally {
+      setTogglingId("");
+    }
   };
 
-  const handleCreateAutomation = (automation) => {
-    const newTemplate = {
-      id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `automation-${Date.now()}`,
-      name: automation.name.trim(),
-      description: automation.description.trim(),
-      trigger: automation.trigger.trim(),
-      response: automation.response.trim(),
-      icon: iconMap[automation.icon] || MessageSquare,
-      iconName: automation.icon,
-      category: automation.category,
-      enabled: true,
-    };
+  const handleCreateAutomation = async (automation) => {
+    setStatus({ type: "", message: "" });
+    setIsSaving(true);
 
-    setTemplates((prev) => [...prev, newTemplate]);
+    try {
+      if (typeof onCreateAutomation === "function") {
+        const createdAutomation = await onCreateAutomation(automation);
+        setTemplates((prev) => [...prev, mapTemplate(createdAutomation, prev.length)]);
+      } else {
+        const newTemplate = {
+          id:
+            typeof crypto !== "undefined" && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `automation-${Date.now()}`,
+          name: automation.name.trim(),
+          description: automation.description.trim(),
+          trigger: automation.trigger.trim(),
+          response: automation.response.trim(),
+          icon: iconMap[automation.icon] || MessageSquare,
+          iconName: automation.icon,
+          category: automation.category,
+          enabled: true,
+        };
+
+        setTemplates((prev) => [...prev, newTemplate]);
+      }
+
+      setShowCreateModal(false);
+      setStatus({
+        type: "success",
+        message: "Automation saved and ready for the comment listener workflow.",
+      });
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error?.message || "Automation could not be saved.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const enabledCount = templates.filter((t) => t.enabled).length;
@@ -104,6 +167,18 @@ export function Automations({ summary, initialTemplates, tip }) {
             </Button>
           </div>
         </div>
+
+        {status.message ? (
+          <div
+            className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+              status.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-red-200 bg-red-50 text-red-700"
+            }`}
+          >
+            {status.message}
+          </div>
+        ) : null}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -169,6 +244,7 @@ export function Automations({ summary, initialTemplates, tip }) {
                     <Switch
                       checked={template.enabled}
                       onCheckedChange={() => toggleTemplate(template.id)}
+                      disabled={togglingId === template.id}
                     />
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
@@ -228,6 +304,8 @@ export function Automations({ summary, initialTemplates, tip }) {
         <CreateAutomationModal
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreateAutomation}
+          availablePosts={availablePosts}
+          isSaving={isSaving}
         />
       )}
     </>

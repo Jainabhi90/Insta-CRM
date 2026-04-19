@@ -72,11 +72,17 @@ export function buildAutomationWorkspace(automationPayload, fallbackWorkspace, o
           fallbackWorkspace.automations[index % fallbackWorkspace.automations.length].enabled,
         ),
       ),
+      mediaId: pickValue(automation, ["mediaId", "postId", "media_id"], ""),
+      mediaCaption: pickValue(automation, ["mediaCaption", "caption", "media_caption"], ""),
+      mediaThumbnail: pickValue(automation, ["mediaThumbnail", "thumbnail", "media_thumbnail"], ""),
     })),
-    summary: fallbackWorkspace.automationSummary,
+    summary: {
+      ...fallbackWorkspace.automationSummary,
+      ...(automationPayload?.summary || {}),
+    },
     tip: {
       ...fallbackWorkspace.automationTip,
-      body: "Automation cards are now ready for a backend endpoint. Keep the same response shape or adjust the adapter keys here.",
+      ...(automationPayload?.tip || {}),
     },
     isFallback: false,
   }

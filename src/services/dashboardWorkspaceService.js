@@ -178,6 +178,14 @@ export async function loadAuthenticatedWorkspace() {
     )
   }
 
+  if (!session.owner) {
+    return {
+      session,
+      workspace: null,
+      warnings: ["Choose an Instagram account from your workspace first."],
+    }
+  }
+
   let owner = session.owner
 
   try {

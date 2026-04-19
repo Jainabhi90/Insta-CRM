@@ -1,4 +1,5 @@
 import { normalizeSession } from "../adapters/ownerAdapter"
+import { getAccounts, selectAccount } from "../api/auth/accountsApi"
 import { bootstrapInstagramSession } from "../api/auth/sessionBootstrapApi"
 import { getCurrentSession, logoutCurrentSession } from "../api/auth/sessionApi"
 import { ApiError, canUseDemoFallback, isDemoFallbackEnabled } from "../api/core/apiClient"
@@ -77,4 +78,27 @@ export async function logoutSession() {
       throw error
     }
   }
+}
+
+export async function getWorkspaceAccounts() {
+  if (isDemoFallbackEnabled()) {
+    const demoSession = getStoredDemoSession()
+
+    return {
+      gowner: demoSession?.gowner || null,
+      accounts: demoSession?.owner ? [demoSession.owner] : [],
+      selectedOwnerId: demoSession?.owner?.id || "",
+    }
+  }
+
+  return getAccounts()
+}
+
+export async function selectWorkspaceAccount(iownerId) {
+  if (isDemoFallbackEnabled()) {
+    return getStoredDemoSession()
+  }
+
+  const payload = await selectAccount({ iownerId })
+  return normalizeSession(payload)
 }

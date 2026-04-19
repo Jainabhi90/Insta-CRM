@@ -41,7 +41,7 @@ export function AuthModal({
             </div>
             <CardTitle className="text-2xl font-bold">Continue With Instagram</CardTitle>
             <CardDescription className="text-gray-500 mt-2">
-              Use your Instagram business account as the only login for InstaLead. If this account already exists, we refresh the saved token and open the same dashboard.
+              Connect another Instagram business account to your Google workspace. If this account already exists, we refresh the saved token and open the same dashboard.
             </CardDescription>
           </CardHeader>
 
@@ -55,10 +55,10 @@ export function AuthModal({
             <div className="space-y-4">
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
                 <p className="text-sm text-blue-900 font-semibold">
-                  Instagram-only access
+                  Workspace account linking
                 </p>
                 <p className="text-sm text-blue-800 mt-1">
-                  We use the Instagram account identity returned by Meta to find or create your owner record, refresh the saved token, and open your dashboard.
+                  We attach this Instagram account to your Google workspace, refresh the saved token on the backend, and keep it available in your account switcher.
                 </p>
               </div>
 

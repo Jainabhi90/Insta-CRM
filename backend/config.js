@@ -38,6 +38,14 @@ const config = {
       process.env.INSTAGRAM_SCOPE ||
       "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights",
   },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || "",
+  },
+  n8n: {
+    internalSecret: process.env.N8N_INTERNAL_SECRET || "",
+  },
 }
 
 module.exports = {

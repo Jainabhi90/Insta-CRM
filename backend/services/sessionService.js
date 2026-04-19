@@ -30,13 +30,28 @@ function signPayload(payload) {
   return crypto.createHmac("sha256", getSessionSecret()).update(payload).digest("hex")
 }
 
-function createSessionToken(owner) {
+function createSessionToken(sessionState) {
+  const payloadValue = {
+    issuedAt: Date.now(),
+  }
+
+  if (sessionState?.gownerId) {
+    payloadValue.gownerId = String(sessionState.gownerId)
+    payloadValue.email = sessionState.email || ""
+
+    if (sessionState.selectedIOwnerId) {
+      payloadValue.selectedIOwnerId = String(sessionState.selectedIOwnerId)
+    }
+  } else if (sessionState?.ownerId) {
+    payloadValue.ownerId = String(sessionState.ownerId)
+    payloadValue.email = sessionState.email || ""
+  } else if (sessionState?._id) {
+    payloadValue.ownerId = sessionState._id.toString()
+    payloadValue.email = sessionState.email
+  }
+
   const payload = Buffer.from(
-    JSON.stringify({
-      ownerId: owner._id.toString(),
-      email: owner.email,
-      issuedAt: Date.now(),
-    }),
+    JSON.stringify(payloadValue),
   ).toString("base64url")
 
   const signature = signPayload(payload)
@@ -78,8 +93,8 @@ function verifySessionToken(token) {
   }
 }
 
-function setSessionCookie(res, owner) {
-  const token = createSessionToken(owner)
+function setSessionCookie(res, sessionState) {
+  const token = createSessionToken(sessionState)
 
   res.cookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,

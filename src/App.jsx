@@ -14,6 +14,7 @@ import { PostPerformance } from "./components/PostPerformance";
 import { InstagramBrandMark } from "./components/InstagramBrandMark";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,9 +32,11 @@ import Accounts from "./pages/Accounts";
 import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
 import { getInstagramInbox } from "./api/instagram/inboxApi";
+import { createAutomation, updateAutomation } from "./api/automations/automationApi";
 import {
   logoutSession,
   restoreExistingSession,
+  selectWorkspaceAccount,
   startInstagramLogin,
 } from "./services/authSessionService";
 import {
@@ -43,6 +46,7 @@ import {
 import { ensureDemoPreviewSession } from "./services/demoSessionService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
+import { normalizeSession } from "./adapters/ownerAdapter";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
@@ -57,6 +61,10 @@ function hasCompletedGoogleLogin() {
 
 function hasActiveSession(session) {
   return Boolean(session?.owner);
+}
+
+function hasWorkspaceSession(session) {
+  return Boolean(session?.gowner);
 }
 
 function getCurrentRoute() {
@@ -163,6 +171,11 @@ export default function App() {
       return;
     }
 
+    if (!hasWorkspaceSession(session)) {
+      navigate("/google-auth");
+      return;
+    }
+
     setAuthError("");
     setDashboardError("");
     setShowAuthModal(true);
@@ -247,7 +260,12 @@ export default function App() {
       return;
     }
 
-    openInstagramModal();
+    if (hasWorkspaceSession(session)) {
+      navigate("/accounts");
+      return;
+    }
+
+    navigate("/google-auth");
   };
 
   const handleInstagramAuth = async () => {
@@ -307,7 +325,7 @@ export default function App() {
       return;
     }
 
-    await handleInstagramAuth();
+    navigate("/accounts");
   };
 
   const handleRefreshInstagram = async () => {
@@ -354,6 +372,46 @@ export default function App() {
     return result;
   };
 
+  const handleCreateAutomation = async (payload) => {
+    const response = await createAutomation(payload);
+    const createdAutomation = response?.automation || response;
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            automations: [...(currentWorkspace.automations || []), createdAutomation],
+          }
+        : currentWorkspace,
+    );
+
+    return createdAutomation;
+  };
+
+  const handleToggleAutomation = async (automationId, enabled) => {
+    const response = await updateAutomation(automationId, {
+      enabled,
+      active: enabled,
+    });
+
+    const updatedAutomation = response?.automation || response;
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            automations: (currentWorkspace.automations || []).map((automation) =>
+              automation.id === automationId || automation.automation_id === automationId
+                ? updatedAutomation
+                : automation,
+            ),
+          }
+        : currentWorkspace,
+    );
+
+    return updatedAutomation;
+  };
+
   const handleGoToPricing = () => {
     navigate("/pricing");
   };
@@ -385,10 +443,14 @@ export default function App() {
     }
   };
 
-  const handleGoogleCallbackComplete = () => {
+  const handleGoogleWorkspaceReady = (sessionPayload) => {
+    const normalizedSession = normalizeSession(sessionPayload);
     window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
-    setHasGoogleLogin(true);
-    navigate("/insta-landing", { replace: true });
+    setHasGoogleLogin(Boolean(normalizedSession?.gowner));
+    setSession(normalizedSession);
+    setWorkspace(null);
+    setDashboardError("");
+    navigate("/accounts", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {
@@ -435,6 +497,9 @@ export default function App() {
         }
 
         setSession(restoredSession);
+        if (restoredSession?.gowner) {
+          setHasGoogleLogin(true);
+        }
       } catch (error) {
         if (isActive) {
           setDashboardError(error.message || "Unable to restore your account.");
@@ -467,6 +532,11 @@ export default function App() {
         ensureDemoPreviewSession();
       }
 
+      if (!session?.owner && hasWorkspaceSession(session)) {
+        navigate("/accounts", { replace: true });
+        return;
+      }
+
       if (isMounted) {
         await hydrateDashboard(route.search);
       }
@@ -477,7 +547,28 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [route.page, route.search]);
+  }, [route.page, route.search, session]);
+
+  const handleSelectWorkspaceAccount = async (iownerId) => {
+    if (pendingAction) {
+      return;
+    }
+
+    setPendingAction("select_account");
+    setDashboardError("");
+
+    try {
+      const nextSession = await selectWorkspaceAccount(iownerId);
+      setSession(nextSession);
+      setHasGoogleLogin(Boolean(nextSession?.gowner));
+      navigate("/dashboard", { replace: route.page === "dashboard" });
+      await hydrateDashboard("");
+    } catch (error) {
+      setDashboardError(error?.message || "Unable to open that Instagram account right now.");
+    } finally {
+      setPendingAction("");
+    }
+  };
 
   if (route.page !== "dashboard") {
     return (
@@ -499,13 +590,28 @@ export default function App() {
           <GoogleLandingPage />
         ) : route.page === "google-callback" ? (
           <GoogleCallback
-            onComplete={handleGoogleCallbackComplete}
+            onComplete={handleGoogleWorkspaceReady}
             onFailed={handleGoogleCallbackFailed}
           />
         ) : route.page === "accounts" ? (
           <Accounts
+            gowner={session?.gowner}
+            accounts={session?.accounts || []}
+            pendingAction={pendingAction}
             onConnectInstagram={openInstagramModal}
-            onOpenDashboard={() => navigate("/dashboard")}
+            onOpenDashboard={() => {
+              if (session?.owner) {
+                navigate("/dashboard");
+                return;
+              }
+
+              const fallbackAccount = session?.accounts?.[0]?.id || "";
+
+              if (fallbackAccount) {
+                handleSelectWorkspaceAccount(fallbackAccount);
+              }
+            }}
+            onSelectAccount={handleSelectWorkspaceAccount}
             onBackToHome={handleBackToHome}
           />
         ) : isDarkTheme ? (
@@ -549,6 +655,26 @@ export default function App() {
   }
 
   if (!session || !workspace) {
+    if (session?.gowner && !session?.owner) {
+      return (
+        <Accounts
+          gowner={session.gowner}
+          accounts={session.accounts || []}
+          pendingAction={pendingAction}
+          onConnectInstagram={openInstagramModal}
+          onOpenDashboard={() => {
+            const fallbackAccount = session?.accounts?.[0]?.id || "";
+
+            if (fallbackAccount) {
+              handleSelectWorkspaceAccount(fallbackAccount);
+            }
+          }}
+          onSelectAccount={handleSelectWorkspaceAccount}
+          onBackToHome={handleBackToHome}
+        />
+      )
+    }
+
     return (
       <>
         <DashboardAccessGate
@@ -579,9 +705,13 @@ export default function App() {
       <main className="flex-1 overflow-y-auto">
         <div className="fixed right-4 top-[22px] z-40">
           <DashboardAccountMenu
+            gowner={session.gowner}
             owner={session.owner}
+            accounts={session.accounts || []}
             pendingAction={pendingAction}
             onSwitchAccount={handleSwitchAccount}
+            onSelectAccount={handleSelectWorkspaceAccount}
+            onConnectInstagram={handleInstagramAuth}
             onLogout={handleLogout}
           />
         </div>
@@ -619,6 +749,9 @@ export default function App() {
             summary={workspace.automationSummary}
             initialTemplates={workspace.automations}
             tip={workspace.automationTip}
+            availablePosts={workspace.posts}
+            onCreateAutomation={handleCreateAutomation}
+            onToggleAutomation={handleToggleAutomation}
           />
         )}
         {activeView === "performance" && (
@@ -633,10 +766,19 @@ export default function App() {
   );
 }
 
-function DashboardAccountMenu({ owner, onSwitchAccount, onLogout, pendingAction }) {
+function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, onSelectAccount, onConnectInstagram, onLogout, pendingAction }) {
   const isBusy = Boolean(pendingAction)
   const instagramHandle = owner?.instagramHandle || owner?.name || "Instagram account"
   const instagramUserId = owner?.instagramUserId || "Not available"
+
+  const getInitials = (name) =>
+    String(name || "IG")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
 
   return (
     <DropdownMenu>
@@ -650,14 +792,54 @@ function DashboardAccountMenu({ owner, onSwitchAccount, onLogout, pendingAction 
           <InstagramBrandMark className="h-10 w-10" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+      <DropdownMenuContent align="end" className="w-80 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
         <DropdownMenuLabel className="px-3 py-2">
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             <p className="text-sm font-semibold text-gray-900">{instagramHandle}</p>
             <p className="text-xs text-gray-500">IG ID: {instagramUserId}</p>
+            {gowner?.email ? <p className="text-xs text-gray-400">{gowner.email}</p> : null}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {accounts.length > 0 ? (
+          <>
+            <DropdownMenuLabel className="px-3 pt-2 text-xs uppercase tracking-wide text-gray-500">
+              Workspace accounts
+            </DropdownMenuLabel>
+            {accounts.map((account) => (
+              <DropdownMenuItem
+                key={account.id}
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  if (!account.isSelected) {
+                    onSelectAccount?.(account.id);
+                  }
+                }}
+                disabled={isBusy || account.isSelected}
+              >
+                <Avatar className="h-9 w-9 border border-gray-200">
+                  <AvatarImage src={account.avatarUrl || account.profilePictureUrl || ""} alt={account.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-orange-500 text-white">
+                    {getInitials(account.name || account.instagramHandle)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-900">{account.instagramHandle || account.name}</p>
+                  <p className="truncate text-xs text-gray-500">
+                    {account.connectionStatus === "token_expired" ? "Reconnect soon" : account.connectionStatus}
+                  </p>
+                </div>
+                {account.isSelected ? (
+                  <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                    Active
+                  </span>
+                ) : null}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem
           className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm"
           onSelect={(event) => {
@@ -667,7 +849,18 @@ function DashboardAccountMenu({ owner, onSwitchAccount, onLogout, pendingAction 
           disabled={isBusy}
         >
           <Repeat2 className="h-4 w-4" />
-          Switch account
+          Manage accounts
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm"
+          onSelect={(event) => {
+            event.preventDefault();
+            onConnectInstagram?.();
+          }}
+          disabled={isBusy}
+        >
+          <InstagramBrandMark className="h-4 w-4" />
+          Connect another Instagram
         </DropdownMenuItem>
         <DropdownMenuItem
           className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 focus:text-red-600"
@@ -743,4 +936,3 @@ function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pen
     </div>
   );
 }
-

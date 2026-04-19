@@ -47,6 +47,7 @@ function normalizeCampaign(campaign, fallbackPost, index) {
 
   return {
     id: pickValue(campaign, ["id", "campaign_id", "post_id"], fallbackPost.id || `campaign-${index}`),
+    mediaId: pickValue(campaign, ["id", "mediaId", "post_id", "media_id"], fallbackPost.id || `campaign-${index}`),
     thumbnail: pickValue(
       campaign,
       ["thumbnail", "thumbnail_url", "image_url", "media_url", "cover_url"],
@@ -62,6 +63,8 @@ function normalizeCampaign(campaign, fallbackPost, index) {
     comments,
     shares,
     engagement: likes + comments + shares,
+    permalink: pickValue(campaign, ["permalink", "mediaPermalink", "media_permalink"], ""),
+    mediaType: pickValue(campaign, ["media_type", "mediaType"], ""),
     postedAt: formatRelativeTime(
       pickValue(campaign, ["postedAt", "posted_at", "published_at", "created_at"], fallbackPost.postedAt),
       fallbackPost.postedAt,

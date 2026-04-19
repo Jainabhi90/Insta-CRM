@@ -1,6 +1,12 @@
 import { formatHandle, getInitials, pickValue } from "./backendPayloadUtils"
 
 export function normalizeOwner(rawOwner, fallbackOwner = {}) {
+  const id = pickValue(
+    rawOwner,
+    ["id", "iownerId", "ownerId", "owner_id", "user_id"],
+    fallbackOwner.id || "owner-session",
+  )
+
   const instagramUserId = pickValue(
     rawOwner,
     ["instagramUserId", "instagram_user_id", "accountId", "account_id"],
@@ -31,12 +37,6 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     rawOwner,
     ["plan", "plan_name", "subscription_tier", "tier"],
     fallbackOwner.plan || "Growth Plan",
-  )
-
-  const id = pickValue(
-    rawOwner,
-    ["id", "ownerId", "owner_id", "user_id"],
-    fallbackOwner.id || "owner-session",
   )
 
   const tokenExpiresAt = pickValue(
@@ -76,6 +76,22 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
       ? Boolean(instagramUserId || fallbackOwner.instagramConnected)
       : Boolean(explicitConnected)
 
+  const connectionStatus = pickValue(
+    rawOwner,
+    ["connectionStatus", "connection_status", "status"],
+    fallbackOwner.connectionStatus || (instagramConnected ? "connected" : "pending"),
+  )
+
+  const accountType = pickValue(
+    rawOwner,
+    ["accountType", "account_type"],
+    fallbackOwner.accountType || "UNKNOWN",
+  )
+
+  const isSelected = Boolean(
+    pickValue(rawOwner, ["isSelected", "selected"], fallbackOwner.isSelected || false),
+  )
+
   return {
     id,
     name,
@@ -88,6 +104,34 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     plan,
     avatarUrl,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
+    connectionStatus,
+    accountType,
+    isSelected,
+  }
+}
+
+export function normalizeGOwner(rawGOwner, fallbackGOwner = {}) {
+  if (!rawGOwner) {
+    return null
+  }
+
+  return {
+    id: pickValue(rawGOwner, ["id", "gownerId"], fallbackGOwner.id || ""),
+    email: pickValue(rawGOwner, ["email"], fallbackGOwner.email || ""),
+    googleSub: pickValue(rawGOwner, ["googleSub", "google_sub"], fallbackGOwner.googleSub || ""),
+    name: pickValue(rawGOwner, ["name", "display_name"], fallbackGOwner.name || ""),
+    avatarUrl: pickValue(
+      rawGOwner,
+      ["avatarUrl", "avatar_url", "picture", "picture_url"],
+      fallbackGOwner.avatarUrl || "",
+    ),
+    status: pickValue(rawGOwner, ["status"], fallbackGOwner.status || "pending_instagram"),
+    defaultIownerId: pickValue(
+      rawGOwner,
+      ["defaultIownerId", "defaultIOwnerId", "default_iowner_id"],
+      fallbackGOwner.defaultIownerId || "",
+    ),
+    lastLoginAt: pickValue(rawGOwner, ["lastLoginAt", "last_login_at"], fallbackGOwner.lastLoginAt || null),
   }
 }
 
@@ -104,6 +148,12 @@ export function normalizeSession(sessionPayload) {
     return null
   }
 
+  const rawGOwner =
+    sessionPayload.gowner ||
+    sessionPayload.workspace ||
+    sessionPayload.data?.gowner ||
+    null
+
   const rawOwner =
     sessionPayload.owner ||
     sessionPayload.user ||
@@ -112,13 +162,35 @@ export function normalizeSession(sessionPayload) {
     sessionPayload.data?.user ||
     null
 
-  if (!rawOwner) {
+  if (!rawOwner && !rawGOwner) {
     return null
   }
+
+  const normalizedOwner = rawOwner ? normalizeOwner(rawOwner) : null
+  const normalizedAccounts = Array.isArray(sessionPayload.accounts)
+    ? sessionPayload.accounts.map((account) =>
+        normalizeOwner(account, {
+          id: sessionPayload.selectedOwnerId && String(account?.id || account?.ownerId || account?.iownerId || "") === String(sessionPayload.selectedOwnerId)
+            ? String(sessionPayload.selectedOwnerId)
+            : undefined,
+          isSelected:
+            String(account?.id || account?.ownerId || account?.iownerId || "") ===
+            String(sessionPayload.selectedOwnerId || normalizedOwner?.id || ""),
+        }),
+      )
+    : normalizedOwner
+      ? [normalizeOwner(rawOwner, { isSelected: true })]
+      : []
 
   return {
     authenticated: authStatus === "authenticated",
     authStatus,
-    owner: normalizeOwner(rawOwner),
+    gowner: normalizeGOwner(rawGOwner),
+    owner: normalizedOwner,
+    accounts: normalizedAccounts,
+    selectedOwnerId:
+      sessionPayload.selectedOwnerId ||
+      normalizedOwner?.id ||
+      "",
   }
 }

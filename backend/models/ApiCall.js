@@ -5,7 +5,14 @@ const apiCallSchema = new mongoose.Schema(
   {
     requestType: {
       type: String,
-      enum: ["signup_init", "instagram_callback", "comment_webhook", "private_reply"],
+      enum: [
+        "google_exchange",
+        "signup_init",
+        "instagram_callback",
+        "comment_webhook",
+        "private_reply",
+        "accounts_select",
+      ],
       default: "instagram_callback",
     },
     status: {
@@ -51,6 +58,16 @@ const apiCallSchema = new mongoose.Schema(
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Owner",
+      default: null,
+    },
+    gownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GOwner",
+      default: null,
+    },
+    iownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "IOwner",
       default: null,
     },
     requestPayload: {

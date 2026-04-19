@@ -1,6 +1,5 @@
 import { Button } from "./ui/button";
 import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -16,16 +15,18 @@ const automationSchema = z.object({
   response: z.string().min(10, "Add a fuller reply so the automation is actually useful"),
   category: z.string().min(1, "Category is required"),
   icon: z.string().min(1, "Icon is required"),
+  mediaId: z.string().min(1, "Select a post for this automation"),
 });
 
-export function CreateAutomationModal({ onClose, onSave }) {
+export function CreateAutomationModal({ onClose, onSave, availablePosts = [], isSaving = false }) {
   const {
     register,
     handleSubmit,
     control,
+    setError,
+    clearErrors,
     formState: { errors }
   } = useForm({
-    resolver: zodResolver(automationSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -33,20 +34,46 @@ export function CreateAutomationModal({ onClose, onSave }) {
       response: "",
       category: "Sales",
       icon: "MessageSquare",
+      mediaId: availablePosts[0]?.id || "",
     }
   });
 
   const onValidSubmit = (payload) => {
+    clearErrors();
+
+    const validation = automationSchema.safeParse(payload);
+
+    if (!validation.success) {
+      validation.error.issues.forEach((issue) => {
+        const fieldName = issue.path[0];
+
+        if (typeof fieldName === "string") {
+          setError(fieldName, {
+            type: "manual",
+            message: issue.message,
+          });
+        }
+      });
+
+      return;
+    }
+
+    const selectedPost =
+      availablePosts.find((post) => String(post.id) === String(payload.mediaId)) || null
+
     const cleanedPayload = {
-      ...payload,
-      name: payload.name.trim(),
-      description: payload.description.trim(),
-      trigger: payload.trigger.trim(),
-      response: payload.response.trim(),
+      ...validation.data,
+      name: validation.data.name.trim(),
+      description: validation.data.description.trim(),
+      trigger: validation.data.trigger.trim(),
+      response: validation.data.response.trim(),
+      mediaCaption: selectedPost?.caption || "",
+      mediaThumbnail: selectedPost?.thumbnail || "",
+      mediaPermalink: selectedPost?.permalink || "",
+      mediaType: selectedPost?.mediaType || "",
     };
 
     onSave(cleanedPayload);
-    onClose();
   };
 
   const icons = [
@@ -75,6 +102,38 @@ export function CreateAutomationModal({ onClose, onSave }) {
 
         <CardContent>
           <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="mediaId">Instagram Post</Label>
+              <Controller
+                control={control}
+                name="mediaId"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select the post this automation should watch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePosts.length > 0 ? (
+                        availablePosts.map((post) => (
+                          <SelectItem key={post.id} value={String(post.id)}>
+                            {(post.caption || "Instagram post").slice(0, 60)}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="__no_posts__" disabled>
+                          No synced posts available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.mediaId && <p className="text-sm text-red-500 font-medium">{errors.mediaId.message}</p>}
+              <p className="text-sm text-gray-500">
+                The comment listener will only trigger when comments land on this selected post.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Automation Name</Label>
               <Input
@@ -177,14 +236,16 @@ export function CreateAutomationModal({ onClose, onSave }) {
                 variant="outline"
                 className="flex-1"
                 onClick={onClose}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 className="flex-1 bg-theme-primary hover:bg-theme-primary-hover"
+                disabled={isSaving || availablePosts.length === 0}
               >
-                Create Automation
+                {isSaving ? "Saving..." : "Create Automation"}
               </Button>
             </div>
           </form>

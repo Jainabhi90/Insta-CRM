@@ -1,9 +1,30 @@
 const express = require("express")
 const crypto = require("crypto")
+const { config } = require("./config")
 const { connectToDatabase } = require("./db")
+const GOwner = require("./models/GOwner")
+const IOwner = require("./models/IOwner")
 const Owner = require("./models/Owner")
 const ApiCall = require("./models/ApiCall")
 const { hashPassword } = require("./services/passwordService")
+const {
+  confirmCommentAutomation,
+  createOwnerAutomation,
+  listOwnerAutomations,
+  triggerCommentAutomation,
+  updateOwnerAutomation,
+} = require("./services/automationService")
+const {
+  buildAccountSummary,
+  buildGOwnerResponse,
+  getGOwnerAccounts,
+  syncGOwnerAccountsSummary,
+  upsertGOwnerFromGoogleProfile,
+  upsertInstagramOwnerForGOwner,
+} = require("./services/accountRegistryService")
+const {
+  exchangeGoogleCodeForProfile,
+} = require("./services/googleAuthService")
 const {
   buildInstagramAuthorizeUrl,
   exchangeCodeForLongLivedToken,
@@ -37,6 +58,10 @@ function buildOwnerDisplayName(owner) {
     return `@${String(owner.instagramUsername).replace(/^@/, "")}`
   }
 
+  if (owner.instagramDisplayName) {
+    return owner.instagramDisplayName
+  }
+
   if (owner.instagramUserId) {
     return `Instagram ${owner.instagramUserId}`
   }
@@ -55,8 +80,53 @@ function buildOwnerResponse(owner) {
     instagramConnected: Boolean(owner.longLivedAccessToken),
     permissions: Array.isArray(owner.permissions) ? owner.permissions : [],
     tokenExpiresAt: owner.tokenExpiresAt,
-    connectedAt: owner.instagramConnectedAt,
+    connectedAt: owner.connectedAt || owner.instagramConnectedAt || null,
+    connectionStatus: owner.connectionStatus || owner.status || "connected",
+    avatarUrl: owner.profilePictureUrl || "",
+    profilePictureUrl: owner.profilePictureUrl || "",
+    accountType: owner.accountType || "UNKNOWN",
   }
+}
+
+function buildLegacyAccountSummary(owner) {
+  const base = buildOwnerResponse(owner)
+
+  return {
+    ...base,
+    iownerId: base.id,
+    ownerId: base.id,
+    isSelected: true,
+  }
+}
+
+function buildSessionResponse({ gowner = null, owner = null, accounts = [], mode = "unauthenticated" } = {}) {
+  const normalizedAccounts =
+    mode === "gowner"
+      ? accounts.map((account) =>
+          buildAccountSummary(account, { selectedOwnerId: owner?._id?.toString() || "" }),
+        )
+      : owner
+        ? [buildLegacyAccountSummary(owner)]
+        : []
+
+  return {
+    authenticated: Boolean(gowner || owner),
+    authStatus: gowner || owner ? "authenticated" : "unauthenticated",
+    gowner: buildGOwnerResponse(gowner),
+    owner: owner ? buildOwnerResponse(owner) : null,
+    accounts: normalizedAccounts,
+    selectedOwnerId: owner?._id?.toString() || "",
+  }
+}
+
+function validateGooglePayload(payload) {
+  const code = String(payload?.code || "").trim()
+
+  if (!code) {
+    return "Google authorization code is required."
+  }
+
+  return ""
 }
 
 function validateCallbackPayload(payload) {
@@ -90,6 +160,31 @@ function validatePrivateReplyPayload(payload) {
   return ""
 }
 
+function validateAutomationPayload(payload) {
+  const name = String(payload?.name || "").trim()
+  const trigger = String(payload?.trigger || "").trim()
+  const response = String(payload?.response || "").trim()
+  const mediaId = String(payload?.mediaId || payload?.postId || "").trim()
+
+  if (!name) {
+    return "Automation name is required."
+  }
+
+  if (!trigger) {
+    return "Trigger keyword is required."
+  }
+
+  if (!response) {
+    return "Automation response is required."
+  }
+
+  if (!mediaId) {
+    return "Select an Instagram post before creating the automation."
+  }
+
+  return ""
+}
+
 function asyncHandler(handler) {
   return (req, res, next) => {
     Promise.resolve(handler(req, res, next)).catch(next)
@@ -97,29 +192,122 @@ function asyncHandler(handler) {
 }
 
 async function getAuthenticatedOwner(req) {
+  const context = await getAuthenticatedContext(req)
+  return context?.owner || null
+}
+
+async function getAuthenticatedContext(req) {
   const token = readSessionToken(req)
   const session = verifySessionToken(token)
+
+  if (!session?.gownerId && !session?.ownerId) {
+    return null
+  }
+
+  await connectToDatabase()
+
+  if (session?.gownerId) {
+    const gowner = await GOwner.findById(session.gownerId)
+
+    if (!gowner) {
+      return null
+    }
+
+    const accounts = await getGOwnerAccounts(gowner._id)
+    const targetOwnerId =
+      String(session.selectedIOwnerId || "").trim() ||
+      String(gowner.defaultIOwnerId || "").trim()
+    let owner =
+      accounts.find((account) => account._id.toString() === targetOwnerId) || null
+
+    if (!owner && accounts.length > 0) {
+      owner = accounts[0]
+    }
+
+    return {
+      session,
+      mode: "gowner",
+      gowner,
+      owner,
+      accounts,
+    }
+  }
 
   if (!session?.ownerId) {
     return null
   }
 
-  await connectToDatabase()
-  return Owner.findById(session.ownerId)
+  const owner = await Owner.findById(session.ownerId)
+
+  if (!owner) {
+    return null
+  }
+
+  return {
+    session,
+    mode: "legacy",
+    gowner: null,
+    owner,
+    accounts: [owner],
+  }
+}
+
+async function requireAuthenticatedGOwner(req, res, next) {
+  const context = await getAuthenticatedContext(req)
+
+  if (!context?.gowner) {
+    return res.status(401).json({
+      authenticated: false,
+      authStatus: "unauthenticated",
+      message: "Login with Google first.",
+    })
+  }
+
+  req.authContext = context
+  req.gowner = context.gowner
+  req.accounts = context.accounts || []
+  req.owner = context.owner || null
+  next()
 }
 
 async function requireAuthenticatedOwner(req, res, next) {
-  const owner = await getAuthenticatedOwner(req)
+  const context = await getAuthenticatedContext(req)
+  const owner = context?.owner || null
 
   if (!owner) {
     return res.status(401).json({
       authenticated: false,
-      authStatus: "unauthenticated",
-      message: "No active session.",
+      authStatus: context?.gowner ? "authenticated" : "unauthenticated",
+      message: context?.gowner
+        ? "Select or connect an Instagram account first."
+        : "No active session.",
     })
   }
 
+  req.authContext = context
+  req.gowner = context?.gowner || null
+  req.accounts = context?.accounts || [owner]
   req.owner = owner
+  next()
+}
+
+function requireN8nSecret(req, res, next) {
+  const providedSecret = String(req.headers["x-n8n-secret"] || "").trim()
+
+  if (!config.n8n.internalSecret) {
+    return res.status(503).json({
+      ok: false,
+      message: "N8N_INTERNAL_SECRET is not configured on the backend.",
+    })
+  }
+
+  if (!providedSecret || providedSecret !== config.n8n.internalSecret) {
+    return res.status(403).json({
+      ok: false,
+      message: "n8n secret validation failed.",
+    })
+  }
+
   next()
 }
 
@@ -156,9 +344,53 @@ async function enrichOwnerProfile(owner) {
 const router = express.Router()
 
 router.post(
+  "/auth/google/exchange",
+  asyncHandler(async (req, res) => {
+    const validationError = validateGooglePayload(req.body)
+
+    if (validationError) {
+      return res.status(400).json({
+        authenticated: false,
+        message: validationError,
+      })
+    }
+
+    await connectToDatabase()
+
+    const googleProfile = await exchangeGoogleCodeForProfile({
+      code: String(req.body.code || "").trim(),
+      redirectUri: String(req.body.redirectUri || "").trim(),
+    })
+
+    let gowner = await upsertGOwnerFromGoogleProfile(googleProfile)
+    const synced = await syncGOwnerAccountsSummary(gowner)
+    gowner = synced.gowner
+    const selectedOwner = synced.accounts.find(
+      (account) => account._id.toString() === String(gowner.defaultIOwnerId || ""),
+    ) || synced.accounts[0] || null
+
+    setSessionCookie(res, {
+      gownerId: gowner._id,
+      email: gowner.email,
+      selectedIOwnerId: selectedOwner?._id || "",
+    })
+
+    return res.status(200).json(
+      buildSessionResponse({
+        gowner,
+        owner: selectedOwner,
+        accounts: synced.accounts,
+        mode: "gowner",
+      }),
+    )
+  }),
+)
+
+router.post(
   "/auth/session/bootstrap",
   asyncHandler(async (req, res) => {
     await connectToDatabase()
+    const context = await getAuthenticatedContext(req)
 
     const redirectUri = String(req.body.redirectUri || "").trim()
     const forceReauth = req.body.forceReauth !== false
@@ -172,8 +404,11 @@ router.post(
     await ApiCall.create({
       requestType: "signup_init",
       status: "received",
+      email: context?.gowner?.email || context?.owner?.email || "",
       state,
       redirectUri,
+      gownerId: context?.gowner?._id || null,
+      iownerId: context?.owner?._id || null,
       requestPayload: {
         redirectUri,
         forceReauth,
@@ -202,6 +437,7 @@ router.post(
     }
 
     await connectToDatabase()
+    const authContext = await getAuthenticatedContext(req)
 
     const authorizationCode = String(req.body.code || "").trim()
     const state = String(req.body.state || "").trim()
@@ -224,9 +460,12 @@ router.post(
     const apiCall = await ApiCall.create({
       requestType: "instagram_callback",
       status: "received",
+      email: authContext?.gowner?.email || "",
       authorizationCode,
       state,
       redirectUri,
+      gownerId: authContext?.gowner?._id || null,
+      iownerId: authContext?.owner?._id || null,
       requestPayload: {
         state,
         redirectUri,
@@ -239,6 +478,65 @@ router.post(
         redirectUri,
       })
       const profile = await getInstagramProfile(exchangeResult.longLivedAccessToken)
+
+      if (authContext?.gowner) {
+        const { gowner, iowner, accounts } = await upsertInstagramOwnerForGOwner({
+          gowner: authContext.gowner,
+          exchangeResult,
+          profile,
+        })
+
+        setSessionCookie(res, {
+          gownerId: gowner._id,
+          email: gowner.email,
+          selectedIOwnerId: iowner._id,
+        })
+
+        if (bootstrapCall) {
+          bootstrapCall.status = "completed"
+          bootstrapCall.email = gowner.email
+          bootstrapCall.gownerId = gowner._id
+          bootstrapCall.iownerId = iowner._id
+          bootstrapCall.instagramUserId = iowner.instagramUserId
+          bootstrapCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
+          bootstrapCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
+          bootstrapCall.responsePayload = {
+            authorizeCompletedAt: new Date().toISOString(),
+            callbackApiCallId: apiCall._id.toString(),
+            instagramUsername: iowner.instagramUsername,
+          }
+          await bootstrapCall.save()
+        }
+
+        apiCall.status = "completed"
+        apiCall.email = gowner.email
+        apiCall.gownerId = gowner._id
+        apiCall.iownerId = iowner._id
+        apiCall.shortLivedAccessToken = exchangeResult.shortLivedAccessToken
+        apiCall.longLivedAccessToken = exchangeResult.longLivedAccessToken
+        apiCall.instagramUserId = iowner.instagramUserId
+        apiCall.responsePayload = {
+          tokenType: exchangeResult.tokenType,
+          tokenExpiresAt: exchangeResult.tokenExpiresAt,
+          permissions: exchangeResult.permissions,
+          instagramUsername: iowner.instagramUsername,
+        }
+        await apiCall.save()
+
+        return res.status(200).json({
+          ...buildSessionResponse({
+            gowner,
+            owner: iowner,
+            accounts,
+            mode: "gowner",
+          }),
+          exchange: {
+            receivedCode: true,
+            longLivedTokenStored: true,
+          },
+        })
+      }
+
       const identityCandidates = [
         String(profile.instagramAccountId || "").trim(),
         String(profile.instagramUserId || "").trim(),
@@ -355,20 +653,46 @@ router.post(
 router.get(
   "/auth/session",
   asyncHandler(async (req, res) => {
-    const owner = await enrichOwnerProfile(await getAuthenticatedOwner(req))
+    const context = await getAuthenticatedContext(req)
 
-    if (!owner) {
-      return res.status(200).json({
-        authenticated: false,
-        authStatus: "unauthenticated",
-      })
+    if (!context) {
+      return res.status(200).json(buildSessionResponse())
     }
 
-    return res.status(200).json({
-      authenticated: true,
-      authStatus: "authenticated",
-      owner: buildOwnerResponse(owner),
-    })
+    if (context.mode === "gowner") {
+      const owner = context.owner ? await enrichOwnerProfile(context.owner) : null
+      const synced = await syncGOwnerAccountsSummary(context.gowner)
+      const selectedOwner = owner
+        ? synced.accounts.find((account) => account._id.toString() === owner._id.toString()) || owner
+        : null
+
+      if (selectedOwner && String(context.session?.selectedIOwnerId || "") !== selectedOwner._id.toString()) {
+        setSessionCookie(res, {
+          gownerId: synced.gowner._id,
+          email: synced.gowner.email,
+          selectedIOwnerId: selectedOwner._id,
+        })
+      }
+
+      return res.status(200).json(
+        buildSessionResponse({
+          gowner: synced.gowner,
+          owner: selectedOwner,
+          accounts: synced.accounts,
+          mode: "gowner",
+        }),
+      )
+    }
+
+    const owner = await enrichOwnerProfile(context.owner)
+
+    return res.status(200).json(
+      buildSessionResponse({
+        owner,
+        accounts: [owner],
+        mode: "legacy",
+      }),
+    )
   }),
 )
 
@@ -380,6 +704,74 @@ router.post(
       ok: true,
       authenticated: false,
     })
+  }),
+)
+
+router.get(
+  "/accounts",
+  asyncHandler(async (req, res, next) => requireAuthenticatedGOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const synced = await syncGOwnerAccountsSummary(req.gowner)
+    const selectedOwner =
+      (req.owner &&
+        synced.accounts.find((account) => account._id.toString() === req.owner._id.toString())) ||
+      synced.accounts.find((account) => account._id.toString() === String(synced.gowner.defaultIOwnerId || "")) ||
+      synced.accounts[0] ||
+      null
+
+    return res.status(200).json({
+      gowner: buildGOwnerResponse(synced.gowner),
+      accounts: synced.accounts.map((account) =>
+        buildAccountSummary(account, { selectedOwnerId: selectedOwner?._id?.toString() || "" }),
+      ),
+      selectedOwnerId: selectedOwner?._id?.toString() || "",
+    })
+  }),
+)
+
+router.post(
+  "/accounts/select",
+  asyncHandler(async (req, res, next) => requireAuthenticatedGOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const iownerId = String(req.body.iownerId || req.body.ownerId || "").trim()
+
+    if (!iownerId) {
+      return res.status(400).json({
+        ok: false,
+        message: "Select an Instagram account first.",
+      })
+    }
+
+    const selectedOwner = await IOwner.findOne({
+      _id: iownerId,
+      gownerId: req.gowner._id,
+    })
+
+    if (!selectedOwner) {
+      return res.status(404).json({
+        ok: false,
+        message: "That Instagram account was not found for this workspace.",
+      })
+    }
+
+    req.gowner.defaultIOwnerId = selectedOwner._id
+    await req.gowner.save()
+    const synced = await syncGOwnerAccountsSummary(req.gowner)
+
+    setSessionCookie(res, {
+      gownerId: synced.gowner._id,
+      email: synced.gowner.email,
+      selectedIOwnerId: selectedOwner._id,
+    })
+
+    return res.status(200).json(
+      buildSessionResponse({
+        gowner: synced.gowner,
+        owner: selectedOwner,
+        accounts: synced.accounts,
+        mode: "gowner",
+      }),
+    )
   }),
 )
 
@@ -450,10 +842,48 @@ router.get(
   "/automations",
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
-    const workspace = await getOwnerScopedWorkspace(req.owner)
+    const workspace = await listOwnerAutomations(req.owner)
     return res.status(200).json({
+      automations: workspace.automations,
       items: workspace.automations,
       total: workspace.automations.length,
+      summary: workspace.summary,
+      tip: workspace.tip,
+    })
+  }),
+)
+
+router.post(
+  "/automations",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const validationError = validateAutomationPayload(req.body)
+
+    if (validationError) {
+      return res.status(400).json({
+        ok: false,
+        message: validationError,
+      })
+    }
+
+    const automation = await createOwnerAutomation(req.owner, req.body)
+
+    return res.status(201).json({
+      ok: true,
+      automation,
+    })
+  }),
+)
+
+router.patch(
+  "/automations/:automationId",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const automation = await updateOwnerAutomation(req.owner, req.params.automationId, req.body || {})
+
+    return res.status(200).json({
+      ok: true,
+      automation,
     })
   }),
 )
@@ -577,6 +1007,49 @@ router.post(
       await apiCall.save()
       throw error
     }
+  }),
+)
+
+router.post(
+  "/internal/n8n/comment-event",
+  requireN8nSecret,
+  asyncHandler(async (req, res) => {
+    await connectToDatabase()
+
+    const result = await triggerCommentAutomation({
+      instagramAccountId: req.body.instagramAccountId,
+      postId: req.body.postId,
+      commentText: req.body.comment,
+      commenterId: req.body.commenterId || req.body.igUserId,
+      commenterUsername: req.body.commenterUsername,
+      commentId: req.body.commentId,
+      eventField: req.body.eventField,
+      followConfirmBaseUrl: req.body.followConfirmBaseUrl,
+    })
+
+    return res.status(200).json({
+      ok: true,
+      ...result,
+    })
+  }),
+)
+
+router.post(
+  "/internal/n8n/follow-confirm",
+  requireN8nSecret,
+  asyncHandler(async (req, res) => {
+    await connectToDatabase()
+
+    const result = await confirmCommentAutomation({
+      instagramAccountId: req.body.instagramAccountId,
+      postId: req.body.postId,
+      igUserId: req.body.igUserId,
+    })
+
+    return res.status(200).json({
+      ok: true,
+      ...result,
+    })
   }),
 )
 
