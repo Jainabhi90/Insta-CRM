@@ -43,6 +43,7 @@ import {
 import { ensureDemoPreviewSession } from "./services/demoSessionService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
+import { rememberInstagramAccount } from "./lib/instagramAccountCache";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
@@ -158,6 +159,11 @@ export default function App() {
       return;
     }
 
+    if (hasGoogleLogin && window.location.pathname !== "/accounts") {
+      navigate("/accounts");
+      return;
+    }
+
     if (hasActiveSession(session)) {
       navigate("/dashboard");
       return;
@@ -181,7 +187,10 @@ export default function App() {
 
     if (!result.session) {
       setActiveView("leads");
+      return;
     }
+
+    rememberInstagramAccount(result.session.owner);
   };
 
   const hydrateDashboard = async (search = window.location.search) => {
@@ -388,7 +397,7 @@ export default function App() {
   const handleGoogleCallbackComplete = () => {
     window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
     setHasGoogleLogin(true);
-    navigate("/insta-landing", { replace: true });
+    navigate("/accounts", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {

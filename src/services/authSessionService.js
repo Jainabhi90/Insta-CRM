@@ -45,9 +45,14 @@ export async function startInstagramLogin(options = {}) {
   }
 
   const selectedInstagramAccountId = String(options?.selectedInstagramAccountId || "").trim()
+  const shouldForceReauth =
+    typeof options?.forceReauth === "boolean"
+      ? options.forceReauth
+      : import.meta.env.VITE_INSTAGRAM_FORCE_REAUTH !== "false"
+
   const bootstrapPayload = {
     redirectUri: getInstagramRedirectUri(),
-    forceReauth: import.meta.env.VITE_INSTAGRAM_FORCE_REAUTH !== "false",
+    forceReauth: shouldForceReauth,
   }
 
   if (selectedInstagramAccountId) {

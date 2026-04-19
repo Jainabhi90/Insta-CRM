@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { getSavedInstagramAccounts } from "../api/auth/instagramAccountsApi";
+import {
+  getCachedInstagramAccounts,
+  mergeInstagramAccounts,
+} from "../lib/instagramAccountCache";
 
 export default function Accounts({ onConnectInstagram, onOpenDashboard, onBackToHome }) {
   const pendingEmail = useMemo(() => window.localStorage.getItem("pending_email") || "Not available", []);
@@ -14,9 +18,16 @@ export default function Accounts({ onConnectInstagram, onOpenDashboard, onBackTo
     const loadSavedAccounts = async () => {
       setIsLoadingAccounts(true);
 
+      const cachedAccounts = getCachedInstagramAccounts();
+
+      if (isMounted && cachedAccounts.length > 0) {
+        setSavedAccounts(cachedAccounts);
+        setSelectedAccountId(String(cachedAccounts[0]?.id || ""));
+      }
+
       try {
         const payload = await getSavedInstagramAccounts(pendingEmail === "Not available" ? "" : pendingEmail);
-        const nextAccounts = Array.isArray(payload?.items) ? payload.items : [];
+        const nextAccounts = mergeInstagramAccounts(Array.isArray(payload?.items) ? payload.items : []);
 
         if (!isMounted) {
           return;
@@ -32,9 +43,9 @@ export default function Accounts({ onConnectInstagram, onOpenDashboard, onBackTo
           return;
         }
 
-        // No backend endpoint yet: keep onboarding flow functional with button-only UI.
-        setSavedAccounts([]);
-        setSelectedAccountId("");
+        // Backend may not be available yet; cached accounts still keep chooser UX for returning users.
+        setSavedAccounts(cachedAccounts);
+        setSelectedAccountId(String(cachedAccounts[0]?.id || ""));
       } finally {
         if (isMounted) {
           setIsLoadingAccounts(false);
@@ -64,9 +75,17 @@ export default function Accounts({ onConnectInstagram, onOpenDashboard, onBackTo
       normalizedSelection
         ? {
             selectedInstagramAccountId: normalizedSelection,
+            forceReauth: false,
           }
         : undefined,
     );
+  };
+
+  const handleAddAnotherAccount = () => {
+    window.localStorage.removeItem("selected_instagram_account_id");
+    onConnectInstagram?.({
+      forceReauth: true,
+    });
   };
 
   return (
@@ -116,8 +135,13 @@ export default function Accounts({ onConnectInstagram, onOpenDashboard, onBackTo
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleConnectInstagram}>
-            Connect Instagram
+            {showAccountDropdown ? "Continue With Selected Account" : "Connect Instagram"}
           </Button>
+          {showAccountDropdown ? (
+            <Button variant="outline" onClick={handleAddAnotherAccount}>
+              Add Another Account
+            </Button>
+          ) : null}
           <Button variant="outline" onClick={onOpenDashboard}>
             Open Dashboard
           </Button>
