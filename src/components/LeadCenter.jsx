@@ -233,7 +233,7 @@ export function LeadCenter({
           </Button>
         </div>
       </div>
-
+      </div>
       {replyStatus.message ? (
         <div
           className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
@@ -245,6 +245,7 @@ export function LeadCenter({
           {replyStatus.message}
         </div>
       ) : null}
+
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">

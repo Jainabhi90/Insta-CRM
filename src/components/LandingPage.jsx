@@ -5,8 +5,16 @@ import { Check, MessageSquare, TrendingUp, Zap, BarChart3, Target, Sun, Star } f
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  },
+  hover: {
+    y: -8,
+    transition: { duration: 0.3, ease: "easeInOut" },
+    boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
+  }
 };
 
 const staggerContainer = {
@@ -19,22 +27,16 @@ const staggerContainer = {
   }
 };
 
-const revealOnScroll = {
-  initial: { opacity: 0, scale: 0.95 },
-  whileInView: { opacity: 1, scale: 1 },
-  viewport: { once: true },
-  transition: { duration: 0.6, ease: "easeOut" }
-};
-
-const hoverCard = {
-  hover: { 
-    y: -8, 
-    transition: { duration: 0.3, ease: "sharp" },
-    boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
-  }
-};
-
-export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPricing, onToggleTheme }) {
+export function LandingPage({
+  onGetStarted,
+  onLogin,
+  onCreateAccount,
+  onGoToPricing,
+  onToggleTheme,
+  isGoogleAuthenticated,
+  onGoToGoogleLanding,
+  onLogout
+}) {
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -377,7 +379,12 @@ export function LandingPage({ onGetStarted, onLogin, onCreateAccount, onGoToPric
                 img: "https://randomuser.me/api/portraits/men/46.jpg"
               }
             ].map((item, i) => (
-              <motion.div key={i} variants={fadeInUp} whileHover="hover">
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                whileHover={{ y: -6, scale: 1.02 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
                 <Card className="border border-blue-100 shadow-md hover:shadow-xl transition-all bg-white overflow-hidden h-full">
                   <CardContent className="pt-8">
                     <div className="flex gap-1 mb-4">
