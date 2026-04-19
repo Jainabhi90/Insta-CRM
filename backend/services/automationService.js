@@ -301,7 +301,8 @@ async function triggerCommentAutomation({
   const confirmUrl =
     `${normalizedBaseUrl}?igUserId=${encodeURIComponent(normalizeText(commenterId))}` +
     `&postId=${encodeURIComponent(normalizeText(postId))}` +
-    `&instagramAccountId=${encodeURIComponent(normalizeText(instagramAccountId))}`
+    `&instagramAccountId=${encodeURIComponent(normalizeText(instagramAccountId))}` +
+    `&automationId=${encodeURIComponent(automation._id.toString())}`
 
   const followMessage = buildFollowPromptMessage({
     commenterUsername,
@@ -348,6 +349,7 @@ async function confirmCommentAutomation({
   instagramAccountId,
   postId,
   igUserId,
+  automationId,
 }) {
   const owner = await findOwnerForInstagramAccount(instagramAccountId)
 
@@ -358,12 +360,19 @@ async function confirmCommentAutomation({
     }
   }
 
-  const automation = await Automation.findOne({
+  const normalizedAutomationId = normalizeText(automationId)
+  const automationQuery = {
     ownerId: owner._id,
     instagramAccountId: normalizeText(instagramAccountId),
     mediaId: normalizeText(postId),
     active: true,
-  }).sort({ updatedAt: -1, createdAt: -1 })
+  }
+
+  if (normalizedAutomationId) {
+    automationQuery._id = normalizedAutomationId
+  }
+
+  const automation = await Automation.findOne(automationQuery).sort({ updatedAt: -1, createdAt: -1 })
 
   if (!automation) {
     return {

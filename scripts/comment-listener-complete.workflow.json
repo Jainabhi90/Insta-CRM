@@ -162,7 +162,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const query = $input.first().json.query || {};\nreturn [{\n  json: {\n    igUserId: query.igUserId || '',\n    postId: query.postId || '',\n    instagramAccountId: query.instagramAccountId || '',\n    backendBaseUrl: 'http://127.0.0.1:4000',\n    n8nSecret: 'replace-me-with-your-backend-secret'\n  }\n}];"
+        "jsCode": "const query = $input.first().json.query || {};\nreturn [{\n  json: {\n    igUserId: query.igUserId || '',\n    postId: query.postId || '',\n    instagramAccountId: query.instagramAccountId || '',\n    automationId: query.automationId || '',\n    backendBaseUrl: 'http://127.0.0.1:4000',\n    n8nSecret: 'replace-me-with-your-backend-secret'\n  }\n}];"
       },
       "id": "extract-follow-confirm-params",
       "name": "Extract Confirm Params",
@@ -188,7 +188,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { igUserId: $json.igUserId, postId: $json.postId, instagramAccountId: $json.instagramAccountId } }}"
+        "jsonBody": "={{ { igUserId: $json.igUserId, postId: $json.postId, instagramAccountId: $json.instagramAccountId, automationId: $json.automationId } }}"
       },
       "id": "confirm-with-backend",
       "name": "Confirm With Backend",

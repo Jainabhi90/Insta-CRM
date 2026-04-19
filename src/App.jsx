@@ -47,7 +47,6 @@ import { ensureDemoPreviewSession } from "./services/demoSessionService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 import { normalizeSession } from "./adapters/ownerAdapter";
-import { rememberInstagramAccount } from "./lib/instagramAccountCache";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
@@ -195,10 +194,7 @@ export default function App() {
 
     if (!result.session) {
       setActiveView("leads");
-      return;
     }
-
-    rememberInstagramAccount(result.session.owner);
   };
 
   const hydrateDashboard = async (search = window.location.search) => {
@@ -272,7 +268,7 @@ export default function App() {
     navigate("/google-auth");
   };
 
-  const handleInstagramAuth = async (options) => {
+  const handleInstagramAuth = async () => {
     if (pendingAction) {
       return;
     }
@@ -282,7 +278,7 @@ export default function App() {
     setDashboardError("");
 
     try {
-      const result = await startInstagramLogin(options);
+      const result = await startInstagramLogin();
 
       if (result.type === "redirect") {
         setShowAuthModal(false);
@@ -320,7 +316,7 @@ export default function App() {
       await logoutSession();
     } finally {
       setPendingAction("");
-      navigate("/insta-landing");
+      navigate("/");
     }
   };
 
@@ -602,7 +598,7 @@ export default function App() {
             gowner={session?.gowner}
             accounts={session?.accounts || []}
             pendingAction={pendingAction}
-            onConnectInstagram={handleInstagramAuth}
+            onConnectInstagram={openInstagramModal}
             onOpenDashboard={() => {
               if (session?.owner) {
                 navigate("/dashboard");
@@ -665,13 +661,8 @@ export default function App() {
           gowner={session.gowner}
           accounts={session.accounts || []}
           pendingAction={pendingAction}
-          onConnectInstagram={handleInstagramAuth}
+          onConnectInstagram={openInstagramModal}
           onOpenDashboard={() => {
-            if (session?.owner) {
-              navigate("/dashboard");
-              return;
-            }
-
             const fallbackAccount = session?.accounts?.[0]?.id || "";
 
             if (fallbackAccount) {
@@ -681,7 +672,7 @@ export default function App() {
           onSelectAccount={handleSelectWorkspaceAccount}
           onBackToHome={handleBackToHome}
         />
-      );
+      )
     }
 
     return (

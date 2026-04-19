@@ -468,6 +468,7 @@ async function runRouteSmoke() {
           instagramAccountId: "acct-1",
           postId: "post-1",
           igUserId: "lead-1",
+          automationId: "automation-1",
         },
       })
       assert.equal(acceptedFollowConfirm.response.status, 200)
@@ -512,6 +513,7 @@ async function runAutomationServiceSmoke() {
       findOne(query) {
         const match =
           automationOne &&
+          (!query._id || automationOne._id === query._id) &&
           automationOne.ownerId === query.ownerId &&
           automationOne.instagramAccountId === query.instagramAccountId &&
           automationOne.mediaId === query.mediaId &&
@@ -644,6 +646,7 @@ async function runAutomationServiceSmoke() {
     assert.equal(createdLogs.at(-1)?.stage, "prompted")
     assert.match(result.confirmUrl, /igUserId=lead-1/)
     assert.match(result.confirmUrl, /postId=post-1/)
+    assert.match(result.confirmUrl, /automationId=automation-1/)
 
     existingStage = { stage: "prompted" }
     result = await triggerCommentAutomation({
@@ -676,6 +679,7 @@ async function runAutomationServiceSmoke() {
       instagramAccountId: "acct-1",
       postId: "post-1",
       igUserId: "lead-1",
+      automationId: "automation-1",
     })
     assert.equal(result.action, "error")
 
@@ -691,6 +695,7 @@ async function runAutomationServiceSmoke() {
       instagramAccountId: "acct-1",
       postId: "post-1",
       igUserId: "lead-1",
+      automationId: "automation-1",
     })
     assert.equal(result.action, "ignore")
 
@@ -708,6 +713,7 @@ async function runAutomationServiceSmoke() {
       instagramAccountId: "acct-1",
       postId: "post-1",
       igUserId: "lead-1",
+      automationId: "automation-1",
     })
     assert.equal(result.action, "already_sent")
 
