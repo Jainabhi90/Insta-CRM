@@ -121,9 +121,14 @@ function buildSessionResponse({ gowner = null, owner = null, accounts = [], mode
 
 function validateGooglePayload(payload) {
   const code = String(payload?.code || "").trim()
+  const redirectUri = String(payload?.redirectUri || "").trim()
 
   if (!code) {
     return "Google authorization code is required."
+  }
+
+  if (!redirectUri) {
+    return "Google redirect URI is required. Check VITE_GOOGLE_REDIRECT_URI (frontend) and GOOGLE_REDIRECT_URI (backend) are set."
   }
 
   return ""
