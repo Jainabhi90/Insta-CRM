@@ -1044,6 +1044,7 @@ router.post(
       instagramAccountId: req.body.instagramAccountId,
       postId: req.body.postId,
       igUserId: req.body.igUserId,
+      automationId: req.body.automationId,
     })
 
     return res.status(200).json({
