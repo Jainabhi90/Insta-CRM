@@ -3,6 +3,8 @@ import { Button } from "../components/ui/button";
 import { exchangeGoogleCode } from "../api/auth/googleExchangeApi";
 import { getGoogleRedirectUri } from "../lib/googleAuthConfig";
 
+const GOOGLE_EXCHANGE_LOCK_PREFIX = "google_exchange_inflight:";
+
 export default function GoogleCallback({ onComplete, onFailed }) {
   const [hasCode, setHasCode] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -15,6 +17,20 @@ export default function GoogleCallback({ onComplete, onFailed }) {
     if (code) {
       setHasCode(true);
       setErrorMessage("");
+
+      const lockKey = `${GOOGLE_EXCHANGE_LOCK_PREFIX}${code}`;
+      if (window.sessionStorage.getItem(lockKey) === "1") {
+        if (!isCancelled) {
+          setErrorMessage("This Google login callback was already processed. Please start login again.");
+          setHasCode(false);
+        }
+
+        return () => {
+          isCancelled = true;
+        };
+      }
+
+      window.sessionStorage.setItem(lockKey, "1");
 
       const finishGoogleLogin = async () => {
         try {
@@ -31,6 +47,7 @@ export default function GoogleCallback({ onComplete, onFailed }) {
             setErrorMessage(error?.message || "Google login could not be completed.");
             setHasCode(false);
           }
+          window.sessionStorage.removeItem(lockKey);
         }
       };
 
@@ -43,7 +60,7 @@ export default function GoogleCallback({ onComplete, onFailed }) {
 
     setHasCode(false);
     return undefined;
-  }, [onComplete, onFailed]);
+  }, []);
 
   if (!hasCode) {
     return (
