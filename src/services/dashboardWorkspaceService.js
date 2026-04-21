@@ -21,6 +21,8 @@ import { getInstagramRedirectUri } from "../lib/instagramAuthConfig"
 import { createWorkspaceModel } from "../lib/mockWorkspace"
 import { completeDemoInstagramSignup, getStoredDemoSession } from "./demoSessionService"
 
+const INSTAGRAM_CALLBACK_LOCK_PREFIX = "instagram_callback_inflight:"
+
 function buildWorkspaceResponse(owner, session, warnings = []) {
   const fallbackWorkspace = createWorkspaceModel(owner)
 
@@ -116,6 +118,17 @@ export async function finishInstagramLogin(callbackParams) {
     redirectUri: getInstagramRedirectUri(),
   }
 
+  const lockKey =
+    `${INSTAGRAM_CALLBACK_LOCK_PREFIX}${String(payload.state || "")}:${String(payload.code || "")}`
+
+  if (typeof window !== "undefined" && window.sessionStorage.getItem(lockKey) === "1") {
+    return
+  }
+
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(lockKey, "1")
+  }
+
   if (isDemoFallbackEnabled()) {
     await completeDemoInstagramSignup(payload)
     return
@@ -124,6 +137,10 @@ export async function finishInstagramLogin(callbackParams) {
   try {
     await completeInstagramCallback(payload)
   } catch (error) {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(lockKey)
+    }
+
     if (canUseDemoFallback(error)) {
       await completeDemoInstagramSignup(payload)
       return

@@ -151,6 +151,7 @@ export default function App() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const dashboardLoadSequence = useRef(0);
+  const instagramAuthInFlight = useRef(false);
 
   const navigate = (path, options = {}) => {
     const historyMethod = options.replace ? "replaceState" : "pushState";
@@ -271,10 +272,11 @@ export default function App() {
   };
 
   const handleInstagramAuth = async () => {
-    if (pendingAction) {
+    if (pendingAction || instagramAuthInFlight.current) {
       return;
     }
 
+    instagramAuthInFlight.current = true;
     setPendingAction("instagram_auth");
     setAuthError("");
     setDashboardError("");
@@ -297,6 +299,7 @@ export default function App() {
       setAuthError(error.message || "Unable to connect Instagram right now.");
       setShowAuthModal(true);
     } finally {
+      instagramAuthInFlight.current = false;
       setPendingAction("");
     }
   };
