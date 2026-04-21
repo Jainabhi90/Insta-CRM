@@ -11,6 +11,21 @@ function readOrigins(value) {
     .filter(Boolean)
 }
 
+function resolveWebhookVerifyToken() {
+  const token = process.env.META_WEBHOOK_VERIFY_TOKEN || process.env.CHECK_KEY || ""
+  if (!token) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "META_WEBHOOK_VERIFY_TOKEN is required in production. " +
+          "Set it in your environment variables before deploying.",
+      )
+    }
+    return "dev-webhook-verify-token-change-me"
+  }
+
+  return token
+}
+
 const config = {
   port: Number(process.env.PORT || 4000),
   mongoUri: process.env.MONGODB_URI || "",
@@ -27,7 +42,7 @@ const config = {
   meta: {
     appId: process.env.META_APP_ID || "",
     appSecret: process.env.META_APP_SECRET || process.env.APP_SECRET || "",
-    webhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN || process.env.CHECK_KEY || "123",
+    webhookVerifyToken: resolveWebhookVerifyToken(),
     graphApiVersion: process.env.META_GRAPH_API_VERSION || "v23.0",
   },
   instagram: {
@@ -48,6 +63,36 @@ const config = {
   },
 }
 
+function validateConfig(cfg) {
+  if (process.env.NODE_ENV !== "production") {
+    return cfg
+  }
+
+  const required = [
+    { key: "mongoUri", envVar: "MONGODB_URI" },
+    { key: "sessionSecret", envVar: "SESSION_SECRET" },
+  ]
+
+  const missing = required.filter(({ key }) => {
+    const value = cfg[key]
+    return !value || String(value).trim().length === 0
+  })
+
+  if (missing.length > 0) {
+    const names = missing.map(({ envVar }) => envVar).join(", ")
+    throw new Error(
+      `Missing required environment variable(s): ${names}. ` +
+        "Set them before deploying to production.",
+    )
+  }
+
+  if (cfg.sessionSecret && cfg.sessionSecret.length < 32) {
+    throw new Error("SESSION_SECRET must be at least 32 characters long for adequate security.")
+  }
+
+  return cfg
+}
+
 module.exports = {
-  config,
+  config: validateConfig(config),
 }

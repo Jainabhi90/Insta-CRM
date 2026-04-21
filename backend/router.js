@@ -70,8 +70,12 @@ function buildOwnerDisplayName(owner) {
 }
 
 function buildOwnerResponse(owner) {
+  if (!owner || typeof owner !== "object") {
+    throw new Error("buildOwnerResponse: invalid owner object")
+  }
+
   return {
-    id: owner._id.toString(),
+    id: owner._id?.toString() ?? "unknown",
     name: buildOwnerDisplayName(owner),
     email: owner.email,
     instagramUserId: owner.instagramUserId,
@@ -160,6 +164,11 @@ function validatePrivateReplyPayload(payload) {
 
   if (!text) {
     return "Reply text is required."
+  }
+
+  const MAX_REPLY_LENGTH = 1000
+  if (text.length > MAX_REPLY_LENGTH) {
+    return `Reply text must be ${MAX_REPLY_LENGTH} characters or fewer.`
   }
 
   return ""

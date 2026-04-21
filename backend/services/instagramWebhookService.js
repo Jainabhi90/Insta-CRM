@@ -41,11 +41,8 @@ async function processInstagramWebhookPayload(payload) {
   try {
     await connectToDatabase()
   } catch (error) {
-    return {
-      commentEvents,
-      readyCount: 0,
-      warning: error.message,
-    }
+    console.error("[CRITICAL] Webhook cannot connect to database:", error)
+    throw error
   }
 
   const eventResults = []

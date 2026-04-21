@@ -2,9 +2,14 @@ const crypto = require("crypto")
 const { config } = require("../config")
 
 const SESSION_COOKIE_NAME = "insta_crm_session"
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 
 function getSessionSecret() {
-  return config.sessionSecret || config.meta.appSecret || "change-this-session-secret"
+  const secret = config.sessionSecret || config.meta.appSecret
+  if (!secret || secret.trim().length === 0) {
+    throw new Error("SESSION_SECRET is not configured. Set it in your environment variables.")
+  }
+  return secret
 }
 
 function parseCookies(headerValue) {
@@ -31,8 +36,12 @@ function signPayload(payload) {
 }
 
 function createSessionToken(sessionState) {
+  const issuedAt = Date.now()
+  const expiresAt = issuedAt + SESSION_MAX_AGE_MS
+
   const payloadValue = {
-    issuedAt: Date.now(),
+    issuedAt,
+    expiresAt,
   }
 
   if (sessionState?.gownerId) {
@@ -87,7 +96,17 @@ function verifySessionToken(token) {
   }
 
   try {
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"))
+    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"))
+
+    if (session.expiresAt && Date.now() > session.expiresAt) {
+      return null
+    }
+
+    if (session.issuedAt && Date.now() - session.issuedAt > SESSION_MAX_AGE_MS) {
+      return null
+    }
+
+    return session
   } catch {
     return null
   }
@@ -101,7 +120,7 @@ function setSessionCookie(res, sessionState) {
     sameSite: config.cookieSameSite,
     secure: config.cookieSecure,
     path: "/",
-    maxAge: 1000 * 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE_MS,
   })
 }
 

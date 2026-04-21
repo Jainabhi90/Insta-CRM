@@ -67,20 +67,25 @@ app.post(["/metadata", "/api/metadata"], async (req, res) => {
   }
 
   try {
-    await processInstagramWebhookPayload(req.body)
+    // Return 503 on processing errors so Meta retries webhook delivery.
+    const result = await processInstagramWebhookPayload(req.body)
+    return res.status(200).json({ ok: true, processed: result.readyCount ?? 0 })
   } catch (error) {
-    console.error("Webhook processing failed:", error.message)
+    console.error("Webhook processing failed:", error)
+    return res.status(503).json({
+      ok: false,
+      message: "Webhook processing failed. Meta will retry.",
+    })
   }
-
-  return res.sendStatus(200)
 })
 
 app.use((error, req, res, next) => {
   console.error(error)
+  const isDev = process.env.NODE_ENV !== "production"
   res.status(error.status || 500).json({
     ok: false,
-    message: error.message || "Unexpected server error.",
-    details: error.data || null,
+    message: isDev ? error.message || "Unexpected server error." : "An unexpected error occurred.",
+    ...(isDev && { details: error.data || null }),
   })
 })
 

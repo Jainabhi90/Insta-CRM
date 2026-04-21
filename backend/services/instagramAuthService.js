@@ -81,7 +81,16 @@ async function exchangeCodeForShortLivedToken({ code, redirectUri }) {
 
   return {
     shortLivedAccessToken: data.access_token,
-    instagramUserId: String(data.user_id || ""),
+    instagramUserId: (() => {
+      const userId = String(data.user_id || "").trim()
+      if (!userId || !/^\d+$/.test(userId)) {
+        throw new InstagramAuthError(
+          `Instagram returned an invalid user ID format: "${userId}". Expected a numeric string.`,
+          { status: 400, data: { received_user_id: userId } },
+        )
+      }
+      return userId
+    })(),
     permissions: Array.isArray(data.permissions) ? data.permissions : [],
   }
 }
@@ -150,9 +159,18 @@ async function exchangeCodeForLongLivedToken({ code, redirectUri }) {
     longLivedAccessToken: longLivedToken.longLivedAccessToken,
     tokenType: longLivedToken.tokenType,
     expiresIn: longLivedToken.expiresIn,
-    tokenExpiresAt: longLivedToken.expiresIn
-      ? new Date(Date.now() + longLivedToken.expiresIn * 1000)
-      : null,
+    tokenExpiresAt: (() => {
+      const expiresIn = Number(longLivedToken.expiresIn || 0)
+      const MIN_EXPIRY_SECONDS = 3600
+      if (expiresIn < MIN_EXPIRY_SECONDS) {
+        console.warn(
+          `[WARN] Instagram returned an unusually short token lifetime (${expiresIn}s). ` +
+            `Using ${MIN_EXPIRY_SECONDS}s as the minimum.`,
+        )
+        return new Date(Date.now() + MIN_EXPIRY_SECONDS * 1000)
+      }
+      return new Date(Date.now() + expiresIn * 1000)
+    })(),
     redirectUriUsed: getRedirectUri(redirectUri),
   }
 }
