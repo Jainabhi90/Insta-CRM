@@ -561,15 +561,26 @@ export default function App() {
 
     setPendingAction("select_account");
     setDashboardError("");
+    setSelectError("");
 
     try {
       const nextSession = await selectWorkspaceAccount(iownerId);
       setSession(nextSession);
       setHasGoogleLogin(Boolean(nextSession?.gowner));
-      navigate("/dashboard", { replace: route.page === "dashboard" });
-      await hydrateDashboard("");
+      
+      // If already on dashboard, hydrate immediately
+      // Otherwise navigate first and let the useEffect handle hydration
+      if (route.page === "dashboard") {
+        await hydrateDashboard("");
+      } else {
+        navigate("/dashboard");
+        // Small delay to ensure route updates before hydration
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await hydrateDashboard("");
+      }
     } catch (error) {
       setSelectError(error?.message || "Unable to open that Instagram account right now.");
+      setDashboardError(error?.message || "Unable to open that Instagram account right now.");
     } finally {
       setPendingAction("");
     }

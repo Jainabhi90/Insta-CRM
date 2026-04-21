@@ -62,10 +62,14 @@ export default function Accounts({
             accounts.map((account) => (
               <div
                 key={account.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                className={`rounded-2xl border p-5 shadow-sm transition-all ${
+                  account.isSelected
+                    ? "border-blue-500 bg-blue-50 shadow-md"
+                    : "border-gray-200 bg-white hover:shadow-md"
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <Avatar className="h-12 w-12 border border-gray-200">
                       <AvatarImage src={account.avatarUrl || account.profilePictureUrl || ""} alt={account.name} />
                       <AvatarFallback className="bg-gradient-to-br from-blue-600 to-orange-500 text-white">
@@ -77,9 +81,16 @@ export default function Accounts({
                       <p className="text-sm text-gray-500">IG ID: {account.instagramUserId || "Not available"}</p>
                     </div>
                   </div>
-                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getStatusTone(account.connectionStatus)}`}>
-                    {account.connectionStatus === "token_expired" ? "Reconnect soon" : account.connectionStatus}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getStatusTone(account.connectionStatus)}`}>
+                      {account.connectionStatus === "token_expired" ? "Reconnect soon" : account.connectionStatus}
+                    </span>
+                    {account.isSelected ? (
+                      <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
+                        ✓ Active
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600">
@@ -91,11 +102,15 @@ export default function Accounts({
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className={`${
+                      account.isSelected
+                        ? "bg-blue-700 hover:bg-blue-800"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                     onClick={() => onSelectAccount?.(account.id)}
                     disabled={isBusy || account.connectionStatus !== "connected"}
                   >
-                    Open Dashboard
+                    {account.isSelected ? "Current Dashboard" : "Open Dashboard"}
                   </Button>
                   {account.connectionStatus !== "connected" ? (
                     <Button variant="outline" onClick={onConnectInstagram} disabled={isBusy}>
