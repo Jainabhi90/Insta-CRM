@@ -27,6 +27,7 @@ export default function Accounts({
   gowner,
   accounts = [],
   pendingAction,
+  error,
   onConnectInstagram,
   onOpenDashboard,
   onSelectAccount,
@@ -48,6 +49,13 @@ export default function Accounts({
           <p>{gowner?.email || "Not connected"}</p>
           {gowner?.name ? <p className="mt-1 text-blue-700">{gowner.name}</p> : null}
         </div>
+
+        {error ? (
+          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p className="font-semibold">Error</p>
+            <p>{error}</p>
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {accounts.length > 0 ? (
@@ -85,7 +93,7 @@ export default function Accounts({
                   <Button
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={() => onSelectAccount?.(account.id)}
-                    disabled={isBusy}
+                    disabled={isBusy || account.connectionStatus !== "connected"}
                   >
                     Open Dashboard
                   </Button>

@@ -28,6 +28,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
 import GoogleCallback from "./pages/GoogleCallback";
+import InstagramCallback from "./pages/InstagramCallback";
 import Accounts from "./pages/Accounts";
 import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
@@ -146,6 +147,7 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState("");
   const [authError, setAuthError] = useState("");
   const [dashboardError, setDashboardError] = useState("");
+  const [selectError, setSelectError] = useState("");
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const dashboardLoadSequence = useRef(0);
@@ -450,7 +452,7 @@ export default function App() {
     setSession(normalizedSession);
     setWorkspace(null);
     setDashboardError("");
-    navigate("/insta-landing", { replace: true });
+    navigate("/accounts", { replace: true });
   };
 
   const handleGoogleCallbackFailed = () => {
@@ -564,7 +566,7 @@ export default function App() {
       navigate("/dashboard", { replace: route.page === "dashboard" });
       await hydrateDashboard("");
     } catch (error) {
-      setDashboardError(error?.message || "Unable to open that Instagram account right now.");
+      setSelectError(error?.message || "Unable to open that Instagram account right now.");
     } finally {
       setPendingAction("");
     }
@@ -598,6 +600,7 @@ export default function App() {
             gowner={session?.gowner}
             accounts={session?.accounts || []}
             pendingAction={pendingAction}
+            error={selectError}
             onConnectInstagram={openInstagramModal}
             onOpenDashboard={() => {
               if (session?.owner) {

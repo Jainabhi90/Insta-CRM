@@ -768,6 +768,13 @@ router.post(
       })
     }
 
+    if (selectedOwner.connectionStatus !== "connected") {
+      return res.status(400).json({
+        ok: false,
+        message: "This Instagram account is not connected. Please reconnect it first.",
+      })
+    }
+
     req.gowner.defaultIOwnerId = selectedOwner._id
     await req.gowner.save()
     const synced = await syncGOwnerAccountsSummary(req.gowner)
