@@ -88,9 +88,26 @@ function normalizePreviewText(message) {
   return "[Shared content]"
 }
 
-function selectRecipientId(conversation, selfUserId) {
+function selectRecipientId(conversation, selfIdentifiers = []) {
   const participants = Array.isArray(conversation?.participants) ? conversation.participants : []
-  const otherParticipant = participants.find((participant) => String(participant?.id || "") !== String(selfUserId || ""))
+  const normalizedSelfIdentifiers = selfIdentifiers
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+
+  const otherParticipant = participants.find((participant) => {
+    const participantId = String(participant?.id || "").trim()
+    const participantUsername = String(participant?.username || "").trim().toLowerCase()
+
+    if (participantId && normalizedSelfIdentifiers.includes(participantId)) {
+      return false
+    }
+
+    if (participantUsername && normalizedSelfIdentifiers.includes(participantUsername)) {
+      return false
+    }
+
+    return true
+  })
   return String(otherParticipant?.id || "")
 }
 
@@ -103,7 +120,7 @@ function normalizeConversationParticipants(conversation) {
     : []
 }
 
-function buildBaseConversation(conversation, selfUserId) {
+function buildBaseConversation(conversation, selfIdentifiers) {
   const participants = normalizeConversationParticipants(conversation)
   const updatedTime = conversation?.updated_time || null
 
@@ -112,7 +129,7 @@ function buildBaseConversation(conversation, selfUserId) {
     updatedTime,
     participants,
     participantCount: participants.length,
-    recipientId: selectRecipientId({ participants }, selfUserId),
+    recipientId: selectRecipientId({ participants }, selfIdentifiers),
     latestMessagePreview: "",
     latestMessageAt: updatedTime,
     latestSenderUsername: "",
@@ -210,6 +227,11 @@ async function listInstagramInbox(accessToken, options = {}) {
     ? Math.max(0, Number(options.messageFetchLimit))
     : 2
   const profile = await getInstagramProfile(accessToken)
+  const selfIdentifiers = [
+    profile.instagramAccountId,
+    profile.instagramUserId,
+    String(profile.instagramUsername || "").trim().toLowerCase(),
+  ].filter(Boolean)
   const conversationPayload = await instagramRequest("me/conversations", accessToken, {
     query: {
       fields: "id,updated_time,participants",
@@ -220,7 +242,7 @@ async function listInstagramInbox(accessToken, options = {}) {
   const rawConversations = await Promise.all(
     (Array.isArray(conversationPayload?.data) ? conversationPayload.data : []).map(
       async (conversation, index) => {
-        const baseConversation = buildBaseConversation(conversation, profile.instagramUserId)
+        const baseConversation = buildBaseConversation(conversation, selfIdentifiers)
 
         if (messagesPerConversation <= 0 || index >= messageFetchLimit) {
           return baseConversation

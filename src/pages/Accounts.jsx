@@ -26,13 +26,13 @@ function getStatusLabel(connectionStatus) {
 
 function formatExpiry(value) {
   if (!value) {
-    return "Token expiry not available"
+    return "Ready to open"
   }
 
   try {
-    return `Token expiry: ${new Date(value).toLocaleString()}`
+    return `Updated ${new Date(value).toLocaleDateString()}`
   } catch {
-    return "Token expiry not available"
+    return "Ready to open"
   }
 }
 
@@ -49,16 +49,16 @@ export default function Accounts({
   const isBusy = Boolean(pendingAction)
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-12 sm:px-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-md">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_80px_-55px_rgba(15,23,42,0.55)]">
+        <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_40px_120px_-70px_rgba(15,23,42,0.75)]">
           <div className="border-b border-slate-200 px-6 py-6 sm:px-8">
             <p className="text-sm font-medium text-slate-500">Choose an account</p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
               Continue to InstaLead
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Select the Instagram account you want to open.
+              Pick the Instagram account you want to open right now.
             </p>
             <div className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <Avatar className="h-11 w-11 border border-slate-200">
@@ -121,10 +121,10 @@ export default function Accounts({
                           </p>
                         </div>
                         <p className="mt-1 truncate text-sm text-slate-500">
-                          IG ID: {account.instagramUserId || "Not available"}
+                          {account.accountType === "UNKNOWN" ? "Instagram account" : `${account.accountType.toLowerCase()} account`}
                         </p>
                         <p className="mt-2 text-xs text-slate-500">
-                          {getStatusLabel(account.connectionStatus)} • {account.accountType || "UNKNOWN"} • {formatExpiry(account.tokenExpiresAt)}
+                          {getStatusLabel(account.connectionStatus)} • {formatExpiry(account.tokenExpiresAt)}
                         </p>
                       </div>
 
@@ -149,7 +149,7 @@ export default function Accounts({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-900">Use another Instagram account</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Connect another Instagram account to this Google workspace
+                      Add another Instagram account to this workspace
                     </p>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 transition-colors group-hover:text-slate-500" />
