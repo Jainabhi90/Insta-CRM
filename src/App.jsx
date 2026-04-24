@@ -15,6 +15,7 @@ import { InstagramBrandMark } from "./components/InstagramBrandMark";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
+import { Skeleton } from "./components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +44,8 @@ import {
 import {
   finishInstagramLogin,
   loadAuthenticatedWorkspace,
+  readCachedWorkspace,
+  writeCachedWorkspace,
 } from "./services/dashboardWorkspaceService";
 import { ensureDemoPreviewSession } from "./services/demoSessionService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
@@ -168,6 +171,17 @@ export default function App() {
   const dashboardLoadSequence = useRef(0);
   const instagramAuthInFlight = useRef(false);
 
+  const applyCachedWorkspace = (sessionPayload) => {
+    const cachedWorkspace = readCachedWorkspace(sessionPayload)
+
+    if (!cachedWorkspace) {
+      return false
+    }
+
+    setWorkspace(cachedWorkspace)
+    return true
+  }
+
   const navigate = (path, options = {}) => {
     const historyMethod = options.replace ? "replaceState" : "pushState";
     window.history[historyMethod]({}, "", path);
@@ -216,6 +230,7 @@ export default function App() {
   const hydrateDashboard = async (search = window.location.search) => {
     const requestId = dashboardLoadSequence.current + 1;
     dashboardLoadSequence.current = requestId;
+    applyCachedWorkspace(session)
     setIsDashboardLoading(true);
     setDashboardError("");
 
@@ -240,14 +255,7 @@ export default function App() {
         return;
       }
 
-      setSession(null);
-      setWorkspace(null);
       setDashboardError(error.message || "Unable to open your dashboard right now.");
-
-      if (readInstagramCallbackParams(search)) {
-        window.history.replaceState({}, "", "/dashboard");
-        setRoute(getCurrentRoute());
-      }
     } finally {
       if (requestId === dashboardLoadSequence.current) {
         setIsDashboardLoading(false);
@@ -478,7 +486,9 @@ export default function App() {
   const handleInstagramWorkspaceReady = (sessionPayload) => {
     const normalizedSession = normalizeSession(sessionPayload);
     setSession(normalizedSession);
-    setWorkspace(null);
+    if (!applyCachedWorkspace(normalizedSession)) {
+      setWorkspace(null);
+    }
     setDashboardError("");
     setSelectError("");
 
@@ -527,6 +537,12 @@ export default function App() {
   }, [isDarkTheme]);
 
   useEffect(() => {
+    if (session?.owner && workspace) {
+      writeCachedWorkspace(session, workspace)
+    }
+  }, [session, workspace]);
+
+  useEffect(() => {
     let isActive = true;
 
     const restoreSession = async () => {
@@ -538,6 +554,9 @@ export default function App() {
         }
 
         setSession(restoredSession);
+        if (restoredSession?.owner) {
+          applyCachedWorkspace(restoredSession)
+        }
         if (restoredSession?.gowner) {
           setHasGoogleLogin(true);
         }
@@ -606,7 +625,9 @@ export default function App() {
     try {
       const nextSession = await selectWorkspaceAccount(iownerId);
       setSession(nextSession);
-      setWorkspace(null);
+      if (!applyCachedWorkspace(nextSession)) {
+        setWorkspace(null);
+      }
       setHasGoogleLogin(Boolean(nextSession?.gowner));
       
       // If already on dashboard, hydrate immediately
@@ -708,8 +729,8 @@ export default function App() {
     );
   }
 
-  if (isDashboardLoading || (!hasRestoredSession && !session && !workspace)) {
-    return <DashboardLoadingState />;
+  if ((isDashboardLoading && !workspace) || (!hasRestoredSession && !session && !workspace) || (route.page === "dashboard" && session?.owner && !workspace)) {
+    return <DashboardLoadingState owner={session?.owner} />;
   }
 
   if (!session || !workspace) {
@@ -773,6 +794,7 @@ export default function App() {
             onLogout={handleLogout}
           />
         </div>
+        {isDashboardLoading ? <DashboardRefreshBadge /> : null}
         {activeView === "leads" && (
           <LeadCenter
             owner={session.owner}
@@ -936,12 +958,100 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
   )
 }
 
-function DashboardLoadingState() {
+function DashboardRefreshBadge() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="flex items-center gap-3 text-gray-600">
-        <Loader2 className="w-5 h-5 animate-spin text-[#2563eb]" />
-        <span style={{ fontWeight: 500 }}>Loading your dashboard...</span>
+    <div className="fixed right-20 top-6 z-30 hidden items-center gap-2 rounded-full border border-blue-200 bg-white/95 px-3 py-2 text-sm text-slate-600 shadow-sm backdrop-blur md:flex">
+      <Loader2 className="h-4 w-4 animate-spin text-[#2563eb]" />
+      <span className="font-medium">Refreshing latest Meta data…</span>
+    </div>
+  )
+}
+
+function DashboardLoadingState({ owner }) {
+  const ownerLabel = owner?.instagramHandle || owner?.name || "Instagram workspace"
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen">
+        <aside className="hidden w-72 border-r border-slate-200 bg-white px-5 py-6 lg:block">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#f97316] text-white shadow-sm">
+              IL
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          </div>
+          <div className="mt-10 space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-11 w-full rounded-2xl" />
+            ))}
+          </div>
+        </aside>
+
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <div className="flex flex-col gap-3 rounded-[28px] border border-slate-200 bg-white px-6 py-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Opening dashboard</p>
+                  <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+                    {ownerLabel}
+                  </h1>
+                </div>
+                <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-medium">Fetching latest Meta data</span>
+                </div>
+              </div>
+              <p className="text-sm text-slate-500">
+                If we already have saved workspace data, it will appear here as soon as the refresh finishes.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="mt-4 h-8 w-20" />
+                  <Skeleton className="mt-3 h-3 w-28" />
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Skeleton className="h-5 w-40" />
+                <div className="mt-5 space-y-4">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-3">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-5/6" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Skeleton className="h-5 w-32" />
+                <div className="mt-5 space-y-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="rounded-2xl border border-slate-100 p-4">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="mt-3 h-3 w-full" />
+                      <Skeleton className="mt-2 h-3 w-4/5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

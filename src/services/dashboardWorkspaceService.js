@@ -22,6 +22,90 @@ import { createWorkspaceModel } from "../lib/mockWorkspace"
 import { completeDemoInstagramSignup, getStoredDemoSession } from "./demoSessionService"
 
 const INSTAGRAM_CALLBACK_LOCK_PREFIX = "instagram_callback_inflight:"
+const WORKSPACE_CACHE_PREFIX = "instalead.workspace.cache:"
+const WORKSPACE_CACHE_VERSION = 1
+const WORKSPACE_SECTION_TIMEOUT_MS = 8000
+
+function withTimeout(promise, label, timeoutMs = WORKSPACE_SECTION_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const timer = globalThis.setTimeout(() => {
+      reject(new Error(`${label} took too long to load.`))
+    }, timeoutMs)
+
+    Promise.resolve(promise)
+      .then((value) => {
+        globalThis.clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        globalThis.clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
+
+function getWorkspaceOwnerId(sessionLike) {
+  return String(
+    sessionLike?.owner?.id ||
+      sessionLike?.selectedOwnerId ||
+      "",
+  ).trim()
+}
+
+function getWorkspaceCacheKey(ownerId) {
+  return `${WORKSPACE_CACHE_PREFIX}${ownerId}`
+}
+
+export function readCachedWorkspace(sessionLike) {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const ownerId = getWorkspaceOwnerId(sessionLike)
+  if (!ownerId) {
+    return null
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(getWorkspaceCacheKey(ownerId))
+    if (!rawValue) {
+      return null
+    }
+
+    const parsed = JSON.parse(rawValue)
+    if (parsed?.version !== WORKSPACE_CACHE_VERSION || !parsed?.workspace) {
+      return null
+    }
+
+    return parsed.workspace
+  } catch {
+    return null
+  }
+}
+
+export function writeCachedWorkspace(sessionLike, workspace) {
+  if (typeof window === "undefined" || !workspace) {
+    return
+  }
+
+  const ownerId = getWorkspaceOwnerId(sessionLike)
+  if (!ownerId) {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(
+      getWorkspaceCacheKey(ownerId),
+      JSON.stringify({
+        version: WORKSPACE_CACHE_VERSION,
+        savedAt: new Date().toISOString(),
+        workspace,
+      }),
+    )
+  } catch {
+    // Ignore quota/storage errors and continue without cache.
+  }
+}
 
 function buildWorkspaceResponse(owner, session, warnings = []) {
   const fallbackWorkspace = createWorkspaceModel(owner)
@@ -204,9 +288,10 @@ export async function loadAuthenticatedWorkspace() {
   }
 
   let owner = session.owner
+  const warnings = []
 
   try {
-    const ownerPayload = await getOwnerProfile()
+    const ownerPayload = await withTimeout(getOwnerProfile(), "Instagram account profile")
     owner = normalizeOwner(ownerPayload, owner)
   } catch (error) {
     if (canUseDemoFallback(error)) {
@@ -215,16 +300,15 @@ export async function loadAuthenticatedWorkspace() {
       )
     }
 
-    throw error
+    warnings.push(`Instagram account profile could not be refreshed: ${error.message || "Unknown error."}`)
   }
 
   const fallbackWorkspace = createWorkspaceModel(owner)
-  const warnings = []
   const [campaignResult, automationResult, commentResult, inboxResult] = await Promise.allSettled([
-    getCampaigns(),
-    getAutomations(),
-    getInstagramComments(),
-    getInstagramInbox(),
+    withTimeout(getCampaigns(), "Campaign analytics"),
+    withTimeout(getAutomations(), "Automation rules"),
+    withTimeout(getInstagramComments(), "Instagram comments"),
+    withTimeout(getInstagramInbox(), "Instagram inbox"),
   ])
 
   const dmLogResult =
@@ -300,7 +384,7 @@ export async function loadAuthenticatedWorkspace() {
 
 async function getDmLogFallbackResult() {
   try {
-    const dmLogs = await getDmLogs()
+    const dmLogs = await withTimeout(getDmLogs(), "DM lead activity")
     return {
       status: "fulfilled",
       value: dmLogs,
