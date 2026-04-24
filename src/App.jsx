@@ -68,6 +68,21 @@ function hasWorkspaceSession(session) {
   return Boolean(session?.gowner);
 }
 
+function getPreferredDashboardAccountId(session) {
+  if (!session) {
+    return ""
+  }
+
+  return (
+    session.accounts?.find((account) => account.isSelected)?.id ||
+    session.owner?.id ||
+    session.selectedOwnerId ||
+    session.accounts?.find((account) => account.connectionStatus === "connected")?.id ||
+    session.accounts?.[0]?.id ||
+    ""
+  )
+}
+
 function getCurrentRoute() {
   if (typeof window === "undefined") {
     return { page: "google-landing", search: "" };
@@ -560,7 +575,11 @@ export default function App() {
         ensureDemoPreviewSession();
       }
 
-      if (!session?.owner && hasWorkspaceSession(session)) {
+      if (pendingAction === "select_account") {
+        return;
+      }
+
+      if (!session?.owner && hasWorkspaceSession(session) && pendingAction !== "select_account") {
         navigate("/accounts", { replace: true });
         return;
       }
@@ -575,7 +594,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [route.page, route.search, session]);
+  }, [route.page, route.search, session, pendingAction]);
 
   const handleSelectWorkspaceAccount = async (iownerId) => {
     if (pendingAction) {
@@ -589,6 +608,7 @@ export default function App() {
     try {
       const nextSession = await selectWorkspaceAccount(iownerId);
       setSession(nextSession);
+      setWorkspace(null);
       setHasGoogleLogin(Boolean(nextSession?.gowner));
       
       // If already on dashboard, hydrate immediately
@@ -645,12 +665,7 @@ export default function App() {
             error={selectError}
             onConnectInstagram={openInstagramModal}
             onOpenDashboard={() => {
-              if (session?.owner) {
-                navigate("/dashboard");
-                return;
-              }
-
-              const fallbackAccount = session?.accounts?.[0]?.id || "";
+              const fallbackAccount = getPreferredDashboardAccountId(session);
 
               if (fallbackAccount) {
                 handleSelectWorkspaceAccount(fallbackAccount);
@@ -708,7 +723,7 @@ export default function App() {
           pendingAction={pendingAction}
           onConnectInstagram={openInstagramModal}
           onOpenDashboard={() => {
-            const fallbackAccount = session?.accounts?.[0]?.id || "";
+            const fallbackAccount = getPreferredDashboardAccountId(session);
 
             if (fallbackAccount) {
               handleSelectWorkspaceAccount(fallbackAccount);
