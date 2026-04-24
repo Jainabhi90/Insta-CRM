@@ -96,7 +96,7 @@ function getCurrentRoute() {
 
   if (path === "/auth/callback") {
     return {
-      page: "dashboard",
+      page: "instagram-callback",
       search: window.location.search,
     };
   }
@@ -462,6 +462,29 @@ export default function App() {
     navigate("/google-auth", { replace: true });
   };
 
+  const handleInstagramWorkspaceReady = (sessionPayload) => {
+    const normalizedSession = normalizeSession(sessionPayload);
+    setSession(normalizedSession);
+    setWorkspace(null);
+    setDashboardError("");
+    setSelectError("");
+
+    if (normalizedSession?.gowner) {
+      setHasGoogleLogin(true);
+    }
+
+    navigate("/dashboard", { replace: true });
+  };
+
+  const handleInstagramCallbackFailed = () => {
+    if (hasWorkspaceSession(session)) {
+      navigate("/accounts", { replace: true });
+      return;
+    }
+
+    navigate("/", { replace: true });
+  };
+
   const handleBackToHome = () => {
     navigate("/");
   };
@@ -608,6 +631,11 @@ export default function App() {
           <GoogleCallback
             onComplete={handleGoogleWorkspaceReady}
             onFailed={handleGoogleCallbackFailed}
+          />
+        ) : route.page === "instagram-callback" ? (
+          <InstagramCallback
+            onComplete={handleInstagramWorkspaceReady}
+            onFailed={handleInstagramCallbackFailed}
           />
         ) : route.page === "accounts" ? (
           <Accounts
