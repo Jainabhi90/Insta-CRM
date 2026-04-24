@@ -189,14 +189,12 @@ export default function App() {
       return;
     }
 
-    if (!hasWorkspaceSession(session)) {
-      navigate("/google-auth");
+    if (hasWorkspaceSession(session)) {
+      navigate("/accounts");
       return;
     }
 
-    setAuthError("");
-    setDashboardError("");
-    setShowAuthModal(true);
+    navigate("/google-auth");
   };
 
   const openSignupModal = () => {
@@ -663,7 +661,7 @@ export default function App() {
             accounts={session?.accounts || []}
             pendingAction={pendingAction}
             error={selectError}
-            onConnectInstagram={openInstagramModal}
+            onConnectInstagram={handleInstagramAuth}
             onOpenDashboard={() => {
               const fallbackAccount = getPreferredDashboardAccountId(session);
 
@@ -721,7 +719,7 @@ export default function App() {
           gowner={session.gowner}
           accounts={session.accounts || []}
           pendingAction={pendingAction}
-          onConnectInstagram={openInstagramModal}
+          onConnectInstagram={handleInstagramAuth}
           onOpenDashboard={() => {
             const fallbackAccount = getPreferredDashboardAccountId(session);
 
