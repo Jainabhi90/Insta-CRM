@@ -10,58 +10,85 @@ export function DashboardSidebar({ activeView, onViewChange }) {
   ];
 
   return (
-    <div className="w-72 h-screen border-r border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_38%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] flex flex-col">
-      <div className="p-6 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary to-theme-accent text-white shadow-[0_18px_30px_-20px_rgba(37,99,235,0.9)]">
-            IL
+    <aside className="hidden lg:flex lg:w-[290px] lg:flex-col">
+      <div className="sticky top-4 flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[32px] border border-white/80 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.14),_transparent_38%),linear-gradient(180deg,#ffffff_0%,#f8fafc_52%,#eef4ff_100%)] shadow-[0_40px_120px_-70px_rgba(15,23,42,0.55)] backdrop-blur">
+        <div className="border-b border-slate-200/80 px-6 py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-theme-primary via-blue-500 to-theme-accent text-white shadow-[0_24px_45px_-28px_rgba(37,99,235,0.85)]">
+              IL
+            </div>
+            <div>
+              <span className="text-xl font-semibold tracking-tight text-slate-900">InstaLead</span>
+              <p className="text-xs text-slate-500">A calmer way to run Instagram revenue</p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-semibold tracking-tight text-slate-900">InstaLead</span>
-            <p className="text-xs text-slate-500">Customer conversations, organized beautifully</p>
+          <div className="mt-5 rounded-[24px] border border-blue-100 bg-white/80 px-4 py-4 shadow-[0_16px_40px_-34px_rgba(37,99,235,0.7)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400">
+              Control Room
+            </p>
+            <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
+              Everything important stays one click away, without the clutter.
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-4 py-5">
+          <div className="rounded-[28px] border border-white/70 bg-white/80 p-3 shadow-[0_28px_60px_-48px_rgba(15,23,42,0.6)] backdrop-blur">
+            <p className="px-3 pb-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Workspace
+            </p>
+            <div className="space-y-1.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onViewChange(item.id)}
+                    className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all ${
+                      isActive
+                        ? "bg-slate-900 text-white shadow-[0_22px_36px_-28px_rgba(15,23,42,0.95)]"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                        isActive ? "bg-white/12" : "bg-slate-100"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <span className={isActive ? "font-medium" : "font-normal"}>{item.label}</span>
+                      <p className={`text-xs ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                        {item.id === "leads"
+                          ? "Leads and responses"
+                          : item.id === "dm-inbox"
+                          ? "Direct conversations"
+                          : item.id === "comments"
+                          ? "Comment follow-up"
+                          : item.id === "automations"
+                          ? "Rules and templates"
+                          : "Posts and reach"}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+
+        <div className="px-6 pb-6">
+          <div className="rounded-[26px] border border-slate-200/80 bg-slate-900 px-5 py-5 text-white shadow-[0_24px_60px_-38px_rgba(15,23,42,0.8)]">
+            <p className="text-sm font-semibold">Always-on workspace</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Keep conversations, automation, and performance in one polished operating system.
+            </p>
           </div>
         </div>
       </div>
-
-      <nav className="flex-1 p-4">
-        <div className="rounded-[26px] border border-white/70 bg-white/80 p-3 shadow-[0_25px_60px_-45px_rgba(15,23,42,0.55)] backdrop-blur">
-          <p className="px-3 pb-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-            Workspace
-          </p>
-          <div className="space-y-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeView === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all ${
-                  isActive
-                    ? "bg-slate-900 text-white shadow-[0_20px_35px_-28px_rgba(15,23,42,0.95)]"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${isActive ? "bg-white/12" : "bg-slate-100"}`}>
-                  <Icon className="w-4 h-4" />
-                </span>
-                <span className={isActive ? "font-medium" : "font-normal"}>{item.label}</span>
-              </button>
-            );
-          })}
-          </div>
-        </div>
-      </nav>
-
-      <div className="px-6 pb-6">
-        <div className="rounded-[24px] border border-slate-200 bg-white/85 p-4 shadow-[0_18px_40px_-36px_rgba(15,23,42,0.55)] backdrop-blur">
-          <p className="text-sm font-semibold text-slate-900">Always-on workspace</p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            Review conversations, monitor replies, and keep every post response flow in one place.
-          </p>
-        </div>
-      </div>
-    </div>
+    </aside>
   );
 }
