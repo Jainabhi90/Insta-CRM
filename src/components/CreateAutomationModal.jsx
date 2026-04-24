@@ -84,19 +84,19 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <Card className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 z-10"
+          className="absolute right-4 top-4 z-10 rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <CardHeader>
-          <CardTitle className="text-2xl">Create Custom Automation</CardTitle>
-          <CardDescription>
-            Set up a new auto-reply template for your Instagram DMs
+        <CardHeader className="border-b border-slate-200 pb-6">
+          <CardTitle className="text-2xl tracking-tight">Create Custom Automation</CardTitle>
+          <CardDescription className="max-w-xl leading-6">
+            Set the post, keywords, and reply you want ready the moment new conversations begin.
           </CardDescription>
         </CardHeader>
 
@@ -121,7 +121,7 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
                         ))
                       ) : (
                         <SelectItem value="__no_posts__" disabled>
-                          No synced posts available
+                          No posts available yet
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -129,8 +129,8 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
                 )}
               />
               {errors.mediaId && <p className="text-sm text-red-500 font-medium">{errors.mediaId.message}</p>}
-              <p className="text-sm text-gray-500">
-                The comment listener will only trigger when comments land on this selected post.
+              <p className="text-sm text-slate-500">
+                This automation stays focused on the post you choose here.
               </p>
             </div>
 
@@ -211,13 +211,13 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
                 {...register("trigger")}
               />
               {errors.trigger && <p className="text-sm text-red-500 font-medium mt-1">{errors.trigger.message}</p>}
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 Separate multiple keywords with commas
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="response">Auto-Reply Message</Label>
+              <Label htmlFor="response">Reply Message</Label>
               <Textarea
                 id="response"
                 placeholder="e.g., Thanks for reaching out! Your order is on the way. Track it here: [tracking-link]"
@@ -225,8 +225,8 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
                 rows={4}
               />
               {errors.response && <p className="text-sm text-red-500 font-medium">{errors.response.message}</p>}
-              <p className="text-sm text-gray-500">
-                This message will be sent automatically when triggers are detected
+              <p className="text-sm text-slate-500">
+                This message is used when the selected keywords are matched.
               </p>
             </div>
 
@@ -242,7 +242,7 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-theme-primary hover:bg-theme-primary-hover"
+                className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800"
                 disabled={isSaving || availablePosts.length === 0}
               >
                 {isSaving ? "Saving..." : "Create Automation"}

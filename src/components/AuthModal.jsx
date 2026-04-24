@@ -18,10 +18,10 @@ export function AuthModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm">
       <div className="min-h-full flex items-center justify-center">
         <Card
-          className={`w-full max-w-md relative bg-white border border-gray-200 shadow-xl overflow-hidden transition-all duration-300 ${
+          className={`relative w-full max-w-md overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)] transition-all duration-300 ${
             hasAnimated ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           }`}
         >
@@ -41,7 +41,7 @@ export function AuthModal({
             </div>
             <CardTitle className="text-2xl font-bold">Continue With Instagram</CardTitle>
             <CardDescription className="text-gray-500 mt-2">
-              Connect another Instagram business account to your Google workspace. If this account already exists, we refresh the saved token and open the same dashboard.
+              Connect another Instagram account to this workspace. If the account is already here, we will reopen it right away.
             </CardDescription>
           </CardHeader>
 
@@ -55,10 +55,10 @@ export function AuthModal({
             <div className="space-y-4">
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
                 <p className="text-sm text-blue-900 font-semibold">
-                  Workspace account linking
+                  One workspace, multiple accounts
                 </p>
                 <p className="text-sm text-blue-800 mt-1">
-                  We attach this Instagram account to your Google workspace, refresh the saved token on the backend, and keep it available in your account switcher.
+                  This account will appear in your switcher so you can move between dashboards without repeating the setup every time.
                 </p>
               </div>
 
@@ -68,8 +68,8 @@ export function AuthModal({
                 </p>
                 <ul className="mt-2 space-y-2 text-sm text-gray-600">
                   <li>1. Instagram asks you to approve access for your business account.</li>
-                  <li>2. We exchange the returned code on the backend and save the latest token.</li>
-                  <li>3. If the Instagram account already exists, you go back into the same dashboard.</li>
+                  <li>2. We finish the connection and keep this account ready in your workspace.</li>
+                  <li>3. If the Instagram account already exists, you go right back into the same dashboard.</li>
                 </ul>
               </div>
 

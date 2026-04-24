@@ -18,7 +18,7 @@ function getScoreBadge(score) {
 
 const defaultSummary = {
   totalLeads: 0,
-  weeklyGrowth: "No synced leads yet",
+  weeklyGrowth: "No leads yet",
   hotLeads: 0,
   hotLeadLabel: "Score 80+",
   responseRate: "0%",
@@ -159,12 +159,12 @@ export function LeadCenter({
       await onRefreshInstagram();
       setReplyStatus({
         type: "success",
-        message: "Instagram comments and inbox were refreshed from the backend.",
+        message: "Fresh activity has arrived across your workspace.",
       });
     } catch (error) {
       setReplyStatus({
         type: "error",
-        message: error.message || "Instagram data could not be refreshed right now.",
+        message: error.message || "Activity could not refresh right now.",
       });
     } finally {
       setIsRefreshing(false);
@@ -204,20 +204,22 @@ export function LeadCenter({
   return (
     <div className="p-8">
       <div className="mb-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-3xl mb-2 font-semibold">Lead Command Center</h1>
-          <p className="text-gray-600">Your real-time lead dashboard. Focus on hot leads first.</p>
+          <p className="text-sm font-medium text-slate-500">Overview</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Lead Command Center</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Spot your strongest opportunities first, keep conversations moving, and reply from one calm workspace.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className="bg-theme-primary/10 text-theme-primary hover:bg-theme-primary/20 border-transparent">
-            Live Instagram Data
+          <Badge className="border-transparent bg-slate-900/5 text-slate-700 hover:bg-slate-900/10">
+            Latest activity
           </Badge>
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="bg-white"
+            className="rounded-2xl bg-white"
           >
             {isRefreshing ? (
               <>
@@ -233,6 +235,7 @@ export function LeadCenter({
           </Button>
         </div>
       </div>
+        </div>
       </div>
       {replyStatus.message ? (
         <div
@@ -248,22 +251,22 @@ export function LeadCenter({
 
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Total Leads</p>
           <p className="text-3xl font-bold" style={{ fontWeight: 700 }}>{leadSummary.totalLeads}</p>
           <p className="text-sm text-green-600 mt-1">{leadSummary.weeklyGrowth}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Hot Leads</p>
           <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.hotLeads}</p>
           <p className="text-sm text-orange-600 mt-1">{leadSummary.hotLeadLabel}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Response Rate</p>
           <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.responseRate}</p>
           <p className="text-sm text-green-600 mt-1">{leadSummary.responseTrend}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-600 mb-1">Est. Revenue</p>
           <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.estimatedRevenue}</p>
           <p className="text-sm text-green-600 mt-1">{leadSummary.revenueLabel}</p>
@@ -282,7 +285,7 @@ export function LeadCenter({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm mb-8">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
@@ -337,7 +340,7 @@ export function LeadCenter({
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-gray-200 p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -345,8 +348,8 @@ export function LeadCenter({
                   <MessageCircleReply className="w-5 h-5 text-[#2563eb]" />
                   <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Comments</h2>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Reading live comments from the connected Instagram Business account.
+                <p className="text-sm text-slate-500">
+                  Track fresh conversations on your recent posts and jump into private follow-up when needed.
                 </p>
               </div>
               <Badge variant="outline">
@@ -417,13 +420,13 @@ export function LeadCenter({
               );
             }) : (
               <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-                No live Instagram comments were returned yet.
+                No comments have arrived yet.
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-gray-200 p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -431,8 +434,8 @@ export function LeadCenter({
                   <MessageSquare className="w-5 h-5 text-[#f97316]" />
                   <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Inbox</h2>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Reading recent DM conversations and showing the latest message preview.
+                <p className="text-sm text-slate-500">
+                  Stay close to active conversations and keep the latest replies easy to scan.
                 </p>
               </div>
               <Badge variant="outline">
@@ -526,7 +529,7 @@ export function LeadCenter({
               );
             }) : (
               <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-                No live Instagram DM conversations were returned yet.
+                No direct messages have arrived yet.
               </div>
             )}
           </div>

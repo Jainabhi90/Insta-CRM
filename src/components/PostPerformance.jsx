@@ -15,8 +15,8 @@ function formatNumber(num) {
 
 const defaultInsight = {
   title: "No post data yet",
-  body: "Your backend has not synced any Instagram post analytics into the CRM yet.",
-  note: "Once posts are stored in your database, this section will show live reach and engagement.",
+  body: "Post insights will appear here once this account has enough activity to display.",
+  note: "When fresh post activity arrives, this section will start highlighting reach and engagement patterns.",
 };
 
 export function PostPerformance({ summary, posts, insight }) {
@@ -48,16 +48,17 @@ export function PostPerformance({ summary, posts, insight }) {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl mb-2 font-semibold">Post Performance</h1>
-        <p className="text-gray-600">
-          Track your Instagram posts performance with detailed analytics on views, engagement, and interactions.
+      <div className="mb-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+        <p className="text-sm font-medium text-slate-500">Insights</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Post Performance</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          Keep an eye on reach, engagement, and which posts are creating the strongest response.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Eye className="w-5 h-5 text-theme-primary" />
             <p className="text-sm text-gray-600">Total Views</p>
@@ -66,7 +67,7 @@ export function PostPerformance({ summary, posts, insight }) {
           <p className="text-sm text-gray-600 mt-1">Last 30 days</p>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Heart className="w-5 h-5 text-red-500" />
             <p className="text-sm text-gray-600">Total Likes</p>
@@ -75,7 +76,7 @@ export function PostPerformance({ summary, posts, insight }) {
           <p className="text-sm text-green-600 mt-1">{summaryCards.likesTrend}</p>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <MessageSquare className="w-5 h-5 text-theme-accent" />
             <p className="text-sm text-gray-600">Total Comments</p>
@@ -84,7 +85,7 @@ export function PostPerformance({ summary, posts, insight }) {
           <p className="text-sm text-green-600 mt-1">{summaryCards.commentsTrend}</p>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-green-600" />
             <p className="text-sm text-gray-600">Avg Engagement</p>
@@ -97,7 +98,7 @@ export function PostPerformance({ summary, posts, insight }) {
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {performancePosts.length > 0 ? performancePosts.map((post) => (
-          <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow border-2 border-gray-100">
+          <Card key={post.id} className="overflow-hidden border border-slate-200 transition-all hover:-translate-y-0.5 hover:shadow-[0_30px_80px_-55px_rgba(15,23,42,0.65)]">
             <div className="relative">
               <ImageWithFallback
                 src={post.thumbnail}
@@ -158,22 +159,21 @@ export function PostPerformance({ summary, posts, insight }) {
             </CardContent>
           </Card>
         )) : (
-          <Card className="border border-dashed border-gray-300 bg-white lg:col-span-3">
+          <Card className="border border-dashed border-slate-300 bg-white lg:col-span-3">
             <CardContent className="py-12 text-center">
               <h3 className="text-lg text-gray-900 mb-2 font-semibold">
-                No synced posts yet
+                No posts yet
               </h3>
               <p className="text-gray-600">
-                Post analytics will appear here after your backend stores Instagram post performance.
+                Post insights will appear here once the account has recent post activity ready to review.
               </p>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* Insights Banner */}
-      <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg mb-2 font-semibold">📊 {insightContent.title}</h3>
+      <div className="mt-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.1),_transparent_35%),linear-gradient(135deg,#eff6ff_0%,#faf5ff_100%)] p-6">
+        <h3 className="text-lg mb-2 font-semibold text-slate-900">{insightContent.title}</h3>
         <p className="text-gray-700 mb-2">
           {insightContent.body}
         </p>

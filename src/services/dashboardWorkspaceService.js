@@ -159,7 +159,7 @@ function buildSectionWarning(label, error, isPreviewData) {
   const message = error?.message || `${label} could not be loaded.`
 
   if (isPreviewData) {
-    return `${label} are temporarily unavailable. Preview data is shown while the backend recovers. (${message})`
+    return `${label} are temporarily unavailable for the moment. Saved preview content is shown meanwhile. (${message})`
   }
 
   return `${label} could not be loaded: ${message}`
@@ -256,7 +256,7 @@ export async function loadAuthenticatedWorkspace() {
 
     if (canUseDemoFallback(error)) {
       return getDemoWorkspaceResponse(
-        "The backend is temporarily unavailable, so demo data is shown instead.",
+        "The service is temporarily unavailable, so preview data is shown instead.",
       )
     }
 
@@ -296,7 +296,7 @@ export async function loadAuthenticatedWorkspace() {
   } catch (error) {
     if (canUseDemoFallback(error)) {
       return getDemoWorkspaceResponse(
-        "The backend is temporarily unavailable, so demo data is shown instead.",
+        "The service is temporarily unavailable, so preview data is shown instead.",
       )
     }
 

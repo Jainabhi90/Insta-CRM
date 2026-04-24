@@ -72,12 +72,12 @@ export function DmInbox({
       await onRefresh();
       setReplyStatus({
         type: "success",
-        message: "Instagram inbox was refreshed from the backend.",
+        message: "New conversation activity just arrived.",
       });
     } catch (error) {
       setReplyStatus({
         type: "error",
-        message: error?.message || "Instagram inbox could not be refreshed right now.",
+        message: error?.message || "Conversation activity could not refresh right now.",
       });
     } finally {
       setIsRefreshing(false);
@@ -100,7 +100,7 @@ export function DmInbox({
     if (!selectedConversation.canReply || !selectedConversation.recipientId) {
       setReplyStatus({
         type: "error",
-        message: "This conversation cannot receive a direct reply from the dashboard.",
+        message: "This conversation is view-only right now.",
       });
       return;
     }
@@ -123,7 +123,7 @@ export function DmInbox({
 
       setReplyStatus({
         type: "success",
-        message: `Reply sent to ${selectedConversation.handle || "conversation"}. Check your Instagram inbox.`,
+        message: `Reply sent to ${selectedConversation.handle || "conversation"}.`,
       });
       setReplyText("");
 
@@ -142,15 +142,17 @@ export function DmInbox({
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="mb-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-3xl mb-2" style={{ fontWeight: 600 }}>
-            Instagram DM Inbox
+          <p className="text-sm font-medium text-slate-500">Conversations</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            Direct Message Inbox
           </h1>
-          <p className="text-gray-600">
-            Review incoming conversations and validate direct-message read flow.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Review incoming messages, keep context close, and respond without leaving the workspace.
           </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
             <span>{inboxSummary.totalConversations} conversations</span>
             <span>Latest activity: {inboxSummary.latestActivityLabel}</span>
             {inboxSummary.accountUsername ? (
@@ -162,10 +164,12 @@ export function DmInbox({
           variant="outline"
           onClick={handleRefresh}
           disabled={isRefreshing || typeof onRefresh !== "function"}
+          className="rounded-2xl bg-white"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
         </Button>
+      </div>
       </div>
 
       {replyStatus.message ? (
@@ -180,7 +184,7 @@ export function DmInbox({
         </div>
       ) : null}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         {normalizedConversations.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {normalizedConversations.map((conversation) => (
@@ -222,21 +226,21 @@ export function DmInbox({
               <Inbox className="w-6 h-6 text-gray-500" />
             </div>
             <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
-              No synced DM conversations yet
-            </h3>
-            <p className="text-gray-600 max-w-xl mx-auto">
-              Live Instagram DM conversations will appear here once the connected business account has readable inbox activity.
-            </p>
-          </div>
+                No conversations yet
+              </h3>
+              <p className="text-gray-600 max-w-xl mx-auto">
+              New conversations will appear here as soon as this account starts receiving messages.
+              </p>
+            </div>
         )}
       </div>
 
-      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-5">
+      <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg mb-1" style={{ fontWeight: 600 }}>
           Reply Composer
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Select a conversation above, draft a response, and send for review flow validation.
+        <p className="text-sm text-slate-500 mb-4">
+          Select a conversation above, draft a response, and send it when it feels right.
         </p>
 
         <div className="mb-3">

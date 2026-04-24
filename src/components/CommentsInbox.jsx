@@ -97,12 +97,12 @@ export function CommentsInbox({
       await onRefresh();
       setStatus({
         type: "success",
-        message: "Instagram comments were refreshed from the backend.",
+        message: "New comment activity just arrived.",
       });
     } catch (error) {
       setStatus({
         type: "error",
-        message: error?.message || "Instagram comments could not be refreshed right now.",
+        message: error?.message || "Comments could not refresh right now.",
       });
     } finally {
       setIsRefreshing(false);
@@ -149,15 +149,17 @@ export function CommentsInbox({
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="mb-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-3xl mb-2" style={{ fontWeight: 600 }}>
-            Instagram Comments
+          <p className="text-sm font-medium text-slate-500">Community</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            Comments Inbox
           </h1>
-          <p className="text-gray-600">
-            Review incoming comments and verify comment-read flow for app review.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Stay on top of fresh comments, scan the context quickly, and send a private reply when needed.
           </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
             <span>{commentSummary.totalComments} comments</span>
             <span>{commentSummary.mediaReviewed} posts reviewed</span>
             <span>Latest activity: {commentSummary.latestActivityLabel}</span>
@@ -167,10 +169,12 @@ export function CommentsInbox({
           variant="outline"
           onClick={handleRefresh}
           disabled={isRefreshing || typeof onRefresh !== "function"}
+          className="rounded-2xl bg-white"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
         </Button>
+      </div>
       </div>
 
       {status.message ? (
@@ -185,7 +189,7 @@ export function CommentsInbox({
         </div>
       ) : null}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         {comments.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {comments.map((comment, index) => {
@@ -255,12 +259,12 @@ export function CommentsInbox({
               <MessageCircle className="w-6 h-6 text-gray-500" />
             </div>
             <h3 className="text-lg text-gray-900 mb-2" style={{ fontWeight: 600 }}>
-              No synced comments yet
-            </h3>
-            <p className="text-gray-600 max-w-xl mx-auto">
-              Live Instagram comments will appear here once the connected business account has readable comment activity.
-            </p>
-          </div>
+                No comments yet
+              </h3>
+              <p className="text-gray-600 max-w-xl mx-auto">
+              New comments will appear here as soon as this account starts receiving them.
+              </p>
+            </div>
         )}
       </div>
     </div>

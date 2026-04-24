@@ -960,9 +960,9 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
 
 function DashboardRefreshBadge() {
   return (
-    <div className="fixed right-20 top-6 z-30 hidden items-center gap-2 rounded-full border border-blue-200 bg-white/95 px-3 py-2 text-sm text-slate-600 shadow-sm backdrop-blur md:flex">
+    <div className="fixed right-20 top-6 z-30 hidden items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-sm text-slate-600 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] backdrop-blur md:flex">
       <Loader2 className="h-4 w-4 animate-spin text-[#2563eb]" />
-      <span className="font-medium">Refreshing latest Meta data…</span>
+      <span className="font-medium">New data arriving...</span>
     </div>
   )
 }
@@ -1002,11 +1002,11 @@ function DashboardLoadingState({ owner }) {
                 </div>
                 <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="font-medium">Fetching latest Meta data</span>
+                  <span className="font-medium">Bringing in fresh updates</span>
                 </div>
               </div>
               <p className="text-sm text-slate-500">
-                If we already have saved workspace data, it will appear here as soon as the refresh finishes.
+                Saved workspace activity appears first, then the newest updates settle in automatically.
               </p>
             </div>
 
@@ -1073,7 +1073,7 @@ function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pen
             Access Your Dashboard
           </CardTitle>
           <CardDescription className="text-gray-500">
-            Login with Instagram to open your owner dashboard. If this account already exists, we refresh the saved token and take you back inside.
+            Sign in with Instagram to open this account. If it already exists in your workspace, we will bring you right back in.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

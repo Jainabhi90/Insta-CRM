@@ -125,7 +125,7 @@ export function Automations({
       setShowCreateModal(false);
       setStatus({
         type: "success",
-        message: "Automation saved and ready for the comment listener workflow.",
+        message: "Automation saved and ready to run.",
       });
     } catch (error) {
       setStatus({
@@ -151,20 +151,23 @@ export function Automations({
     <>
       <div className="p-8">
         <div className="mb-8">
-          <div className="flex items-start justify-between mb-2">
+          <div className="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_38%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+            <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl mb-2 font-semibold">Automation Playbook</h1>
-              <p className="text-gray-600">
-                Simple templates to automate your Instagram replies. No flowcharts needed.
+              <p className="text-sm font-medium text-slate-500">Automation studio</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Automation Playbook</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Build polished reply flows for specific posts, keep message quality high, and switch rules on when the timing is right.
               </p>
             </div>
             <Button 
-              className="bg-theme-primary hover:bg-theme-primary-hover"
+              className="rounded-2xl bg-slate-900 px-5 hover:bg-slate-800"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Custom
+              New Automation
             </Button>
+          </div>
           </div>
         </div>
 
@@ -181,25 +184,24 @@ export function Automations({
         ) : null}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-sm text-gray-600 mb-1">Active Automations</p>
-            <p className="text-3xl font-bold">{enabledCount}/{templates.length}</p>
-            <p className="text-sm text-green-600 mt-1">Working 24/7</p>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500 mb-1">Active automations</p>
+            <p className="text-3xl font-bold text-slate-900">{enabledCount}/{templates.length}</p>
+            <p className="text-sm text-emerald-600 mt-1">Ready when new replies arrive</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-sm text-gray-600 mb-1">Auto-Replies Today</p>
-            <p className="text-3xl font-bold">{stats.autoRepliesToday}</p>
-            <p className="text-sm text-gray-600 mt-1">Avg response: {stats.averageResponseTime}</p>
+          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500 mb-1">Replies today</p>
+            <p className="text-3xl font-bold text-slate-900">{stats.autoRepliesToday}</p>
+            <p className="text-sm text-slate-500 mt-1">Average response: {stats.averageResponseTime}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-sm text-gray-600 mb-1">Time Saved</p>
-            <p className="text-3xl font-bold">{stats.timeSaved}</p>
-            <p className="text-sm text-gray-600 mt-1">{stats.timeSavedLabel}</p>
+          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-500 mb-1">Time saved</p>
+            <p className="text-3xl font-bold text-slate-900">{stats.timeSaved}</p>
+            <p className="text-sm text-slate-500 mt-1">{stats.timeSavedLabel}</p>
           </div>
         </div>
 
-        {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {templates.length > 0 ? templates.map((template) => {
             const Icon = template.icon;
@@ -207,20 +209,20 @@ export function Automations({
             return (
               <Card
                 key={template.id}
-                className={`border-2 transition-all ${
+                className={`overflow-hidden border transition-all duration-200 ${
                   template.enabled
-                    ? "border-blue-200 bg-blue-50/30"
-                    : "border-gray-200 bg-white"
+                    ? "border-slate-900 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_24px_60px_-48px_rgba(15,23,42,0.75)]"
+                    : "border-slate-200 bg-white shadow-sm"
                 }`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                           template.enabled
-                            ? "bg-theme-primary text-white"
-                            : "bg-gray-100 text-gray-600"
+                            ? "bg-slate-900 text-white"
+                            : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -231,10 +233,10 @@ export function Automations({
                           variant="outline"
                           className={
                             template.category === "Sales"
-                              ? "border-green-300 text-green-700 bg-green-50"
+                              ? "border-emerald-200 text-emerald-700 bg-emerald-50"
                               : template.category === "Lead Gen"
-                              ? "border-orange-300 text-orange-700 bg-orange-50"
-                              : "border-blue-300 text-blue-700 bg-blue-50"
+                              ? "border-amber-200 text-amber-700 bg-amber-50"
+                              : "border-blue-200 text-blue-700 bg-blue-50"
                           }
                         >
                           {template.category}
@@ -281,7 +283,7 @@ export function Automations({
                   Create your first automation to start handling common Instagram replies automatically.
                 </p>
                 <Button
-                  className="bg-theme-primary hover:bg-theme-primary-hover"
+                        className="bg-slate-900 hover:bg-slate-800"
                   onClick={() => setShowCreateModal(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -293,9 +295,9 @@ export function Automations({
         </div>
 
         {/* Info Banner */}
-        <div className="mt-8 bg-gradient-to-r from-blue-50 to-orange-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg mb-2 font-semibold">💡 {tipContent.title}</h3>
-          <p className="text-gray-700">
+        <div className="mt-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.1),_transparent_35%),linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] p-6">
+          <h3 className="text-lg mb-2 font-semibold text-slate-900">{tipContent.title}</h3>
+          <p className="text-slate-700">
             {tipContent.body}
           </p>
         </div>
