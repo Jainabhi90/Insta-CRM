@@ -18,10 +18,10 @@ export function AuthModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#4f1d3f]/22 p-4 backdrop-blur-md">
       <div className="min-h-full flex items-center justify-center">
         <Card
-          className={`relative w-full max-w-md overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)] transition-all duration-300 ${
+          className={`brand-panel relative w-full max-w-md overflow-hidden rounded-[28px] border-0 transition-all duration-300 ${
             hasAnimated ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           }`}
         >
@@ -35,7 +35,7 @@ export function AuthModal({
 
           <CardHeader className="text-center pb-3">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-theme-primary to-theme-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-[0_18px_40px_-24px_rgba(214,64,134,0.5)]">
                 IL
               </div>
             </div>
@@ -53,16 +53,16 @@ export function AuthModal({
             ) : null}
 
             <div className="space-y-4">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
-                <p className="text-sm text-blue-900 font-semibold">
+              <div className="rounded-xl border border-[#f2d2e2] bg-[#fff0f7] px-4 py-4">
+                <p className="text-sm text-[#8e295c] font-semibold">
                   One workspace, multiple accounts
                 </p>
-                <p className="text-sm text-blue-800 mt-1">
+                <p className="text-sm text-[#9f3f70] mt-1">
                   This account will appear in your switcher so you can move between dashboards without repeating the setup every time.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+              <div className="rounded-xl border border-[#f2d2e2] bg-white/82 px-4 py-4">
                 <p className="text-sm text-gray-900 font-semibold">
                   What happens next
                 </p>
@@ -76,7 +76,7 @@ export function AuthModal({
               <Button
                 type="button"
                 onClick={onConnectInstagram}
-                className="w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-sm hover:shadow-md bg-theme-primary hover:bg-theme-primary-hover text-white"
+                className="brand-button-gradient w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-3 text-white"
                 disabled={isBusy}
               >
                 {isConnecting ? (

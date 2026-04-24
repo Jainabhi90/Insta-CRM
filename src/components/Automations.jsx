@@ -151,7 +151,7 @@ export function Automations({
     <>
       <div className="p-8">
         <div className="mb-8">
-          <div className="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_38%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+          <div className="brand-hero-card rounded-[28px] p-6">
             <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-slate-500">Automation studio</p>
@@ -161,7 +161,7 @@ export function Automations({
               </p>
             </div>
             <Button 
-              className="rounded-2xl bg-slate-900 px-5 hover:bg-slate-800"
+              className="brand-button-gradient rounded-2xl px-5"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -185,17 +185,17 @@ export function Automations({
 
         {/* Stats */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="brand-panel-soft rounded-[24px] p-6">
             <p className="text-sm text-slate-500 mb-1">Active automations</p>
             <p className="text-3xl font-bold text-slate-900">{enabledCount}/{templates.length}</p>
             <p className="text-sm text-emerald-600 mt-1">Ready when new replies arrive</p>
           </div>
-          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="brand-panel-soft rounded-[24px] p-6">
             <p className="text-sm text-slate-500 mb-1">Replies today</p>
             <p className="text-3xl font-bold text-slate-900">{stats.autoRepliesToday}</p>
             <p className="text-sm text-slate-500 mt-1">Average response: {stats.averageResponseTime}</p>
           </div>
-          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="brand-panel-soft rounded-[24px] p-6">
             <p className="text-sm text-slate-500 mb-1">Time saved</p>
             <p className="text-3xl font-bold text-slate-900">{stats.timeSaved}</p>
             <p className="text-sm text-slate-500 mt-1">{stats.timeSavedLabel}</p>
@@ -211,8 +211,8 @@ export function Automations({
                 key={template.id}
                 className={`overflow-hidden border transition-all duration-200 ${
                   template.enabled
-                    ? "border-slate-900 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_24px_60px_-48px_rgba(15,23,42,0.75)]"
-                    : "border-slate-200 bg-white shadow-sm"
+                    ? "border-[#e9b7d0] bg-[linear-gradient(180deg,#ffffff_0%,#fff5fb_100%)] shadow-[0_24px_60px_-48px_rgba(106,54,87,0.35)]"
+                    : "border-[#f2d2e2] bg-white shadow-sm"
                 }`}
               >
                 <CardHeader>
@@ -221,8 +221,8 @@ export function Automations({
                       <div
                         className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                           template.enabled
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-100 text-slate-600"
+                            ? "bg-gradient-to-br from-theme-primary to-theme-accent text-white"
+                            : "bg-[#fff1f8] text-[#9f3f70]"
                         }`}
                       >
                         <Icon className="w-5 h-5" />

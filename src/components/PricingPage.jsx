@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
 export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccount }) {
   const [billingCycle, setBillingCycle] = useState("monthly");
@@ -9,22 +9,21 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
   const pricingPlans = {
     monthly: {
       free: {
-        name: "Free",
+        name: "Starter",
         price: "₹0",
-        period: "Free",
+        period: "Free forever",
         accounts: "1 Instagram Account",
         dms: "1,000 DMs per month",
         features: [
-          "Access Last 10 Posts",
-          "Link Unlimited Posts",
-          "Posts & Reels Auto-Reply",
-          "Facebook Automations",
-          "Story Automations",
-          "Next Post",
-          "Inbox Starters",
+          "Access last 10 posts",
+          "Link unlimited posts",
+          "Posts & reels auto-reply",
+          "Story automations",
+          "Next post",
+          "Inbox starters",
         ],
-        buttonText: "Get Started for Free",
-        buttonColor: "bg-theme-primary hover:bg-theme-primary-hover",
+        buttonText: "Start free",
+        buttonColor: "brand-button-gradient",
         popular: false,
       },
       pro: {
@@ -34,108 +33,93 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
         accounts: "3 Instagram Accounts",
         dms: "25,000 DMs per month",
         features: [
-          "Everything in Free, plus:",
-          "Remove InstaLead Branding",
-          "Comment Auto-Reply",
-          "Universal Triggers",
-          "Flow Automation",
-          "Lead Gen [NEW]",
-          "DM Planner [NEW]",
-          "Follower Growth Tool",
-          "Reminder DMs",
-          "Access to Rewind",
-          "Referral Program",
-          "Inbox Automation",
-          "Advertising Automation",
-          "IG Live Automation",
-          "Slow Down Mode",
-          "Priority Support",
+          "Everything in Starter",
+          "Remove InstaLead branding",
+          "Comment auto-reply",
+          "Universal triggers",
+          "Flow automation",
+          "Lead gen",
+          "DM planner",
+          "Inbox automation",
+          "Priority support",
         ],
         buttonText: "Upgrade to Pro",
-        buttonColor: "bg-theme-accent hover:bg-theme-accent-hover",
+        buttonColor: "bg-slate-900 hover:bg-slate-800 text-white",
         popular: true,
       },
       platinum: {
-        name: "Platinum+",
+        name: "Scale",
         price: "₹499",
         period: "Per month",
         accounts: "10 Instagram Accounts",
         dms: "300,000 DMs per month",
         features: [
-          "Everything in Pro, plus:",
-          "Early Access New Features",
-          "Live Chat with InstaLead team",
-          "DM Overflow Queue",
-          "Teams [Coming Soon]",
+          "Everything in Pro",
+          "Early access features",
+          "Live chat with InstaLead",
+          "DM overflow queue",
+          "Teams (coming soon)",
         ],
-        buttonText: "Upgrade to Platinum+",
-        buttonColor: "bg-gray-700 hover:bg-gray-800",
+        buttonText: "Choose Scale",
+        buttonColor: "bg-white text-slate-900 hover:bg-[#fff3f9]",
         popular: false,
       },
     },
     yearly: {
       free: {
-        name: "Free",
+        name: "Starter",
         price: "₹0",
-        period: "Free",
+        period: "Free forever",
         accounts: "1 Instagram Account",
         dms: "1,000 DMs per month",
         features: [
-          "Access Last 10 Posts",
-          "Link Unlimited Posts",
-          "Posts & Reels Auto-Reply",
-          "Facebook Automations",
-          "Story Automations",
-          "Next Post",
-          "Inbox Starters",
+          "Access last 10 posts",
+          "Link unlimited posts",
+          "Posts & reels auto-reply",
+          "Story automations",
+          "Next post",
+          "Inbox starters",
         ],
-        buttonText: "Get Started for Free",
-        buttonColor: "bg-theme-primary hover:bg-theme-primary-hover",
+        buttonText: "Start free",
+        buttonColor: "brand-button-gradient",
         popular: false,
       },
       pro: {
         name: "Pro",
         price: "₹1,999",
-        period: "Per year (Save ₹389)",
+        period: "Per year (save ₹389)",
         accounts: "3 Instagram Accounts",
         dms: "25,000 DMs per month",
         features: [
-          "Everything in Free, plus:",
-          "Remove InstaLead Branding",
-          "Comment Auto-Reply",
-          "Universal Triggers",
-          "Flow Automation",
-          "Lead Gen [NEW]",
-          "DM Planner [NEW]",
-          "Follower Growth Tool",
-          "Reminder DMs",
-          "Access to Rewind",
-          "Referral Program",
-          "Inbox Automation",
-          "Advertising Automation",
-          "IG Live Automation",
-          "Slow Down Mode",
-          "Priority Support",
+          "Everything in Starter",
+          "Remove InstaLead branding",
+          "Comment auto-reply",
+          "Universal triggers",
+          "Flow automation",
+          "Lead gen",
+          "DM planner",
+          "Inbox automation",
+          "Priority support",
         ],
         buttonText: "Upgrade to Pro",
-        buttonColor: "bg-theme-accent hover:bg-theme-accent-hover",
+        buttonColor: "bg-slate-900 hover:bg-slate-800 text-white",
         popular: true,
       },
       platinum: {
-        name: "Platinum+",
+        name: "Scale",
         price: "₹4,999",
-        period: "Per year (Save ₹989)",
+        period: "Per year (save ₹989)",
         accounts: "10 Instagram Accounts",
         dms: "300,000 DMs per month",
         features: [
-          "Everything in Pro, plus:",
-          "Early Access New Features",
-          "Live Chat with InstaLead team",
-          "DM Overflow Queue",
-          "Teams [Coming Soon]",
+          "Everything in Pro",
+          "Early access features",
+          "Live chat with InstaLead",
+          "DM overflow queue",
+          "Teams (coming soon)",
         ],
-        buttonText: "Upgrade to Platinum+",
-        buttonColor: "bg-gray-700 hover:bg-gray-800",
+        buttonText: "Choose Scale",
+        buttonColor: "bg-white text-slate-900 hover:bg-[#fff3f9]",
         popular: false,
       },
     },
@@ -144,202 +128,119 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
   const currentPlans = pricingPlans[billingCycle];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={onBackToHome} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-theme-primary to-theme-accent rounded-lg" />
-            <span className="text-xl font-semibold">InstaLead</span>
+    <div className="brand-shell-bg min-h-screen text-slate-900">
+      <header className="sticky top-0 z-40 border-b border-white/75 bg-white/72 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 md:px-6">
+          <button onClick={onBackToHome} className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_46px_-30px_rgba(214,64,134,0.6)]">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-base font-semibold">InstaLead</p>
+              <p className="text-xs text-[#8d6780]">Pricing</p>
+            </div>
           </button>
-          <nav className="flex items-center gap-6">
-            <button 
-              onClick={onBackToHome}
-              className="text-gray-600 hover:text-theme-primary transition-colors font-medium"
-            >
-              Home
-            </button>
-            <Button variant="outline" onClick={onLogin || onGetStarted}>
-              Log In
+          <nav className="flex items-center gap-3">
+            <Button variant="outline" className="rounded-full border-[#f2d2e2] bg-white/85 text-slate-900 hover:bg-[#fff3f9]" onClick={onLogin || onGetStarted}>
+              Log in
             </Button>
-            <Button className="bg-theme-primary hover:bg-theme-primary-hover" onClick={onCreateAccount || onGetStarted}>
+            <Button className="brand-button-gradient rounded-full px-5 font-semibold" onClick={onCreateAccount || onGetStarted}>
               Connect Instagram
             </Button>
           </nav>
         </div>
       </header>
 
-      {/* Pricing Content */}
-      <div className="container mx-auto px-4 py-16">
-        {/* Billing Toggle */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-gray-100 rounded-lg p-1 flex gap-1">
+      <main className="mx-auto max-w-7xl px-4 pb-20 pt-16 md:px-6">
+        <div className="text-center">
+          <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Pricing</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Pick the workspace size that
+            <span className="mt-2 block bg-gradient-to-r from-theme-primary via-[#ec4899] to-theme-accent bg-clip-text text-transparent">
+              matches your growth
+            </span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-[#715667]">
+            Same CRM flow, softer visual language, and enough room to scale from one account to a full portfolio.
+          </p>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <div className="brand-panel-soft inline-flex rounded-full p-1">
             <button
               onClick={() => setBillingCycle("monthly")}
-              className={`px-6 py-2 rounded-md transition-colors font-medium ${
+              className={`rounded-full px-6 py-2 text-sm font-semibold transition-all ${
                 billingCycle === "monthly"
-                  ? "bg-theme-primary text-white"
-                  : "bg-transparent text-gray-700 hover:text-gray-900"
+                  ? "brand-button-gradient"
+                  : "text-[#8d6780] hover:bg-[#fff3f9]"
               }`}
             >
-              Monthly Pricing
+              Monthly
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
-              className={`px-6 py-2 rounded-md transition-colors font-medium ${
+              className={`rounded-full px-6 py-2 text-sm font-semibold transition-all ${
                 billingCycle === "yearly"
-                  ? "bg-theme-primary text-white"
-                  : "bg-transparent text-gray-700 hover:text-gray-900"
+                  ? "brand-button-gradient"
+                  : "text-[#8d6780] hover:bg-[#fff3f9]"
               }`}
             >
-              Yearly Pricing
+              Yearly
             </button>
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {/* Free Plan */}
-          <Card className="border-2 border-gray-200 hover:shadow-lg transition-shadow flex flex-col">
-            <CardContent className="pt-8 pb-8 flex flex-col flex-1">
-              <div className="mb-6">
-                <h3 className="text-2xl mb-3 font-semibold text-theme-primary">
-                  {currentPlans.free.name}
-                </h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold">
-                    {currentPlans.free.price}
-                  </span>
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {Object.values(currentPlans).map((plan) => (
+            <Card
+              key={plan.name}
+              className={`overflow-hidden rounded-[30px] border-0 ${
+                plan.popular ? "brand-hero-card" : "brand-panel"
+              }`}
+            >
+              <CardContent className="flex h-full flex-col p-7">
+                <div className="mb-6">
+                  {plan.popular ? (
+                    <div className="mb-4 inline-flex rounded-full bg-[#fde8f2] px-3 py-1 text-xs font-semibold text-[#9f3f70]">
+                      Most popular
+                    </div>
+                  ) : null}
+                  <h3 className="text-2xl font-semibold text-slate-900">{plan.name}</h3>
+                  <div className="mt-4 flex items-end gap-2">
+                    <span className="text-5xl font-semibold tracking-tight">{plan.price}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-[#8d6780]">{plan.period}</p>
+                  <div className="mt-4 rounded-[22px] bg-white/72 px-4 py-4 text-sm text-[#715667]">
+                    <p>Connect <strong>{plan.accounts}</strong></p>
+                    <p className="mt-1">Send up to <strong>{plan.dms}</strong></p>
+                  </div>
                 </div>
-                <p className="text-gray-600 mb-4">{currentPlans.free.period}</p>
-                <div className="text-sm mb-2">
-                  <p>Connect <strong>{currentPlans.free.accounts}</strong></p>
-                  <p>and send up to <strong>{currentPlans.free.dms}</strong></p>
+
+                <div className="flex-1">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9a728a]">Included</p>
+                  <ul className="space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3 text-sm text-[#715667]">
+                        <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#fde8f2] text-theme-primary">
+                          <Check className="h-3.5 w-3.5" />
+                        </span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
 
-              <div className="mb-6 flex-1">
-                <p className="mb-3 font-semibold">Free includes:</p>
-                <ul className="space-y-2">
-                  {currentPlans.free.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-theme-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Button
-                className={`w-full ${currentPlans.free.buttonColor} mt-auto`}
-                onClick={onCreateAccount || onGetStarted}
-                size="lg"
-              >
-                Connect Instagram
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Pro Plan */}
-          <Card className="border-2 border-theme-accent hover:shadow-xl transition-shadow relative bg-gradient-to-b from-orange-50/50 to-white flex flex-col">
-            {currentPlans.pro.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-theme-accent text-white px-4 py-1 rounded-full text-sm">
-                Popular
-              </div>
-            )}
-            <CardContent className="pt-8 pb-8 flex flex-col flex-1">
-              <div className="mb-6">
-                <h3 className="text-2xl mb-3 font-semibold text-theme-accent">
-                  {currentPlans.pro.name}
-                </h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold">
-                    {currentPlans.pro.price}
-                  </span>
-                  <span className="text-gray-500 text-lg">INR</span>
-                </div>
-                <p className="text-gray-600 mb-4">{currentPlans.pro.period}</p>
-                <div className="text-sm mb-2">
-                  <p>Connect up to <strong>{currentPlans.pro.accounts}</strong></p>
-                  <p>& send up to <strong>{currentPlans.pro.dms}</strong></p>
-                </div>
-              </div>
-
-              <div className="mb-6 flex-1">
-                <ul className="space-y-2">
-                  {currentPlans.pro.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      {feature.includes("Everything in") ? (
-                        <span className="text-sm font-semibold">{feature}</span>
-                      ) : (
-                        <>
-                          <Check className="w-5 h-5 text-theme-accent mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">{feature}</span>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Button
-                className={`w-full ${currentPlans.pro.buttonColor} mt-auto`}
-                onClick={onCreateAccount || onGetStarted}
-                size="lg"
-              >
-                Connect Instagram
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Platinum+ Plan */}
-          <Card className="border-2 border-gray-300 hover:shadow-lg transition-shadow flex flex-col">
-            <CardContent className="pt-8 pb-8 flex flex-col flex-1">
-              <div className="mb-6">
-                <h3 className="text-2xl mb-3 font-semibold text-[#374151]">
-                  {currentPlans.platinum.name}
-                </h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold">
-                    {currentPlans.platinum.price}
-                  </span>
-                  <span className="text-gray-500 text-lg">INR</span>
-                </div>
-                <p className="text-gray-600 mb-4">{currentPlans.platinum.period}</p>
-                <div className="text-sm mb-2">
-                  <p>Connect up to <strong>{currentPlans.platinum.accounts}</strong></p>
-                  <p>& send up to <strong>{currentPlans.platinum.dms}</strong></p>
-                </div>
-              </div>
-
-              <div className="mb-6 flex-1">
-                <ul className="space-y-2">
-                  {currentPlans.platinum.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      {feature.includes("Everything in") ? (
-                        <span className="text-sm font-semibold">{feature}</span>
-                      ) : (
-                        <>
-                          <Check className="w-5 h-5 text-gray-700 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">{feature}</span>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Button
-                className={`w-full ${currentPlans.platinum.buttonColor} mt-auto`}
-                onClick={onCreateAccount || onGetStarted}
-                size="lg"
-              >
-                Connect Instagram
-              </Button>
-            </CardContent>
-          </Card>
+                <Button
+                  className={`mt-8 h-12 rounded-full font-semibold ${plan.buttonColor}`}
+                  onClick={onCreateAccount || onGetStarted}
+                >
+                  {plan.buttonText}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

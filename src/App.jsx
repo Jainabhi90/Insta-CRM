@@ -830,15 +830,15 @@ export default function App() {
   const ActiveViewIcon = activeViewMeta.icon;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(249,115,22,0.1),_transparent_18%),linear-gradient(180deg,#f8fafc_0%,#eef4ff_100%)]">
+    <div className="brand-shell-bg min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-5 px-4 py-4 sm:px-5 lg:px-6">
         <DashboardSidebar activeView={activeView} onViewChange={setActiveView} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-4 z-30 mb-6 overflow-hidden rounded-[32px] border border-white/75 bg-white/85 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.65)] backdrop-blur">
+          <header className="brand-panel sticky top-4 z-30 mb-6 overflow-hidden rounded-[32px]">
             <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6 lg:px-7">
               <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-theme-primary via-blue-500 to-theme-accent text-white shadow-[0_22px_44px_-26px_rgba(37,99,235,0.9)]">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_44px_-26px_rgba(214,64,134,0.65)]">
                     <ActiveViewIcon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
@@ -872,7 +872,7 @@ export default function App() {
           </header>
 
           <main className="min-w-0 flex-1 pb-6">
-            <div className="rounded-[34px] border border-white/60 bg-white/55 shadow-[0_30px_90px_-70px_rgba(15,23,42,0.45)] backdrop-blur-sm">
+            <div className="brand-panel rounded-[34px] border-0 bg-white/65">
               {activeView === "leads" && (
                 <LeadCenter
                   owner={session.owner}
@@ -976,19 +976,19 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-3 rounded-[22px] border border-slate-200 bg-white px-3.5 py-2.5 text-left shadow-[0_20px_50px_-34px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_55px_-34px_rgba(15,23,42,0.52)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex items-center gap-3 rounded-[22px] border border-[#f2d2e2] bg-white/92 px-3.5 py-2.5 text-left shadow-[0_22px_55px_-36px_rgba(106,54,87,0.4)] transition-all hover:-translate-y-0.5 hover:border-[#e9b7d0] hover:shadow-[0_26px_58px_-36px_rgba(106,54,87,0.46)] focus:outline-none focus:ring-2 focus:ring-[rgba(229,69,146,0.45)] focus:ring-offset-2"
           aria-label="Open account menu"
           disabled={isBusy}
         >
           <div className="relative">
             <Avatar className="h-11 w-11 border border-slate-200 shadow-sm">
               <AvatarImage src={owner?.avatarUrl || owner?.profilePictureUrl || ""} alt={instagramHandle} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-orange-500 text-white">
-                {getInitials(instagramHandle)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-1 -right-1 rounded-full border border-white bg-white p-0.5 shadow-sm">
-              <InstagramBrandMark className="h-4 w-4" />
+                <AvatarFallback className="bg-gradient-to-br from-theme-primary to-theme-accent text-white">
+                  {getInitials(instagramHandle)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 rounded-full border border-white bg-white p-0.5 shadow-sm">
+                <InstagramBrandMark className="h-4 w-4" />
             </div>
           </div>
           <div className="hidden min-w-0 sm:block">
@@ -1000,8 +1000,8 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[340px] rounded-[24px] border border-slate-200 bg-white/95 p-2 shadow-[0_30px_90px_-56px_rgba(15,23,42,0.55)] backdrop-blur">
-        <DropdownMenuLabel className="rounded-[18px] bg-slate-50 px-4 py-3">
+      <DropdownMenuContent align="end" className="w-[340px] rounded-[24px] border border-[#f2d2e2] bg-white/95 p-2 shadow-[0_30px_90px_-56px_rgba(106,54,87,0.45)] backdrop-blur">
+        <DropdownMenuLabel className="rounded-[18px] bg-[#fff4fa] px-4 py-3">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-900">{instagramHandle}</p>
             <p className="text-xs text-slate-500">IG ID: {instagramUserId}</p>
@@ -1028,7 +1028,7 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
               >
                 <Avatar className="h-9 w-9 border border-gray-200">
                   <AvatarImage src={account.avatarUrl || account.profilePictureUrl || ""} alt={account.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-orange-500 text-white">
+                  <AvatarFallback className="bg-gradient-to-br from-theme-primary to-theme-accent text-white">
                     {getInitials(account.name || account.instagramHandle)}
                   </AvatarFallback>
                 </Avatar>
@@ -1039,7 +1039,7 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
                   </p>
                 </div>
                 {account.isSelected ? (
-                  <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                  <span className="rounded-full bg-[#fde8f2] px-2 py-1 text-xs font-medium text-[#9f3f70]">
                     Active
                   </span>
                 ) : null}
@@ -1088,8 +1088,8 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
 
 function DashboardRefreshBadge() {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 shadow-[0_14px_40px_-32px_rgba(37,99,235,0.75)]">
-      <Loader2 className="h-4 w-4 animate-spin text-[#2563eb]" />
+    <div className="inline-flex items-center gap-2 rounded-full border border-[#f2d2e2] bg-[#fff0f7] px-3 py-2 text-sm text-[#9f3f70] shadow-[0_14px_40px_-32px_rgba(214,64,134,0.45)]">
+      <Loader2 className="h-4 w-4 animate-spin text-theme-primary" />
       <span className="font-medium">New data arriving...</span>
     </div>
   )
@@ -1099,10 +1099,10 @@ function DashboardLoadingState({ owner }) {
   const ownerLabel = owner?.instagramHandle || owner?.name || "Instagram workspace"
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(249,115,22,0.1),_transparent_18%),linear-gradient(180deg,#f8fafc_0%,#eef4ff_100%)]">
+    <div className="brand-shell-bg min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-5 px-4 py-4 sm:px-5 lg:px-6">
         <aside className="hidden lg:block lg:w-[290px]">
-          <div className="sticky top-4 overflow-hidden rounded-[32px] border border-white/80 bg-white/85 p-6 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.6)] backdrop-blur">
+          <div className="brand-panel sticky top-4 overflow-hidden rounded-[32px] p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#f97316] text-white shadow-sm">
                 IL
@@ -1122,7 +1122,7 @@ function DashboardLoadingState({ owner }) {
 
         <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-6xl space-y-6">
-            <div className="flex flex-col gap-3 rounded-[30px] border border-white/80 bg-white/90 px-6 py-6 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.6)] backdrop-blur">
+            <div className="brand-panel flex flex-col gap-3 rounded-[30px] px-6 py-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Opening dashboard</p>
@@ -1130,7 +1130,7 @@ function DashboardLoadingState({ owner }) {
                     {ownerLabel}
                   </h1>
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                <div className="flex items-center gap-2 rounded-full border border-[#f2d2e2] bg-[#fff0f7] px-3 py-2 text-sm text-[#9f3f70]">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="font-medium">Bringing in fresh updates</span>
                 </div>
@@ -1142,7 +1142,7 @@ function DashboardLoadingState({ owner }) {
 
             <div className="grid gap-4 md:grid-cols-3">
               {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="rounded-3xl border border-white/70 bg-white/85 p-5 shadow-[0_24px_70px_-58px_rgba(15,23,42,0.5)]">
+                <div key={index} className="brand-panel-soft rounded-3xl p-5">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="mt-4 h-8 w-20" />
                   <Skeleton className="mt-3 h-3 w-28" />
@@ -1151,7 +1151,7 @@ function DashboardLoadingState({ owner }) {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <div className="rounded-3xl border border-white/70 bg-white/85 p-5 shadow-[0_24px_70px_-58px_rgba(15,23,42,0.5)]">
+              <div className="brand-panel-soft rounded-3xl p-5">
                 <Skeleton className="h-5 w-40" />
                 <div className="mt-5 space-y-4">
                   {Array.from({ length: 5 }).map((_, index) => (
@@ -1167,7 +1167,7 @@ function DashboardLoadingState({ owner }) {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/70 bg-white/85 p-5 shadow-[0_24px_70px_-58px_rgba(15,23,42,0.5)]">
+              <div className="brand-panel-soft rounded-3xl p-5">
                 <Skeleton className="h-5 w-32" />
                 <div className="mt-5 space-y-4">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1191,11 +1191,11 @@ function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pen
   const isConnecting = pendingAction === "instagram_auth";
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(249,115,22,0.1),_transparent_18%),linear-gradient(180deg,#f8fafc_0%,#eef4ff_100%)] flex items-center justify-center p-6">
-      <Card className="w-full max-w-md overflow-hidden rounded-[30px] border border-white/80 bg-white/95 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.6)] backdrop-blur">
+    <div className="brand-shell-bg min-h-screen flex items-center justify-center p-6">
+      <Card className="brand-panel w-full max-w-md overflow-hidden rounded-[30px] border-0 bg-white/92">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563eb] via-blue-500 to-[#f97316] text-lg text-white shadow-[0_22px_44px_-26px_rgba(37,99,235,0.85)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-lg text-white shadow-[0_22px_44px_-26px_rgba(214,64,134,0.6)]">
               IL
             </div>
           </div>

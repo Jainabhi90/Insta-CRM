@@ -142,7 +142,7 @@ export function DmInbox({
 
   return (
     <div className="p-8">
-      <div className="mb-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">Conversations</p>
@@ -164,7 +164,7 @@ export function DmInbox({
           variant="outline"
           onClick={handleRefresh}
           disabled={isRefreshing || typeof onRefresh !== "function"}
-          className="rounded-2xl bg-white"
+          className="rounded-2xl border-[#f2d2e2] bg-white"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
@@ -184,7 +184,7 @@ export function DmInbox({
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+      <div className="brand-panel-soft overflow-hidden rounded-[28px]">
         {normalizedConversations.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {normalizedConversations.map((conversation) => (
@@ -192,8 +192,8 @@ export function DmInbox({
                 key={conversation._rowId}
                 className={`p-5 cursor-pointer transition-colors ${
                   selectedConversation?._rowId === conversation._rowId
-                    ? "bg-blue-50"
-                    : "hover:bg-gray-50"
+                    ? "bg-[#fff0f7]"
+                    : "hover:bg-[#fff7fb]"
                 }`}
                 onClick={() => handleSelectConversation(conversation)}
               >
@@ -235,7 +235,7 @@ export function DmInbox({
         )}
       </div>
 
-      <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="brand-panel-soft mt-6 rounded-[28px] p-5">
         <h2 className="text-lg mb-1" style={{ fontWeight: 600 }}>
           Reply Composer
         </h2>
@@ -298,7 +298,7 @@ export function DmInbox({
         ) : null}
 
         <Button
-          className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+          className="brand-button-gradient"
           onClick={handleSendReply}
           disabled={isSendingReply || !selectedConversation || !selectedConversation?.canReply}
         >

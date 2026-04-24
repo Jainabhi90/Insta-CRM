@@ -28,8 +28,8 @@ function ReplyComposer({ comment, disabled, onCancel, onSubmit }) {
   };
 
   return (
-    <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-      <p className="text-sm text-blue-900" style={{ fontWeight: 600 }}>
+    <div className="mt-4 rounded-xl border border-[#f2d2e2] bg-[#fff0f7] p-4">
+      <p className="text-sm text-[#8e295c]" style={{ fontWeight: 600 }}>
         Send private reply to @{comment.commenterUsername || "instagram_user"}
       </p>
       <Textarea
@@ -42,7 +42,7 @@ function ReplyComposer({ comment, disabled, onCancel, onSubmit }) {
       <div className="mt-3 flex items-center gap-2">
         <Button
           size="sm"
-          className="bg-[#2563eb] hover:bg-[#1d4ed8]"
+          className="brand-button-gradient"
           onClick={handleSubmit}
           disabled={disabled || !replyText.trim()}
         >
@@ -149,7 +149,7 @@ export function CommentsInbox({
 
   return (
     <div className="p-8">
-      <div className="mb-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_30px_80px_-55px_rgba(15,23,42,0.45)]">
+      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">Community</p>
@@ -169,7 +169,7 @@ export function CommentsInbox({
           variant="outline"
           onClick={handleRefresh}
           disabled={isRefreshing || typeof onRefresh !== "function"}
-          className="rounded-2xl bg-white"
+          className="rounded-2xl border-[#f2d2e2] bg-white"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
@@ -189,7 +189,7 @@ export function CommentsInbox({
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+      <div className="brand-panel-soft overflow-hidden rounded-[28px]">
         {comments.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {comments.map((comment, index) => {
