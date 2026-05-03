@@ -1,4 +1,5 @@
 import { Button } from "./ui/button";
+import { useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -8,25 +9,54 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { X, MessageSquare, Mail, Gift, Zap } from "lucide-react";
 
+const requiredText = (label, maxLength) => {
+  let field = z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() : ""),
+    z.string().min(1, `${label} is required`),
+  );
+
+  if (typeof maxLength === "number") {
+    field = field.max(maxLength, `${label} is too long`);
+  }
+
+  return field;
+};
+
 const automationSchema = z.object({
-  name: z.string().min(1, "Name is required").max(50, "Name is too long"),
-  description: z.string().min(1, "Description is required"),
-  trigger: z.string().min(1, "Trigger keyword is required"),
-  response: z.string().min(10, "Add a fuller reply so the automation is actually useful"),
-  category: z.string().min(1, "Category is required"),
-  icon: z.string().min(1, "Icon is required"),
-  mediaId: z.string().min(1, "Select a post for this automation"),
+  name: requiredText("Name", 50),
+  description: requiredText("Description"),
+  trigger: requiredText("Trigger keyword"),
+  response: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() : ""),
+    z.string().min(10, "Add a fuller reply so the automation is actually useful"),
+  ),
+  category: requiredText("Category"),
+  icon: requiredText("Icon"),
+  mediaId: requiredText("Instagram post"),
 });
 
 export function CreateAutomationModal({ onClose, onSave, availablePosts = [], isSaving = false }) {
+  const normalizedPosts = useMemo(
+    () =>
+      availablePosts.map((post) => ({
+        ...post,
+        id: String(post.id),
+      })),
+    [availablePosts],
+  );
+
   const {
     register,
     handleSubmit,
     control,
-    setError,
+    getValues,
     clearErrors,
+    setError,
+    setValue,
     formState: { errors }
   } = useForm({
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     defaultValues: {
       name: "",
       description: "",
@@ -34,11 +64,25 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
       response: "",
       category: "Sales",
       icon: "MessageSquare",
-      mediaId: availablePosts[0]?.id || "",
-    }
+      mediaId: normalizedPosts[0]?.id || "",
+    },
   });
 
-  const onValidSubmit = (payload) => {
+  useEffect(() => {
+    if (normalizedPosts.length === 0) {
+      setValue("mediaId", "", { shouldValidate: true });
+      return;
+    }
+
+    const currentMediaId = String(getValues("mediaId") || "");
+    const currentPostStillExists = normalizedPosts.some((post) => post.id === currentMediaId);
+
+    if (!currentPostStillExists) {
+      setValue("mediaId", normalizedPosts[0].id, { shouldValidate: true });
+    }
+  }, [getValues, normalizedPosts, setValue]);
+
+  const onValidSubmit = async (payload) => {
     clearErrors();
 
     const validation = automationSchema.safeParse(payload);
@@ -59,21 +103,17 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
     }
 
     const selectedPost =
-      availablePosts.find((post) => String(post.id) === String(payload.mediaId)) || null
+      normalizedPosts.find((post) => post.id === String(validation.data.mediaId)) || null;
 
     const cleanedPayload = {
       ...validation.data,
-      name: validation.data.name.trim(),
-      description: validation.data.description.trim(),
-      trigger: validation.data.trigger.trim(),
-      response: validation.data.response.trim(),
       mediaCaption: selectedPost?.caption || "",
       mediaThumbnail: selectedPost?.thumbnail || "",
       mediaPermalink: selectedPost?.permalink || "",
       mediaType: selectedPost?.mediaType || "",
     };
 
-    onSave(cleanedPayload);
+    await onSave(cleanedPayload);
   };
 
   const icons = [
@@ -85,7 +125,7 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-      <Card className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
+      <Card className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fff7fb_45%,#fff1f8_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
@@ -100,141 +140,147 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="mediaId">Instagram Post</Label>
-              <Controller
-                control={control}
-                name="mediaId"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select the post this automation should watch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availablePosts.length > 0 ? (
-                        availablePosts.map((post) => (
-                          <SelectItem key={post.id} value={String(post.id)}>
-                            {(post.caption || "Instagram post").slice(0, 60)}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="__no_posts__" disabled>
-                          No posts available yet
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.mediaId && <p className="text-sm text-red-500 font-medium">{errors.mediaId.message}</p>}
-              <p className="text-sm text-slate-500">
-                This automation stays focused on the post you choose here.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Automation Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="e.g., Order Confirmation"
-                {...register("name")}
-              />
-              {errors.name && <p className="text-sm text-red-500 font-medium">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                type="text"
-                placeholder="e.g., Respond to order confirmation requests"
-                {...register("description")}
-              />
-              {errors.description && <p className="text-sm text-red-500 font-medium">{errors.description.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+          <form onSubmit={handleSubmit(onValidSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="mediaId">Instagram Post</Label>
                 <Controller
                   control={control}
-                  name="category"
+                  name="mediaId"
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue />
+                      <SelectTrigger className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]">
+                        <SelectValue placeholder="Select the post this automation should watch" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Sales">Sales</SelectItem>
-                        <SelectItem value="Lead Gen">Lead Gen</SelectItem>
-                        <SelectItem value="Support">Support</SelectItem>
+                        {normalizedPosts.length > 0 ? (
+                          normalizedPosts.map((post) => (
+                            <SelectItem key={post.id} value={String(post.id)}>
+                              {(post.caption || "Instagram post").slice(0, 60)}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="__no_posts__" disabled>
+                            No posts available yet
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.category && <p className="text-sm text-red-500 font-medium">{errors.category.message}</p>}
+                {errors.mediaId && <p className="text-sm font-medium text-red-500">{errors.mediaId.message}</p>}
+                <p className="text-sm text-slate-500">
+                  This automation stays focused on the post you choose here.
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="icon">Icon</Label>
-                <Controller
-                  control={control}
-                  name="icon"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {icons.map((icon) => (
-                          <SelectItem key={icon.value} value={icon.value}>
-                            {icon.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                <Label htmlFor="name">Automation Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="e.g., Order Confirmation"
+                  className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]"
+                  {...register("name")}
                 />
-                {errors.icon && <p className="text-sm text-red-500 font-medium">{errors.icon.message}</p>}
+                {errors.name && <p className="text-sm font-medium text-red-500">{errors.name.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  type="text"
+                  placeholder="e.g., Respond to order confirmation requests"
+                  className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]"
+                  {...register("description")}
+                />
+                {errors.description && <p className="text-sm font-medium text-red-500">{errors.description.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Controller
+                    control={control}
+                    name="category"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Sales">Sales</SelectItem>
+                          <SelectItem value="Lead Gen">Lead Gen</SelectItem>
+                          <SelectItem value="Support">Support</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.category && <p className="text-sm font-medium text-red-500">{errors.category.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="icon">Icon</Label>
+                  <Controller
+                    control={control}
+                    name="icon"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {icons.map((icon) => (
+                            <SelectItem key={icon.value} value={icon.value}>
+                              {icon.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.icon && <p className="text-sm font-medium text-red-500">{errors.icon.message}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trigger">Trigger Keywords</Label>
+                <Input
+                  id="trigger"
+                  type="text"
+                  placeholder="e.g., order, status, tracking, shipped"
+                  className="h-12 rounded-2xl border-[#f2d2e2] bg-white/95 px-4 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]"
+                  {...register("trigger")}
+                />
+                {errors.trigger && <p className="mt-1 text-sm font-medium text-red-500">{errors.trigger.message}</p>}
+                <p className="text-sm text-slate-500">
+                  Separate multiple keywords with commas
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="response">Reply Message</Label>
+                <Textarea
+                  id="response"
+                  placeholder="e.g., Thanks for reaching out! Your order is on the way. Track it here: [tracking-link]"
+                  className="min-h-[140px] rounded-[24px] border-[#f2d2e2] bg-white/95 px-4 py-3 shadow-[0_18px_40px_-34px_rgba(229,69,146,0.45)] focus-visible:border-theme-primary focus-visible:ring-[rgba(229,69,146,0.18)]"
+                  {...register("response")}
+                  rows={4}
+                />
+                {errors.response && <p className="text-sm font-medium text-red-500">{errors.response.message}</p>}
+                <p className="text-sm text-slate-500">
+                  This message is used when the selected keywords are matched.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="trigger">Trigger Keywords</Label>
-              <Input
-                id="trigger"
-                type="text"
-                placeholder="e.g., order, status, tracking, shipped"
-                {...register("trigger")}
-              />
-              {errors.trigger && <p className="text-sm text-red-500 font-medium mt-1">{errors.trigger.message}</p>}
-              <p className="text-sm text-slate-500">
-                Separate multiple keywords with commas
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="response">Reply Message</Label>
-              <Textarea
-                id="response"
-                placeholder="e.g., Thanks for reaching out! Your order is on the way. Track it here: [tracking-link]"
-                {...register("response")}
-                rows={4}
-              />
-              {errors.response && <p className="text-sm text-red-500 font-medium">{errors.response.message}</p>}
-              <p className="text-sm text-slate-500">
-                This message is used when the selected keywords are matched.
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur-sm">
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1"
+                className="flex-1 rounded-2xl border-[#f2d2e2] bg-white hover:bg-[#fff4fa]"
                 onClick={onClose}
                 disabled={isSaving}
               >
@@ -242,8 +288,8 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
               </Button>
               <Button
                 type="submit"
-                className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800"
-                disabled={isSaving || availablePosts.length === 0}
+                className="brand-button-gradient flex-1 rounded-2xl text-white"
+                disabled={isSaving || normalizedPosts.length === 0}
               >
                 {isSaving ? "Saving..." : "Create Automation"}
               </Button>
