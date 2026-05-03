@@ -942,8 +942,8 @@ function DashboardMobileTabs({ activeView, onViewChange }) {
               onClick={() => onViewChange(key)}
               className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-all ${
                 isActive
-                  ? "bg-slate-900 text-white shadow-[0_18px_36px_-26px_rgba(15,23,42,0.95)]"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                  ? "bg-gradient-to-r from-theme-primary to-theme-accent text-white shadow-[0_18px_36px_-26px_rgba(214,64,134,0.5)]"
+                  : "bg-[#fff3f9] text-[#8d6780] hover:bg-[#fde8f2] hover:text-slate-900"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -976,7 +976,7 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-3 rounded-[22px] border border-[#f2d2e2] bg-white/92 px-3.5 py-2.5 text-left shadow-[0_22px_55px_-36px_rgba(106,54,87,0.4)] transition-all hover:-translate-y-0.5 hover:border-[#e9b7d0] hover:shadow-[0_26px_58px_-36px_rgba(106,54,87,0.46)] focus:outline-none focus:ring-2 focus:ring-[rgba(229,69,146,0.45)] focus:ring-offset-2"
+          className="inline-flex max-w-full items-center gap-3 rounded-[22px] border border-[#f2d2e2] bg-white/92 px-3.5 py-2.5 text-left shadow-[0_22px_55px_-36px_rgba(106,54,87,0.4)] transition-all hover:-translate-y-0.5 hover:border-[#e9b7d0] hover:shadow-[0_26px_58px_-36px_rgba(106,54,87,0.46)] focus:outline-none focus:ring-2 focus:ring-[rgba(229,69,146,0.45)] focus:ring-offset-2"
           aria-label="Open account menu"
           disabled={isBusy}
         >
@@ -991,7 +991,7 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
                 <InstagramBrandMark className="h-4 w-4" />
             </div>
           </div>
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 max-w-[180px] sm:block">
             <p className="truncate text-sm font-semibold text-slate-900">{instagramHandle}</p>
             <p className="truncate text-xs text-slate-500">
               {selectedCount} connected account{selectedCount === 1 ? "" : "s"}
@@ -1000,7 +1000,12 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[340px] rounded-[24px] border border-[#f2d2e2] bg-white/95 p-2 shadow-[0_30px_90px_-56px_rgba(106,54,87,0.45)] backdrop-blur">
+      <DropdownMenuContent
+        align="end"
+        sideOffset={14}
+        collisionPadding={20}
+        className="w-[290px] rounded-[24px] border border-[#f2d2e2] bg-white/98 p-2 shadow-[0_30px_90px_-56px_rgba(106,54,87,0.45)] backdrop-blur"
+      >
         <DropdownMenuLabel className="rounded-[18px] bg-[#fff4fa] px-4 py-3">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-900">{instagramHandle}</p>
