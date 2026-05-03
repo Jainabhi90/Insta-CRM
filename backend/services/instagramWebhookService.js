@@ -1,6 +1,5 @@
 const { connectToDatabase } = require("../db")
-const IOwner = require("../models/IOwner")
-const Owner = require("../models/Owner")
+const { triggerCommentAutomation } = require("./automationService")
 
 function extractCommentEvents(payload) {
   const entries = Array.isArray(payload?.entry) ? payload.entry : []
@@ -19,6 +18,7 @@ function extractCommentEvents(payload) {
         commentId: String(change?.value?.id || ""),
         commentText: change?.value?.text || "",
         fromId: String(change?.value?.from?.id || ""),
+        fromUsername: String(change?.value?.from?.username || ""),
         mediaId: String(change?.value?.media?.id || change?.value?.media_id || ""),
         createdTime: change?.value?.created_time || null,
       })
@@ -28,13 +28,15 @@ function extractCommentEvents(payload) {
   return commentEvents
 }
 
-async function processInstagramWebhookPayload(payload) {
+async function processInstagramWebhookPayload(payload, options = {}) {
   const commentEvents = extractCommentEvents(payload)
+  const followConfirmBaseUrl = String(options.followConfirmBaseUrl || "").trim()
 
   if (commentEvents.length === 0) {
     return {
       commentEvents: [],
       readyCount: 0,
+      promptedCount: 0,
     }
   }
 
@@ -48,24 +50,30 @@ async function processInstagramWebhookPayload(payload) {
   const eventResults = []
 
   for (const commentEvent of commentEvents) {
-    const owner =
-      (await IOwner.findOne({
-        instagramUserId: commentEvent.instagramAccountId,
-      }).lean()) ||
-      (await Owner.findOne({
-        instagramUserId: commentEvent.instagramAccountId,
-      }).lean())
+    const automationResult = await triggerCommentAutomation({
+      instagramAccountId: commentEvent.instagramAccountId,
+      postId: commentEvent.mediaId,
+      commentText: commentEvent.commentText,
+      commenterId: commentEvent.fromId,
+      commenterUsername: commentEvent.fromUsername,
+      commentId: commentEvent.commentId,
+      eventField: "comments",
+      followConfirmBaseUrl,
+    })
 
     eventResults.push({
       ...commentEvent,
-      ownerId: owner?._id?.toString() || null,
-      readyToSendDm: Boolean(owner?.longLivedAccessToken),
+      action: automationResult.action || "ignore",
+      reason: automationResult.reason || "",
+      automationId: automationResult.automationId || "",
+      dmLogId: automationResult.dmLogId || "",
     })
   }
 
   return {
     commentEvents: eventResults,
-    readyCount: eventResults.filter((event) => event.readyToSendDm).length,
+    readyCount: eventResults.length,
+    promptedCount: eventResults.filter((event) => event.action === "prompted").length,
   }
 }
 

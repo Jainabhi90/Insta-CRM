@@ -136,8 +136,8 @@ async function listOwnerAutomations(owner) {
       title: automations.length > 0 ? "Workflow ready" : "No automations yet",
       body:
         automations.length > 0
-          ? "These rules are now stored in MongoDB and can be matched by the comment listener workflow."
-          : "Create a rule, connect it to a post, and the comment listener can start matching incoming comments.",
+          ? "These rules are now stored in MongoDB and matched directly by the backend when new comments arrive."
+          : "Create a rule, connect it to a post, and the backend can start matching incoming comments automatically.",
     },
   }
 }
@@ -313,6 +313,8 @@ async function triggerCommentAutomation({
     accessToken: owner.longLivedAccessToken,
     recipientId: commenterId,
     text: followMessage,
+    instagramAccountId: owner.instagramAccountId || undefined,
+    instagramUserId: owner.instagramUserId || undefined,
   })
 
   const dmLog = await DmLog.create({
@@ -399,6 +401,8 @@ async function confirmCommentAutomation({
     accessToken: owner.longLivedAccessToken,
     recipientId: igUserId,
     text: automation.response,
+    instagramAccountId: owner.instagramAccountId || undefined,
+    instagramUserId: owner.instagramUserId || undefined,
   })
 
   const dmLog = await DmLog.create({

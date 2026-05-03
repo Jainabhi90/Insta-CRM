@@ -199,6 +199,124 @@ function validateAutomationPayload(payload) {
   return ""
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+function renderAutomationConfirmPage({ status = "success", title, message }) {
+  const palette =
+    status === "success"
+      ? {
+          badge: "Ready",
+          tint: "rgba(219, 39, 119, 0.12)",
+          border: "rgba(236, 72, 153, 0.25)",
+          primary: "#db2777",
+          shadow: "rgba(219, 39, 119, 0.22)",
+        }
+      : {
+          badge: "Needs attention",
+          tint: "rgba(148, 163, 184, 0.12)",
+          border: "rgba(148, 163, 184, 0.26)",
+          primary: "#64748b",
+          shadow: "rgba(100, 116, 139, 0.18)",
+        }
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(title)} • InstaLead</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg-a: #fff8fc;
+        --bg-b: #fffdf7;
+        --card: rgba(255,255,255,0.88);
+        --border: ${palette.border};
+        --primary: ${palette.primary};
+        --text: #251829;
+        --muted: #6b5a67;
+        --shadow: 0 38px 90px -56px ${palette.shadow};
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(251, 207, 232, 0.6), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(254, 240, 138, 0.32), transparent 34%),
+          linear-gradient(135deg, var(--bg-a), var(--bg-b));
+        color: var(--text);
+      }
+      .card {
+        width: min(100%, 520px);
+        padding: 30px 28px;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: ${palette.tint};
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--primary);
+        box-shadow: 0 0 0 6px ${palette.tint};
+      }
+      h1 {
+        margin: 18px 0 10px;
+        font-size: clamp(28px, 4vw, 38px);
+        line-height: 1.05;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.65;
+      }
+      .footer {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(226, 232, 240, 0.75);
+        color: var(--muted);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <span class="badge"><span class="dot"></span>${escapeHtml(palette.badge)}</span>
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <div class="footer">You can close this tab and return to Instagram.</div>
+    </main>
+  </body>
+</html>`
+}
+
 function asyncHandler(handler) {
   return (req, res, next) => {
     Promise.resolve(handler(req, res, next)).catch(next)
@@ -1006,6 +1124,8 @@ router.post(
         commentId: commentId || undefined,
         recipientId: recipientId || undefined,
         text,
+        instagramAccountId: owner.instagramAccountId || undefined,
+        instagramUserId: owner.instagramUserId || undefined,
       })
 
       apiCall.status = "completed"
@@ -1028,6 +1148,39 @@ router.post(
       await apiCall.save()
       throw error
     }
+  }),
+)
+
+router.get(
+  "/automation/follow-confirm",
+  asyncHandler(async (req, res) => {
+    await connectToDatabase()
+
+    const result = await confirmCommentAutomation({
+      instagramAccountId: req.query.instagramAccountId,
+      postId: req.query.postId,
+      igUserId: req.query.igUserId,
+      automationId: req.query.automationId,
+    })
+
+    const isSuccess = result.action === "sent" || result.action === "already_sent"
+    const title = isSuccess ? "Check your Instagram DMs" : "Automation could not finish"
+    const message =
+      result.message ||
+      (isSuccess
+        ? "The requested message is on its way."
+        : "We could not complete this request. Please return to Instagram and try again.")
+
+    return res
+      .status(isSuccess ? 200 : 400)
+      .type("html")
+      .send(
+        renderAutomationConfirmPage({
+          status: isSuccess ? "success" : "error",
+          title,
+          message,
+        }),
+      )
   }),
 )
 
