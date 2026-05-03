@@ -135,7 +135,14 @@ export function CommentsInbox({
       setActiveCommentId("");
 
       if (typeof onRefresh === "function") {
-        await onRefresh();
+        try {
+          await onRefresh();
+        } catch (_error) {
+          setStatus({
+            type: "success",
+            message: `Private reply sent for comment ${commentId}. New data will arrive shortly.`,
+          });
+        }
       }
     } catch (error) {
       setStatus({

@@ -128,7 +128,14 @@ export function DmInbox({
       setReplyText("");
 
       if (typeof onRefresh === "function") {
-        await onRefresh();
+        try {
+          await onRefresh();
+        } catch (_error) {
+          setReplyStatus({
+            type: "success",
+            message: `Reply sent to ${selectedConversation.handle || "conversation"}. New data will arrive shortly.`,
+          });
+        }
       }
     } catch (error) {
       setReplyStatus({

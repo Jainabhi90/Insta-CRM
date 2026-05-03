@@ -190,7 +190,15 @@ export function LeadCenter({
         message: successMessage,
       });
       setActiveReplyTarget("");
-      await handleRefresh();
+
+      try {
+        await handleRefresh();
+      } catch (_error) {
+        setReplyStatus({
+          type: "success",
+          message: `${successMessage} New data will arrive shortly.`,
+        });
+      }
     } catch (error) {
       setReplyStatus({
         type: "error",

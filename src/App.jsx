@@ -445,9 +445,7 @@ export default function App() {
   };
 
   const handleSendInstagramReply = async (payload) => {
-    const result = await sendInstagramReply(payload);
-    await refreshWorkspace();
-    return result;
+    return sendInstagramReply(payload);
   };
 
   const handleCreateAutomation = async (payload) => {
