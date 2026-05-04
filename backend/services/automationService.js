@@ -1,4 +1,5 @@
 const Automation = require("../models/Automation")
+const AutomationEvent = require("../models/AutomationEvent")
 const DmLog = require("../models/DmLog")
 const IOwner = require("../models/IOwner")
 const Owner = require("../models/Owner")
@@ -245,6 +246,55 @@ function buildFollowPromptMessage({
   ].join("\n")
 }
 
+async function recordAutomationEvent({
+  source = "meta_webhook",
+  eventField = "comments",
+  owner = null,
+  automation = null,
+  instagramAccountId = "",
+  postId = "",
+  commentId = "",
+  commentText = "",
+  commenterId = "",
+  commenterUsername = "",
+  listened = false,
+  matched = false,
+  action = "ignore",
+  reason = "",
+  dmLogId = null,
+  confirmUrl = "",
+  errorMessage = "",
+}) {
+  try {
+    await AutomationEvent.create({
+      source: normalizeText(source) || "meta_webhook",
+      eventField: normalizeText(eventField) || "comments",
+      ownerId: owner?._id || null,
+      gownerId: owner?.gownerId || null,
+      iownerId: owner?.gownerId ? owner?._id || null : null,
+      ownerEmail: normalizeText(owner?.email),
+      instagramAccountId: normalizeText(instagramAccountId),
+      instagramUserId: normalizeText(owner?.instagramUserId),
+      instagramUsername: normalizeText(owner?.instagramUsername),
+      automationId: automation?._id || null,
+      mediaId: normalizeText(postId),
+      commentId: normalizeText(commentId),
+      commentText: normalizeText(commentText),
+      commenterId: normalizeText(commenterId),
+      commenterUsername: normalizeText(commenterUsername),
+      listened: Boolean(listened),
+      matched: Boolean(matched),
+      action: normalizeText(action) || "ignore",
+      reason: normalizeText(reason),
+      dmLogId,
+      confirmUrl: normalizeText(confirmUrl),
+      errorMessage: normalizeText(errorMessage),
+    })
+  } catch (error) {
+    console.error("Failed to persist automation event:", error?.message || error)
+  }
+}
+
 async function triggerCommentAutomation({
   instagramAccountId,
   postId,
@@ -254,10 +304,26 @@ async function triggerCommentAutomation({
   commentId,
   eventField = "comments",
   followConfirmBaseUrl,
+  triggerSource = "meta_webhook",
 }) {
   const owner = await findOwnerForInstagramAccount(instagramAccountId)
 
   if (!owner || !owner.longLivedAccessToken) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: false,
+      action: "ignore",
+      reason: "owner_not_connected",
+    })
+
     return {
       action: "ignore",
       reason: "owner_not_connected",
@@ -272,6 +338,22 @@ async function triggerCommentAutomation({
   })
 
   if (!automation) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: false,
+      action: "ignore",
+      reason: "no_matching_automation",
+    })
+
     return {
       action: "ignore",
       reason: "no_matching_automation",
@@ -285,6 +367,24 @@ async function triggerCommentAutomation({
   })
 
   if (existingStage) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "ignore",
+      reason: `already_${existingStage.stage}`,
+      dmLogId: existingStage._id,
+    })
+
     return {
       action: "ignore",
       reason: `already_${existingStage.stage}`,
@@ -309,42 +409,84 @@ async function triggerCommentAutomation({
     confirmUrl,
   })
 
-  await sendInstagramReply({
-    accessToken: owner.longLivedAccessToken,
-    commentId: normalizeText(commentId) || undefined,
-    recipientId: normalizeText(commentId) ? undefined : commenterId,
-    text: followMessage,
-    instagramAccountId: owner.instagramAccountId || undefined,
-    instagramUserId: owner.instagramUserId || undefined,
-  })
+  try {
+    await sendInstagramReply({
+      accessToken: owner.longLivedAccessToken,
+      commentId: normalizeText(commentId) || undefined,
+      recipientId: normalizeText(commentId) ? undefined : commenterId,
+      text: followMessage,
+      instagramAccountId: owner.instagramAccountId || undefined,
+      instagramUserId: owner.instagramUserId || undefined,
+    })
 
-  const dmLog = await DmLog.create({
-    ownerId: owner._id,
-    gownerId: owner.gownerId || null,
-    iownerId: owner.gownerId ? owner._id : null,
-    ownerEmail: owner.email,
-    instagramAccountId: normalizeText(instagramAccountId),
-    instagramUserId: normalizeText(owner.instagramUserId),
-    instagramUsername: normalizeText(owner.instagramUsername),
-    automationId: automation._id,
-    mediaId: normalizeText(postId),
-    mediaPermalink: automation.mediaPermalink,
-    triggerCommentId: normalizeText(commentId),
-    triggerCommentText: normalizeText(commentText),
-    eventField: normalizeText(eventField) || "comments",
-    targetInstagramUserId: normalizeText(commenterId),
-    targetInstagramUsername: normalizeText(commenterUsername),
-    stage: "prompted",
-    messageText: followMessage,
-    confirmUrl,
-    sentAt: new Date(),
-  })
+    const dmLog = await DmLog.create({
+      ownerId: owner._id,
+      gownerId: owner.gownerId || null,
+      iownerId: owner.gownerId ? owner._id : null,
+      ownerEmail: owner.email,
+      instagramAccountId: normalizeText(instagramAccountId),
+      instagramUserId: normalizeText(owner.instagramUserId),
+      instagramUsername: normalizeText(owner.instagramUsername),
+      automationId: automation._id,
+      mediaId: normalizeText(postId),
+      mediaPermalink: automation.mediaPermalink,
+      triggerCommentId: normalizeText(commentId),
+      triggerCommentText: normalizeText(commentText),
+      eventField: normalizeText(eventField) || "comments",
+      targetInstagramUserId: normalizeText(commenterId),
+      targetInstagramUsername: normalizeText(commenterUsername),
+      stage: "prompted",
+      messageText: followMessage,
+      confirmUrl,
+      sentAt: new Date(),
+    })
 
-  return {
-    action: "prompted",
-    automationId: automation._id.toString(),
-    dmLogId: dmLog._id.toString(),
-    confirmUrl,
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "prompted",
+      reason: "prompt_sent",
+      dmLogId: dmLog._id,
+      confirmUrl,
+    })
+
+    return {
+      action: "prompted",
+      automationId: automation._id.toString(),
+      dmLogId: dmLog._id.toString(),
+      confirmUrl,
+    }
+  } catch (error) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "failed",
+      reason: "prompt_send_failed",
+      confirmUrl,
+      errorMessage: error?.message || "Unknown automation send failure",
+    })
+
+    throw error
   }
 }
 
@@ -357,6 +499,18 @@ async function confirmCommentAutomation({
   const owner = await findOwnerForInstagramAccount(instagramAccountId)
 
   if (!owner || !owner.longLivedAccessToken) {
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: false,
+      action: "error",
+      reason: "owner_not_connected",
+    })
+
     return {
       action: "error",
       message: "The connected Instagram account is no longer available.",
@@ -378,6 +532,19 @@ async function confirmCommentAutomation({
   const automation = await Automation.findOne(automationQuery).sort({ updatedAt: -1, createdAt: -1 })
 
   if (!automation) {
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      owner,
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: false,
+      action: "ignore",
+      reason: "no_active_automation_for_confirm",
+    })
+
     return {
       action: "ignore",
       message: "No active automation was found for this Instagram post.",
@@ -392,42 +559,91 @@ async function confirmCommentAutomation({
   }).sort({ createdAt: -1 })
 
   if (existingSentLog) {
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: true,
+      action: "already_sent",
+      reason: "duplicate_confirm_click",
+      dmLogId: existingSentLog._id,
+    })
+
     return {
       action: "already_sent",
       message: "You're already all set. Check your DMs.",
     }
   }
 
-  await sendInstagramReply({
-    accessToken: owner.longLivedAccessToken,
-    recipientId: igUserId,
-    text: automation.response,
-    instagramAccountId: owner.instagramAccountId || undefined,
-    instagramUserId: owner.instagramUserId || undefined,
-  })
+  try {
+    await sendInstagramReply({
+      accessToken: owner.longLivedAccessToken,
+      recipientId: igUserId,
+      text: automation.response,
+      instagramAccountId: owner.instagramAccountId || undefined,
+      instagramUserId: owner.instagramUserId || undefined,
+    })
 
-  const dmLog = await DmLog.create({
-    ownerId: owner._id,
-    gownerId: owner.gownerId || null,
-    iownerId: owner.gownerId ? owner._id : null,
-    ownerEmail: owner.email,
-    instagramAccountId: normalizeText(instagramAccountId),
-    instagramUserId: normalizeText(owner.instagramUserId),
-    instagramUsername: normalizeText(owner.instagramUsername),
-    automationId: automation._id,
-    mediaId: normalizeText(postId),
-    mediaPermalink: automation.mediaPermalink,
-    targetInstagramUserId: normalizeText(igUserId),
-    stage: "sent",
-    messageText: automation.response,
-    sentAt: new Date(),
-  })
+    const dmLog = await DmLog.create({
+      ownerId: owner._id,
+      gownerId: owner.gownerId || null,
+      iownerId: owner.gownerId ? owner._id : null,
+      ownerEmail: owner.email,
+      instagramAccountId: normalizeText(instagramAccountId),
+      instagramUserId: normalizeText(owner.instagramUserId),
+      instagramUsername: normalizeText(owner.instagramUsername),
+      automationId: automation._id,
+      mediaId: normalizeText(postId),
+      mediaPermalink: automation.mediaPermalink,
+      targetInstagramUserId: normalizeText(igUserId),
+      stage: "sent",
+      messageText: automation.response,
+      sentAt: new Date(),
+    })
 
-  return {
-    action: "sent",
-    message: "You're all set! Check your DMs.",
-    automationId: automation._id.toString(),
-    dmLogId: dmLog._id.toString(),
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: true,
+      action: "sent",
+      reason: "final_message_sent",
+      dmLogId: dmLog._id,
+    })
+
+    return {
+      action: "sent",
+      message: "You're all set! Check your DMs.",
+      automationId: automation._id.toString(),
+      dmLogId: dmLog._id.toString(),
+    }
+  } catch (error) {
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: true,
+      action: "failed",
+      reason: "final_message_send_failed",
+      errorMessage: error?.message || "Unknown confirm send failure",
+    })
+
+    throw error
   }
 }
 

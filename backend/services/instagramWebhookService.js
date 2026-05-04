@@ -59,6 +59,7 @@ async function processInstagramWebhookPayload(payload, options = {}) {
       commentId: commentEvent.commentId,
       eventField: "comments",
       followConfirmBaseUrl,
+      triggerSource: "meta_webhook",
     })
 
     eventResults.push({

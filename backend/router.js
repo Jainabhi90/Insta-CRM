@@ -6,6 +6,7 @@ const GOwner = require("./models/GOwner")
 const IOwner = require("./models/IOwner")
 const Owner = require("./models/Owner")
 const ApiCall = require("./models/ApiCall")
+const AutomationEvent = require("./models/AutomationEvent")
 const { hashPassword } = require("./services/passwordService")
 const {
   confirmCommentAutomation,
@@ -227,6 +228,53 @@ function validateAutomationPayload(payload) {
   }
 
   return ""
+}
+
+function buildAutomationEventResponse(event) {
+  return {
+    id: event._id?.toString() || "",
+    source: event.source,
+    eventField: event.eventField,
+    ownerId: event.ownerId?.toString() || "",
+    automationId: event.automationId?.toString() || "",
+    mediaId: event.mediaId,
+    commentId: event.commentId,
+    commentText: event.commentText,
+    commenterId: event.commenterId,
+    commenterUsername: event.commenterUsername,
+    listened: Boolean(event.listened),
+    matched: Boolean(event.matched),
+    action: event.action,
+    reason: event.reason,
+    dmLogId: event.dmLogId?.toString() || "",
+    confirmUrl: event.confirmUrl,
+    errorMessage: event.errorMessage,
+    createdAt: event.createdAt,
+    updatedAt: event.updatedAt,
+  }
+}
+
+function buildAutomationStatusAnswer(events) {
+  const latestEvent = events[0] || null
+  const hasMetaWebhookEvent = events.some((event) => event.source === "meta_webhook")
+  const hasListenedEvent = events.some((event) => event.listened)
+  const hasMatchedEvent = events.some((event) => event.matched)
+  const hasPromptedEvent = events.some((event) => event.action === "prompted")
+  const hasFinalSentEvent = events.some(
+    (event) => event.action === "sent" && event.source === "follow_confirm",
+  )
+
+  return {
+    metaSentTrigger: hasMetaWebhookEvent ? "yes" : "no",
+    automationListened: hasListenedEvent ? "yes" : "no",
+    matchedRule: hasMatchedEvent ? "yes" : "no",
+    dmPromptSent: hasPromptedEvent ? "yes" : "no",
+    finalDmSent: hasFinalSentEvent ? "yes" : "no",
+    latestSource: latestEvent?.source || "",
+    latestAction: latestEvent?.action || "",
+    latestReason: latestEvent?.reason || latestEvent?.errorMessage || "",
+    latestEventAt: latestEvent?.createdAt || null,
+  }
 }
 
 function escapeHtml(value) {
@@ -1022,6 +1070,53 @@ router.get(
   }),
 )
 
+router.get(
+  "/automations/status",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const limit = Math.min(Math.max(Number.parseInt(String(req.query.limit || "10"), 10) || 10, 1), 50)
+    const commentId = String(req.query.commentId || "").trim()
+    const commenterId = String(req.query.commenterId || req.query.igUserId || "").trim()
+    const mediaId = String(req.query.mediaId || req.query.postId || "").trim()
+    const automationId = String(req.query.automationId || "").trim()
+
+    const query = {
+      ownerId: req.owner._id,
+    }
+
+    if (commentId) {
+      query.commentId = commentId
+    }
+
+    if (commenterId) {
+      query.commenterId = commenterId
+    }
+
+    if (mediaId) {
+      query.mediaId = mediaId
+    }
+
+    if (automationId) {
+      query.automationId = automationId
+    }
+
+    const events = await AutomationEvent.find(query).sort({ createdAt: -1 }).limit(limit)
+
+    return res.status(200).json({
+      ok: true,
+      answer: buildAutomationStatusAnswer(events),
+      total: events.length,
+      filters: {
+        commentId,
+        commenterId,
+        mediaId,
+        automationId,
+      },
+      events: events.map(buildAutomationEventResponse),
+    })
+  }),
+)
+
 router.post(
   "/automations",
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
@@ -1091,6 +1186,7 @@ router.get(
             commentId: comment.id,
             eventField: "comments_refresh",
             followConfirmBaseUrl,
+            triggerSource: "comments_refresh",
           }).catch((error) => {
             console.error("Comment automation fallback failed:", {
               commentId: comment.id,
@@ -1256,6 +1352,7 @@ router.post(
       commentId: req.body.commentId,
       eventField: req.body.eventField,
       followConfirmBaseUrl: req.body.followConfirmBaseUrl,
+      triggerSource: req.body.triggerSource || "internal_test",
     })
 
     return res.status(200).json({
