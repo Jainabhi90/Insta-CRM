@@ -226,24 +226,8 @@ async function findExistingDmStage({ automationId, mediaId, targetInstagramUserI
     automationId,
     mediaId: normalizeText(mediaId),
     targetInstagramUserId: normalizeText(targetInstagramUserId),
-    stage: { $in: ["prompted", "sent"] },
+    stage: "sent",
   }).sort({ createdAt: -1 })
-}
-
-function buildFollowPromptMessage({
-  commenterUsername,
-  confirmUrl,
-}) {
-  const username = commenterUsername ? `@${String(commenterUsername).replace(/^@/, "")}` : "there"
-
-  return [
-    `Hey ${username}!`,
-    "",
-    "Thanks for your interest.",
-    "Follow our Instagram account first, then tap the link below and we will send the details instantly.",
-    "",
-    confirmUrl,
-  ].join("\n")
 }
 
 async function recordAutomationEvent({
@@ -381,40 +365,23 @@ async function triggerCommentAutomation({
       listened: true,
       matched: true,
       action: "ignore",
-      reason: `already_${existingStage.stage}`,
+      reason: "already_sent",
       dmLogId: existingStage._id,
     })
 
     return {
       action: "ignore",
-      reason: `already_${existingStage.stage}`,
+      reason: "already_sent",
       automationId: automation._id.toString(),
     }
   }
-
-  const normalizedBaseUrl = normalizeText(followConfirmBaseUrl).replace(/\/+$/, "")
-
-  if (!normalizedBaseUrl) {
-    throw new Error("followConfirmBaseUrl is required for prompt DM generation.")
-  }
-
-  const confirmUrl =
-    `${normalizedBaseUrl}?igUserId=${encodeURIComponent(normalizeText(commenterId))}` +
-    `&postId=${encodeURIComponent(normalizeText(postId))}` +
-    `&instagramAccountId=${encodeURIComponent(normalizeText(instagramAccountId))}` +
-    `&automationId=${encodeURIComponent(automation._id.toString())}`
-
-  const followMessage = buildFollowPromptMessage({
-    commenterUsername,
-    confirmUrl,
-  })
 
   try {
     await sendInstagramReply({
       accessToken: owner.longLivedAccessToken,
       commentId: normalizeText(commentId) || undefined,
       recipientId: normalizeText(commentId) ? undefined : commenterId,
-      text: followMessage,
+      text: automation.response,
       instagramAccountId: owner.instagramAccountId || undefined,
       instagramUserId: owner.instagramUserId || undefined,
     })
@@ -435,9 +402,8 @@ async function triggerCommentAutomation({
       eventField: normalizeText(eventField) || "comments",
       targetInstagramUserId: normalizeText(commenterId),
       targetInstagramUsername: normalizeText(commenterUsername),
-      stage: "prompted",
-      messageText: followMessage,
-      confirmUrl,
+      stage: "sent",
+      messageText: automation.response,
       sentAt: new Date(),
     })
 
@@ -454,17 +420,15 @@ async function triggerCommentAutomation({
       commenterUsername,
       listened: true,
       matched: true,
-      action: "prompted",
-      reason: "prompt_sent",
+      action: "sent",
+      reason: "direct_message_sent",
       dmLogId: dmLog._id,
-      confirmUrl,
     })
 
     return {
-      action: "prompted",
+      action: "sent",
       automationId: automation._id.toString(),
       dmLogId: dmLog._id.toString(),
-      confirmUrl,
     }
   } catch (error) {
     await recordAutomationEvent({
@@ -481,8 +445,7 @@ async function triggerCommentAutomation({
       listened: true,
       matched: true,
       action: "failed",
-      reason: "prompt_send_failed",
-      confirmUrl,
+      reason: "direct_message_send_failed",
       errorMessage: error?.message || "Unknown automation send failure",
     })
 
