@@ -123,8 +123,8 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-      <Card className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fff7fb_45%,#fff1f8_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/55 p-4 py-6 backdrop-blur-sm sm:items-center">
+      <Card className="relative my-auto flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fff7fb_45%,#fff1f8_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
@@ -275,7 +275,7 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
               </div>
             </div>
 
-            <div className="flex gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur-sm">
+            <div className="sticky bottom-0 flex gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur-sm">
               <Button
                 type="button"
                 variant="outline"
