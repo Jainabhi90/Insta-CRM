@@ -52,6 +52,10 @@ async function parseResponseBody(response) {
 }
 
 export async function apiRequest(path, options = {}) {
+  if (isDemoFallbackEnabled()) {
+    throw new TypeError("Demo fallback is enabled. Bypassing network request to prevent Vite proxy errors.");
+  }
+
   const headers = new Headers(options.headers || {})
   const requestOptions = {
     method: options.method || "GET",

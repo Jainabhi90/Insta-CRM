@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Moon, Sun } from "lucide-react";
 
-export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccount }) {
+export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccount, isDarkTheme, onToggleTheme }) {
   const [billingCycle, setBillingCycle] = useState("monthly");
 
   const pricingPlans = {
@@ -128,24 +128,36 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
   const currentPlans = pricingPlans[billingCycle];
 
   return (
-    <div className="brand-shell-bg min-h-screen text-slate-900">
-      <header className="sticky top-0 z-40 border-b border-white/75 bg-white/72 backdrop-blur-xl">
+    <div className={`brand-shell-bg min-h-screen selection:bg-blue-100 ${isDarkTheme ? 'dark text-white' : 'text-[#1B4965]'}`}>
+      <header className={`sticky top-0 z-50 border-b backdrop-blur-sm ${isDarkTheme
+          ? 'bg-[#0B1F3B]/90 border-[#1B4965]/30'
+          : 'bg-white/90 border-[#1B4965]/10'
+        }`}>
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 md:px-6">
-          <button onClick={onBackToHome} className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_46px_-30px_rgba(214,64,134,0.6)]">
+          <button onClick={onBackToHome} className="flex items-center gap-3 group">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary to-theme-accent text-white shadow-lg group-hover:rotate-6 transition-transform">
               <Sparkles className="h-5 w-5" />
             </div>
             <div className="text-left">
-              <p className="text-base font-semibold">InstaLead</p>
-              <p className="text-xs text-[#8d6780]">Pricing</p>
+              <p className={`text-base font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>InstaLead</p>
+              <p className={`text-xs font-bold uppercase tracking-wider ${isDarkTheme ? 'text-[#BEE9E8]/60' : 'text-[#1B4965]/60'}`}>Pricing</p>
             </div>
           </button>
           <nav className="flex items-center gap-3">
-            <Button variant="outline" className="rounded-full border-[#f2d2e2] bg-white/85 text-slate-900 hover:bg-[#fff3f9]" onClick={onLogin || onGetStarted}>
+            <button
+              onClick={onToggleTheme}
+              className={`p-2 transition-colors ${isDarkTheme
+                  ? 'text-white hover:text-white'
+                  : 'text-[#1B4965]/70 hover:text-[#1B4965]'
+                }`}
+            >
+              {isDarkTheme ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <Button variant="outline" className="rounded-full border-[#1B4965]/20 dark:border-[#BEE9E8]/30 bg-white/85 dark:bg-white/10 text-[#1B4965] dark:text-white hover:bg-[#F0F9FF] dark:hover:bg-white/20 transition-colors" onClick={onLogin || onGetStarted}>
               Log in
             </Button>
-            <Button className="brand-button-gradient rounded-full px-5 font-semibold" onClick={onCreateAccount || onGetStarted}>
-              Connect Instagram
+            <Button className="brand-button-gradient rounded-full font-semibold px-6" onClick={onCreateAccount || onGetStarted}>
+              Google Onboarding
             </Button>
           </nav>
         </div>
@@ -153,75 +165,80 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-16 md:px-6">
         <div className="text-center">
-          <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Pricing</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+          <p className="mx-auto mt-4 max-w-2xl text-3xl  text-[#BEE9E8]/70  font-bold">
+            Professional CRM tools with a clean, calm interface. Scale your business from one account to a full portfolio with ease.
+          </p>
+          <p className="text-sm uppercase tracking-[0.24em] text-[#62B6CB] font-bold">Transparent Pricing</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl text-gray-900">
             Pick the workspace size that
-            <span className="mt-2 block bg-gradient-to-r from-theme-primary via-[#ec4899] to-theme-accent bg-clip-text text-transparent">
+            <span className="mt-2 block bg-gradient-to-r from-theme-primary to-theme-accent bg-clip-text text-transparent">
               matches your growth
             </span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-[#715667]">
-            Same CRM flow, softer visual language, and enough room to scale from one account to a full portfolio.
-          </p>
+          
         </div>
 
         <div className="mt-10 flex justify-center">
-          <div className="brand-panel-soft inline-flex rounded-full p-1">
+          <div className="bg-[#1B4965]/5 inline-flex rounded-full p-1 border border-[#1B4965]/10">
             <button
               onClick={() => setBillingCycle("monthly")}
-              className={`rounded-full px-6 py-2 text-sm font-semibold transition-all ${
-                billingCycle === "monthly"
-                  ? "brand-button-gradient"
-                  : "text-[#8d6780] hover:bg-[#fff3f9]"
-              }`}
+              className={`rounded-full px-8 py-2.5 text-sm font-bold transition-all ${billingCycle === "monthly"
+                  ? "brand-button-gradient text-white shadow-md"
+                  : "text-[#1B4965]/60 hover:text-[#1B4965]"
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
-              className={`rounded-full px-6 py-2 text-sm font-semibold transition-all ${
-                billingCycle === "yearly"
-                  ? "brand-button-gradient"
-                  : "text-[#8d6780] hover:bg-[#fff3f9]"
-              }`}
+              className={`rounded-full px-8 py-2.5 text-sm font-bold transition-all ${billingCycle === "yearly"
+                  ? "brand-button-gradient text-white shadow-md"
+                  : "text-[#1B4965]/60 hover:text-[#1B4965]"
+                }`}
             >
               Yearly
             </button>
           </div>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+        <div className="mt-32 grid gap-6 lg:grid-cols-3">
           {Object.values(currentPlans).map((plan) => (
             <Card
               key={plan.name}
-              className={`overflow-hidden rounded-[30px] border-0 ${
-                plan.popular ? "brand-hero-card" : "brand-panel"
-              }`}
+              className={`overflow-hidden rounded-[30px] border-0 transition-transform hover:scale-[1.02] duration-300 ${plan.popular ? "ring-2 ring-theme-primary shadow-2xl" : "brand-panel"
+                }`}
             >
-              <CardContent className="flex h-full flex-col p-7">
+              <CardContent className="flex h-full flex-col p-8">
                 <div className="mb-6">
                   {plan.popular ? (
-                    <div className="mb-4 inline-flex rounded-full bg-[#fde8f2] px-3 py-1 text-xs font-semibold text-[#9f3f70]">
+                    <div className="mb-4 inline-flex rounded-full bg-[#E0F2FE] px-4 py-1 text-xs font-bold uppercase tracking-wider text-theme-primary">
                       Most popular
                     </div>
                   ) : null}
-                  <h3 className="text-2xl font-semibold text-slate-900">{plan.name}</h3>
-                  <div className="mt-4 flex items-end gap-2">
-                    <span className="text-5xl font-semibold tracking-tight">{plan.price}</span>
+                  <h3 className="text-2xl font-bold text-[#0B1F3B]">{plan.name}</h3>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-5xl font-black tracking-tight text-[#0B1F3B]">{plan.price}</span>
+                    <span className="text-lg font-medium text-[#0B1F3B]/60">/{billingCycle === "monthly" ? "mo" : "yr"}</span>
                   </div>
-                  <p className="mt-2 text-sm text-[#8d6780]">{plan.period}</p>
-                  <div className="mt-4 rounded-[22px] bg-white/72 px-4 py-4 text-sm text-[#715667]">
-                    <p>Connect <strong>{plan.accounts}</strong></p>
-                    <p className="mt-1">Send up to <strong>{plan.dms}</strong></p>
+                  <p className="mt-2 text-sm text-[#62B6CB] font-bold">{plan.period}</p>
+                  <div className="mt-6 rounded-[22px] bg-[#F8FAFC] border border-[#1B4965]/5 px-6 py-4 text-sm text-[#0B1F3B]/80 font-medium">
+                    <p className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-theme-primary" />
+                      Connect <strong>{plan.accounts}</strong>
+                    </p>
+                    <p className="mt-2 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-theme-primary" />
+                      Send up to <strong>{plan.dms}</strong>
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex-1">
-                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9a728a]">Included</p>
-                  <ul className="space-y-3">
+                  <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#0B1F3B]/40">What's included</p>
+                  <ul className="space-y-4">
                     {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3 text-sm text-[#715667]">
-                        <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#fde8f2] text-theme-primary">
+                      <li key={feature} className="flex items-start gap-3 text-sm text-[#0B1F3B] font-medium">
+                        <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F0F9FF] text-theme-primary border border-theme-primary/10">
                           <Check className="h-3.5 w-3.5" />
                         </span>
                         <span>{feature}</span>
@@ -231,7 +248,10 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                 </div>
 
                 <Button
-                  className={`mt-8 h-12 rounded-full font-semibold ${plan.buttonColor}`}
+                  className={`mt-10 h-14 rounded-full font-bold text-lg shadow-lg transition-all active:scale-95 ${plan.popular
+                      ? "brand-button-gradient hover:opacity-90 text-[#0B1F3B]"
+                      : "brand-button-gradient text-[#0B1F3B]"
+                    }`}
                   onClick={onCreateAccount || onGetStarted}
                 >
                   {plan.buttonText}

@@ -258,7 +258,7 @@ export function LeadCenter({
       ) : null}
 
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="brand-panel-soft rounded-[24px] p-6">
           <p className="text-sm text-gray-600 mb-1">Total Leads</p>
           <p className="text-3xl font-bold" style={{ fontWeight: 700 }}>{leadSummary.totalLeads}</p>
@@ -273,11 +273,6 @@ export function LeadCenter({
           <p className="text-sm text-gray-600 mb-1">Response Rate</p>
           <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.responseRate}</p>
           <p className="text-sm text-green-600 mt-1">{leadSummary.responseTrend}</p>
-        </div>
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <p className="text-sm text-gray-600 mb-1">Est. Revenue</p>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.estimatedRevenue}</p>
-          <p className="text-sm text-green-600 mt-1">{leadSummary.revenueLabel}</p>
         </div>
       </div>
 
@@ -347,202 +342,7 @@ export function LeadCenter({
         </Table>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="brand-panel-soft overflow-hidden rounded-[28px]">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageCircleReply className="w-5 h-5 text-[#2563eb]" />
-                  <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Comments</h2>
-                </div>
-                <p className="text-sm text-slate-500">
-                  Track fresh conversations on your recent posts and jump into private follow-up when needed.
-                </p>
-              </div>
-              <Badge variant="outline">
-                {commentStats.totalComments} comments
-              </Badge>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-              <span>Posts reviewed: {commentStats.mediaReviewed}</span>
-              <span>Latest activity: {commentStats.latestActivityLabel}</span>
-            </div>
-          </div>
 
-          <div className="max-h-[720px] overflow-y-auto p-6 space-y-4">
-            {commentItems.length > 0 ? commentItems.map((comment) => {
-              const replyKey = `comment:${comment.id}`;
-              const isSending = replyingTarget === replyKey;
-              const isActive = activeReplyTarget === replyKey;
-
-              return (
-                <div key={comment.id} className="rounded-xl border border-gray-200 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
-                        @{comment.commenterUsername}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">{comment.relativeTime}</p>
-                    </div>
-                    <Badge variant="outline">{comment.likeCount} likes</Badge>
-                  </div>
-                  <p className="mt-3 text-sm text-gray-800 whitespace-pre-wrap">{comment.text}</p>
-                  <div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                    <p style={{ fontWeight: 500 }}>Source post</p>
-                    <p className="mt-1 line-clamp-2">{comment.mediaCaption || "Instagram post"}</p>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setActiveReplyTarget((current) => (current === replyKey ? "" : replyKey))
-                      }
-                    >
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send private reply
-                    </Button>
-                    <span className="text-xs text-gray-500">
-                      Comment ID: {comment.id}
-                    </span>
-                  </div>
-                  {isActive ? (
-                    <ReplyComposer
-                      title={`Send private reply to @${comment.commenterUsername}`}
-                      placeholder="Write the DM reply that should be sent for this comment..."
-                      onCancel={() => setActiveReplyTarget("")}
-                      onSubmit={(text) =>
-                        handleReplySubmit(
-                          {
-                            commentId: comment.id,
-                            text,
-                          },
-                          `Private reply sent for comment ${comment.id}.`,
-                        )
-                      }
-                      disabled={isSending}
-                    />
-                  ) : null}
-                </div>
-              );
-            }) : (
-              <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-                No comments have arrived yet.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="brand-panel-soft overflow-hidden rounded-[28px]">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="w-5 h-5 text-[#f97316]" />
-                  <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Inbox</h2>
-                </div>
-                <p className="text-sm text-slate-500">
-                  Stay close to active conversations and keep the latest replies easy to scan.
-                </p>
-              </div>
-              <Badge variant="outline">
-                {inboxStats.totalConversations} conversations
-              </Badge>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-              <span>Latest activity: {inboxStats.latestActivityLabel}</span>
-              {inboxStats.accountUsername ? (
-                <span>Connected account: @{inboxStats.accountUsername}</span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="max-h-[720px] overflow-y-auto p-6 space-y-4">
-            {inboxItems.length > 0 ? inboxItems.map((conversation) => {
-              const replyKey = `dm:${conversation.id}`;
-              const isSending = replyingTarget === replyKey;
-              const isActive = activeReplyTarget === replyKey;
-
-              return (
-                <div key={conversation.id} className="rounded-xl border border-gray-200 p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
-                        {conversation.handle}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {conversation.latestMessageLabel}
-                      </p>
-                    </div>
-                    <Badge variant="outline">
-                      {conversation.participantCount} participant{conversation.participantCount > 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                  <p className="mt-3 text-sm text-gray-800">
-                    {conversation.latestMessagePreview || "[No text preview available]"}
-                  </p>
-                  <div className="mt-3 text-xs text-gray-500">
-                    Latest sender: {conversation.latestSenderUsername || "Unknown"}
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    {conversation.messages.slice(0, 3).map((message) => (
-                      <div key={message.id} className="rounded-lg bg-gray-50 p-3">
-                        <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
-                          <span>{message.senderUsername}</span>
-                          <span>{message.relativeTime}</span>
-                        </div>
-                        <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
-                          {message.text || "[No text content]"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setActiveReplyTarget((current) => (current === replyKey ? "" : replyKey))
-                      }
-                      disabled={!conversation.canReply}
-                    >
-                      <Mail className="w-4 h-4 mr-2" />
-                      Reply in DM
-                    </Button>
-                    {!conversation.canReply ? (
-                      <span className="text-xs text-gray-500">
-                        Reply is available for 1:1 conversations only.
-                      </span>
-                    ) : null}
-                  </div>
-                  {isActive ? (
-                    <ReplyComposer
-                      title={`Send DM to ${conversation.handle}`}
-                      placeholder="Write the Instagram DM reply..."
-                      onCancel={() => setActiveReplyTarget("")}
-                      onSubmit={(text) =>
-                        handleReplySubmit(
-                          {
-                            recipientId: conversation.recipientId,
-                            text,
-                          },
-                          `DM reply sent to ${conversation.handle}.`,
-                        )
-                      }
-                      disabled={isSending}
-                    />
-                  ) : null}
-                </div>
-              );
-            }) : (
-              <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-                No direct messages have arrived yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

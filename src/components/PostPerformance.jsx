@@ -36,8 +36,8 @@ export function PostPerformance({ summary, posts, insight }) {
     totalLikes: formatNumber(totalLikes),
     totalComments: totalComments.toString(),
     averageEngagement: `${avgEngagementRate}%`,
-    likesTrend: "+23% vs last month",
-    commentsTrend: "+18% growth",
+    likesTrend: "↑ 19% vs last month",
+    commentsTrend: "↑ 14% growth",
     engagementLabel: "Industry avg: 3.5%",
     ...summary,
   };
@@ -48,116 +48,91 @@ export function PostPerformance({ summary, posts, insight }) {
 
   return (
     <div className="p-8">
-      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
+      <div className="brand-hero-card mb-12 rounded-[28px] p-6 relative z-10">
         <p className="text-sm font-medium text-slate-500">Insights</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Post Performance</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Keep an eye on reach, engagement, and which posts are creating the strongest response.
+          Keep the eye on reach, engagement, and which posts are creating the strongest response.
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Eye className="w-5 h-5 text-theme-primary" />
-            <p className="text-sm text-gray-600">Total Views</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16 relative z-10">
+        <div className="bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-2xl p-6 border border-slate-100">
+          <div className="flex items-center gap-2 mb-3 text-slate-700">
+            <Eye className="w-[18px] h-[18px] stroke-[1.5]" />
+            <p className="text-[13px] font-medium">Total Views</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalViews}</p>
-          <p className="text-sm text-gray-600 mt-1">Last 30 days</p>
+          <p className="text-[28px] font-semibold tracking-tight text-slate-900">{summaryCards.totalViews}</p>
+          <p className="text-[13px] text-slate-500 mt-1">Last 30 days</p>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Heart className="w-5 h-5 text-red-500" />
-            <p className="text-sm text-gray-600">Total Likes</p>
+        <div className="bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-2xl p-6 border border-slate-100">
+          <div className="flex items-center gap-2 mb-3 text-slate-700">
+            <Heart className="w-[18px] h-[18px] stroke-[1.5]" />
+            <p className="text-[13px] font-medium">Total Likes</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalLikes}</p>
-          <p className="text-sm text-green-600 mt-1">{summaryCards.likesTrend}</p>
+          <p className="text-[28px] font-semibold tracking-tight text-slate-900">{summaryCards.totalLikes}</p>
+          <p className="text-[13px] text-[#2EA366] mt-1 font-medium">{summaryCards.likesTrend}</p>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-theme-accent" />
-            <p className="text-sm text-gray-600">Total Comments</p>
+        <div className="bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-2xl p-6 border border-slate-100">
+          <div className="flex items-center gap-2 mb-3 text-slate-700">
+            <MessageSquare className="w-[18px] h-[18px] stroke-[1.5]" />
+            <p className="text-[13px] font-medium">Total Comments</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalComments}</p>
-          <p className="text-sm text-green-600 mt-1">{summaryCards.commentsTrend}</p>
+          <p className="text-[28px] font-semibold tracking-tight text-slate-900">{summaryCards.totalComments}</p>
+          <p className="text-[13px] text-[#2EA366] mt-1 font-medium">{summaryCards.commentsTrend}</p>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-gray-600">Avg Engagement</p>
+        <div className="bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-2xl p-6 border border-slate-100">
+          <div className="flex items-center gap-2 mb-3 text-slate-700">
+            <Users className="w-[18px] h-[18px] stroke-[1.5]" />
+            <p className="text-[13px] font-medium">Avg Engagement</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.averageEngagement}</p>
-          <p className="text-sm text-gray-600 mt-1">{summaryCards.engagementLabel}</p>
+          <p className="text-[28px] font-semibold tracking-tight text-slate-900">{summaryCards.averageEngagement}</p>
+          <p className="text-[13px] text-slate-500 mt-1">{summaryCards.engagementLabel}</p>
         </div>
       </div>
 
       {/* Posts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-4">
         {performancePosts.length > 0 ? performancePosts.map((post) => (
-          <Card key={post.id} className="brand-panel-soft overflow-hidden border-0 transition-all hover:-translate-y-0.5">
-            <div className="relative">
+          <div key={post.id} className="group cursor-pointer flex flex-col h-full bg-white border border-slate-100 rounded-[20px] p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative mb-3">
               <ImageWithFallback
                 src={post.thumbnail}
                 alt={post.caption}
-                className="w-full h-64 object-cover"
+                className="w-full aspect-square object-cover rounded-[16px]"
               />
               <div className="absolute top-3 right-3">
-                <Badge className="bg-white/90 text-gray-700 hover:bg-white">
+                <Badge className="bg-black/40 backdrop-blur-sm text-white rounded-full hover:bg-black/50 border-0 px-2.5 py-0.5 text-[11px] font-normal">
                   {post.postedAt}
                 </Badge>
               </div>
-              <div className="absolute bottom-3 left-3">
-                <Badge className="bg-black/60 text-white hover:bg-black/70">
-                  <Eye className="w-3 h-3 mr-1" />
-                  {formatNumber(post.views)}
-                </Badge>
+            </div>
+            <div className="px-1 flex flex-col flex-1">
+              <p className="text-[14px] font-medium text-slate-900 leading-snug line-clamp-2 mb-3 flex-1">{post.caption}</p>
+              
+              <div className="flex items-center gap-4 text-slate-500 mt-auto">
+                <div className="flex items-center gap-1.5" title="Views">
+                  <Eye className="w-[14px] h-[14px]" />
+                  <span className="text-xs font-medium">{formatNumber(post.views)}</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Likes">
+                  <Heart className="w-[14px] h-[14px]" />
+                  <span className="text-xs font-medium">{formatNumber(post.likes)}</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Comments">
+                  <MessageSquare className="w-[14px] h-[14px]" />
+                  <span className="text-xs font-medium">{post.comments}</span>
+                </div>
+                <div className="flex items-center gap-1 ml-auto text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full" title="Engagement Rate">
+                  <span className="text-[11px] font-semibold">{post.views > 0 ? ((post.engagement / post.views) * 100).toFixed(1) : "0.0"}%</span>
+                </div>
               </div>
             </div>
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-700 mb-4 line-clamp-2">{post.caption}</p>
-              
-              {/* Performance Stats */}
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Heart className="w-4 h-4 text-red-600" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">{formatNumber(post.likes)}</span>
-                  <p className="text-xs text-gray-500">Likes</p>
-                </div>
-                
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <MessageSquare className="w-4 h-4 text-theme-primary" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">{post.comments}</span>
-                  <p className="text-xs text-gray-500">Comments</p>
-                </div>
-                
-                <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Share2 className="w-4 h-4 text-green-600" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">{post.shares}</span>
-                  <p className="text-xs text-gray-500">Shares</p>
-                </div>
-              </div>
-
-              {/* Engagement Rate */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Engagement Rate</span>
-                  <span className="text-sm font-semibold text-purple-700">
-                    {((post.engagement / post.views) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         )) : (
           <Card className="border border-dashed border-slate-300 bg-white lg:col-span-3">
             <CardContent className="py-12 text-center">

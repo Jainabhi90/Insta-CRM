@@ -19,26 +19,26 @@ const previewRows = [
 ];
 
 const previewMetrics = [
-  { label: "Set up", value: "3 mins" },
-  { label: "Brands", value: "500+" },
-  { label: "Reply lift", value: "9x" },
+  { label: "Set up", value: "3 mins", desc: "Average time" },
+  { label: "Brands", value: "500+", desc: "Trusting us" },
+  { label: "Reply lift", value: "9x", desc: "Engagement" },
 ];
 
 const featureCards = [
   {
     icon: MessageCircle,
-    title: "Comment-to-DM journeys",
-    description: "Catch intent from comments, trigger the right next step, and keep follow-up beautifully structured.",
+    title: "Comment-to-DM",
+    description: "Catch intent from comments and trigger automated, structured follow-ups instantly.",
   },
   {
     icon: Target,
-    title: "Lead scoring workspace",
-    description: "Surface who is warm, who is ready, and who needs a second touch without spreadsheet chaos.",
+    title: "Lead Scoring",
+    description: "Surface warm leads and ready buyers without the usual spreadsheet chaos.",
   },
   {
     icon: BarChart3,
-    title: "Post-level signal tracking",
-    description: "See which content is producing quality conversations instead of vanity noise.",
+    title: "Signal Tracking",
+    description: "Identify which content drives quality conversations instead of vanity metrics.",
   },
 ];
 
@@ -46,42 +46,37 @@ export function GoogleLandingPage() {
   const handleGoogleLogin = () => {
     const authorizeUrl = buildGoogleAuthorizeUrl();
     if (!authorizeUrl) {
-      window.alert("Google login is not configured. Set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI.");
+      window.alert("Google login is not configured.");
       return;
     }
     window.location.assign(authorizeUrl);
   };
 
   return (
-    <div className="brand-shell-bg isolate min-h-screen overflow-x-hidden text-slate-900">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-120px] top-18 h-80 w-80 rounded-full bg-[rgba(229,69,146,0.16)] blur-3xl" />
-        <div className="absolute right-[-140px] top-40 h-[26rem] w-[26rem] rounded-full bg-[rgba(192,132,252,0.18)] blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(214,165,193,.14)_1px,transparent_1px),linear-gradient(90deg,rgba(214,165,193,.14)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_center,black_20%,transparent_76%)]" />
+    <div className="brand-shell-bg min-h-screen overflow-x-hidden text-gray-900 selection:bg-blue-100">
+      {/* Premium Background Mesh */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] h-[600px] w-[600px] rounded-full bg-[#62B6CB]/20 blur-[120px] animate-pulse" />
+        <div className="absolute top-[20%] -right-[5%] h-[500px] w-[500px] rounded-full bg-[#1B4965]/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] h-[600px] w-[600px] rounded-full bg-[#BEE9E8]/20 blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/72 backdrop-blur-xl">
-        <div className="mx-auto flex h-[76px] w-full max-w-7xl items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_46px_-30px_rgba(214,64,134,0.6)]">
-              <Sparkles className="h-5 w-5" />
+      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/40 backdrop-blur-2xl">
+        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary to-theme-accent text-white shadow-lg group-hover:rotate-6 transition-transform">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <div>
-              <p className="text-base font-semibold tracking-tight text-slate-900">InstaLead</p>
-              <p className="text-xs text-[#8d6780]">Google onboarding</p>
-            </div>
+            <span className="text-xl font-black tracking-tight text-gray-900">
+              InstaLead
+            </span>
           </div>
-          <nav className="flex items-center gap-3 text-sm">
-            <a href="/pricing" className="hidden text-[#8d6780] transition-colors hover:text-slate-900 sm:inline">
-              Pricing
-            </a>
-            <a href="/privacy" className="hidden text-[#8d6780] transition-colors hover:text-slate-900 md:inline">
-              Privacy
-            </a>
+          <nav className="flex items-center gap-6 py-4">
+            <a href="/pricing" className="hidden text-sm font-bold text-gray-600 hover:text-theme-primary transition-colors sm:inline">Pricing</a>
+            <a href="/privacy" className="hidden text-sm font-bold text-gray-600 hover:text-theme-primary transition-colors sm:inline">Privacy</a>
             <Button
-              size="sm"
-              className="brand-button-gradient rounded-full px-5 font-semibold"
               onClick={handleGoogleLogin}
+              className="brand-button-gradient rounded-full px-6 shadow-xl hover:shadow-blue-200/50 transition-all active:scale-95"
             >
               Get Started
             </Button>
@@ -89,113 +84,61 @@ export function GoogleLandingPage() {
         </div>
       </header>
 
-      <main className="relative z-10">
-        <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 px-4 pb-18 pt-16 md:px-6 lg:grid-cols-[1.02fr_.98fr] lg:pt-24">
-          <div className="animate-rise-in space-y-8">
-            <div className="brand-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm shadow-sm">
-              <Zap className="h-4 w-4 text-theme-primary" />
-              Built for creators scaling from comments and DMs
-            </div>
+      <main className="relative pt-4">
+        {/* Hero Section */}
+        <section className="mx-auto flex flex-col items-center justify-center gap-12 px-6 pb-16 max-w-7xl min-h-[calc(100vh-120px)]">
+          <div className="space-y-8 flex flex-col items-center text-center">
+            <h1 className=" text-center text-5xl md:text-6xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-theme-primary to-theme-accent pb-2 leading-none font-bold">Built for creators Scaling <br></br> from <br></br>comments to DMs</h1>
+            
+            <p className="max-w-2xl text-lg leading-relaxed text-gray-600 font-medium">
+               A professional Instagram CRM built for modern creators. Connect Google once, add your Instagram Account, and keep every lead, comment, and automation organized in one clean workspace.
+            </p>
 
-            <div className="space-y-5">
-              <h1 className="max-w-3xl text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                A softer, smarter Instagram CRM
-                <span className="mt-2 block bg-gradient-to-r from-theme-primary via-[#ec4899] to-theme-accent bg-clip-text text-transparent">
-                  that starts with Google
-                </span>
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-[#715667]">
-                Connect Google once, add your Instagram accounts into the same workspace, and keep every lead, comment, DM, and automation feeling organized from day one.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center justify-center flex-col sm:flex-row gap-4 pt-4">
               <Button
                 size="lg"
-                className="brand-button-gradient h-14 rounded-full px-8 text-base font-semibold"
                 onClick={handleGoogleLogin}
+                className="brand-button-gradient text-lg h-14 rounded-full px-8 shadow-xl hover:shadow-blue-200/50 transition-all active:scale-95"
               >
                 <Rocket className="mr-2 h-5 w-5" />
                 Continue with Google
-                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <div className="inline-flex items-center gap-2 text-sm text-[#8d6780]">
+               <div className="inline-flex items-center gap-2 text-lg text-[#1B4965]/70">
                 <CheckCircle2 className="h-4 w-4 text-theme-primary" />
                 Free 14-day trial, no credit card
               </div>
             </div>
-
-            <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-              {previewMetrics.map((item, index) => (
-                <div
-                  key={item.label}
-                  className={`brand-panel-soft rounded-[24px] p-4 animate-rise-in ${
-                    index === 1 ? "animate-rise-in-delay" : index === 2 ? "animate-rise-in-delay-2" : ""
-                  }`}
-                >
-                  <p className="text-xs uppercase tracking-wide text-[#9a728a]">{item.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{item.value}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="animate-rise-in-delay relative">
-            <div className="brand-hero-card overflow-hidden rounded-[34px] p-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#9a728a]">
-                    Live workspace
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-900">Revenue-ready command view</p>
-                </div>
-                <span className="rounded-full bg-[#fde8f2] px-3 py-1 text-xs font-semibold text-[#9f3f70]">
-                  Pink mode
-                </span>
+          {/* Feature Highlight Grid */}
+          <div className="flex flex-col space-y-4 justify-center w-full gap-4 mt-8 ">
+            <h2 className="text-2xl font-bold text-gray-900 text-center">Maximize your reach, Minimize your effort</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <div className="flex flex-col items-center justify-center rounded-3xl bg-white/60 border border-white p-4 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all text-center" style={{ height: '180px' }}>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#62B6CB] mb-2">Reply Lift</p>
+                <p className="text-4xl font-black text-gray-900">9x</p>
               </div>
-
-              <div className="mt-6 space-y-4">
-                {previewRows.map((row, index) => (
-                  <div
-                    key={row.lead}
-                    className="brand-panel-soft rounded-[26px] p-4 animate-rise-in"
-                    style={{ animationDelay: `${index * 130}ms` }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900">{row.stage}</p>
-                      <span className="rounded-full bg-gradient-to-r from-theme-primary to-theme-accent px-3 py-1 text-xs font-semibold text-white">
-                        {row.badge}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-[#7e5b71]">{row.lead}</p>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center rounded-3xl bg-[#0B1F3B] p-4 text-white shadow-xl hover:shadow-2xl transition-all text-center" style={{ height: '180px' }}>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#BEE9E8] mb-2">Brands</p>
+                <p className="text-4xl font-black text-white">500+</p>
               </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                {[
-                  { label: "Auto replies", amount: "2.4k" },
-                  { label: "Active leads", amount: "418" },
-                  { label: "Won today", amount: "27" },
-                ].map((metric) => (
-                  <div key={metric.label} className="brand-panel-soft rounded-[22px] p-3 text-center">
-                    <p className="text-[11px] uppercase tracking-wide text-[#9a728a]">{metric.label}</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-900">{metric.amount}</p>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center rounded-3xl bg-white/60 border border-white p-4 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all text-center" style={{ height: '180px' }}>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#62B6CB] mb-2">Setup Time</p>
+                <p className="text-4xl font-black text-gray-900">3 min</p>
               </div>
             </div>
           </div>
         </section>
 
+        {/* Feature Cards */}
         <section className="mx-auto w-full max-w-7xl px-4 pb-20 md:px-6">
           <div className="mb-10 text-center">
-            <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Why it feels better</p>
+            <p className="text-xl uppercase tracking-[0.24em] text-[#1B4965]/60 font-bold">Why it feels better?</p>
             <h2 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
-              One product language across the whole workspace
+              One product language across your workspace
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mt-8">
             {featureCards.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -206,11 +149,11 @@ export function GoogleLandingPage() {
                   }`}
                 >
                   <CardContent className="p-6">
-                    <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fde8f2] text-theme-primary ring-1 ring-[rgba(229,69,146,0.12)]">
+                    <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0F9FF] text-theme-primary ring-1 ring-[#1B4965]/10">
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-xl font-semibold text-slate-900">{feature.title}</h3>
-                    <p className="mt-3 leading-7 text-[#715667]">{feature.description}</p>
+                    <p className="mt-3 leading-7 text-[#1B4965]/80 font-medium">{feature.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -218,34 +161,30 @@ export function GoogleLandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6">
-          <div className="brand-panel overflow-hidden rounded-[34px] p-8 text-center sm:p-12">
-            <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Start softly, scale fast</p>
-            <h3 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
-              Bring Instagram into a calmer operating system
-            </h3>
-            <p className="mx-auto mt-4 max-w-2xl text-[#715667]">
-              Move from scattered replies to one polished CRM flow with Google onboarding, workspace switching, and a cleaner visual language from the first click.
-            </p>
-            <Button
-              size="lg"
-              className="brand-button-gradient mt-8 h-14 rounded-full px-10 text-base font-semibold"
-              onClick={handleGoogleLogin}
-            >
-              Start with Google
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+        {/* Final CTA Card */}
+        <section className="mx-auto mt-8 max-w-7xl px-6 py-32">
+          <div className="flex item-center justify-center relative overflow-hidden rounded-[50px] bg-[#0B1F3B] p-12 md:p-24 text-center text-white shadow-3xl">
+             <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-[#62B6CB] opacity-10 blur-[100px]" />
+             <div className="relative z-10 space-y-8 flex flex-col items-center gap-4">
+                <p className="text-[#62B6CB] font-bold tracking-widest uppercase text-sm">Start softly, Scale fast</p>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter">Bring Instagram into a calmer operating system</h1>
+                <p className="mx-auto max-w-2xl text-[#BEE9E8]/70 text-lg">Move from scattered replies to one polished CRM flow with Google onboarding, workspace switching, and a professional visual language from the first click.</p>
+                <Button
+                size="lg"
+                onClick={handleGoogleLogin}
+                className="brand-button-gradient text-lg h-14 rounded-full px-10 shadow-xl hover:shadow-blue-200/50 transition-all active:scale-95"
+              >
+                Continue with Google
+              </Button>
+             </div>
           </div>
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-white/70 bg-white/65 py-10 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-[#8d6780] md:flex-row md:px-6">
-          <p>© 2026 InstaLead. Built for modern Instagram teams.</p>
-          <div className="flex items-center gap-5">
-            <a href="/terms" className="transition-colors hover:text-slate-900">Terms</a>
-            <a href="/privacy" className="transition-colors hover:text-slate-900">Privacy</a>
-          </div>
+      <footer className="px-6 py-12 border-t border-[#1B4965]/10">
+        <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-2">
+           <p className="text-sm font-medium text-[#1B4965]/40">© 2026 InstaLead. Built for modern Instagram teams.</p>
+           <span className="text-sm font-medium text-[#1B4965]/40">Terms & Privacy</span>
         </div>
       </footer>
     </div>

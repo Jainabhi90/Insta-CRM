@@ -9,13 +9,17 @@ import {
   Repeat2,
   Users,
   Zap,
+  Moon,
+  Sun,
+  Sparkles,
 } from "lucide-react";
 import { LandingPage } from "./components/LandingPage";
 import { DarkLandingPage } from "./components/DarkLandingPage";
-import { GoogleLandingPage } from "./components/GoogleLandingPage";
+
 import { PricingPage } from "./components/PricingPage";
 import { AuthModal } from "./components/AuthModal";
 import { DashboardSidebar } from "./components/DashboardSidebar";
+import { DashboardAccountMenu } from "./components/DashboardAccountMenu";
 import { LeadCenter } from "./components/LeadCenter";
 import { CommentsInbox } from "./components/CommentsInbox";
 import { DmInbox } from "./components/DmInbox";
@@ -98,14 +102,14 @@ function getPreferredDashboardAccountId(session) {
 
 function getCurrentRoute() {
   if (typeof window === "undefined") {
-    return { page: "google-landing", search: "" };
+    return { page: "landing", search: "" };
   }
 
   const path = window.location.pathname;
 
   if (path === "/") {
     return {
-      page: "google-landing",
+      page: "landing",
       search: window.location.search,
     };
   }
@@ -130,7 +134,7 @@ function getCurrentRoute() {
   }
 
   if (path === "/google-auth") {
-    return { page: "google-landing", search: window.location.search };
+    return { page: "landing", search: window.location.search };
   }
 
   if (path === "/auth/google/callback") {
@@ -584,6 +588,11 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.style.colorScheme = isDarkTheme ? "dark" : "light";
+    if (isDarkTheme) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, [isDarkTheme]);
 
   useEffect(() => {
@@ -713,9 +722,9 @@ export default function App() {
             onBackToHome={handleBackToHome}
             onLogin={openLoginModal}
             onCreateAccount={openSignupModal}
+            isDarkTheme={isDarkTheme}
+            onToggleTheme={handleToggleTheme}
           />
-        ) : route.page === "google-landing" ? (
-          <GoogleLandingPage />
         ) : route.page === "google-callback" ? (
           <GoogleCallback
             onComplete={handleGoogleWorkspaceReady}
@@ -811,6 +820,7 @@ export default function App() {
           onBackHome={handleBackToHome}
           onConnectInstagram={openInstagramModal}
           pendingAction={pendingAction}
+          isDarkTheme={isDarkTheme}
         />
         {showAuthModal && (
           <AuthModal
@@ -828,49 +838,34 @@ export default function App() {
   const ActiveViewIcon = activeViewMeta.icon;
 
   return (
-    <div className="brand-shell-bg min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] gap-5 px-4 py-4 sm:px-5 lg:px-6">
-        <DashboardSidebar activeView={activeView} onViewChange={setActiveView} />
+    <div className="min-h-screen bg-white">
+      <div className="flex min-h-screen w-full">
+        <DashboardSidebar 
+          activeView={activeView} 
+          onViewChange={setActiveView}
+          session={session}
+          pendingAction={pendingAction}
+          onSwitchAccount={handleSwitchAccount}
+          onSelectAccount={handleSelectWorkspaceAccount}
+          onConnectInstagram={handleInstagramAuth}
+          onLogout={handleLogout}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="brand-panel sticky top-4 z-30 mb-6 overflow-hidden rounded-[32px]">
-            <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6 lg:px-7">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_44px_-26px_rgba(214,64,134,0.65)]">
-                    <ActiveViewIcon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">
-                      {activeViewMeta.eyebrow}
-                    </p>
-                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
-                      {activeViewMeta.title}
-                    </h1>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                      {activeViewMeta.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                  {isDashboardLoading ? <DashboardRefreshBadge /> : null}
-                  <DashboardAccountMenu
-                    gowner={session.gowner}
-                    owner={session.owner}
-                    accounts={session.accounts || []}
-                    pendingAction={pendingAction}
-                    onSwitchAccount={handleSwitchAccount}
-                    onSelectAccount={handleSelectWorkspaceAccount}
-                    onConnectInstagram={handleInstagramAuth}
-                    onLogout={handleLogout}
-                  />
-                </div>
+          <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-8 py-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between max-w-7xl">
+              <div className="min-w-0">
+                <h1 className="text-[26px] font-medium text-slate-900">
+                  {activeViewMeta.title}
+                </h1>
+                <p className="mt-1 text-[13px] text-slate-600">
+                  {activeViewMeta.description}
+                </p>
               </div>
             </div>
-            <DashboardMobileTabs activeView={activeView} onViewChange={setActiveView} />
           </header>
 
-          <main className="min-w-0 flex-1 pb-6">
-            <div className="brand-panel rounded-[34px] border-0 bg-white/65">
+          <main className="min-w-0 flex-1 px-8 py-8 max-w-7xl">
+            <div className="bg-white">
               {activeView === "leads" && (
                 <LeadCenter
                   owner={session.owner}
@@ -925,178 +920,6 @@ export default function App() {
   );
 }
 
-function DashboardMobileTabs({ activeView, onViewChange }) {
-  return (
-    <div className="border-t border-slate-200/80 px-3 py-3 lg:hidden">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {Object.entries(DASHBOARD_VIEW_META).map(([key, meta]) => {
-          const Icon = meta.icon;
-          const isActive = key === activeView;
-
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onViewChange(key)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-all ${
-                isActive
-                  ? "bg-gradient-to-r from-theme-primary to-theme-accent text-white shadow-[0_18px_36px_-26px_rgba(214,64,134,0.5)]"
-                  : "bg-[#fff3f9] text-[#8d6780] hover:bg-[#fde8f2] hover:text-slate-900"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {meta.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, onSelectAccount, onConnectInstagram, onLogout, pendingAction }) {
-  const isBusy = Boolean(pendingAction)
-  const instagramHandle = owner?.instagramHandle || owner?.name || "Instagram account"
-  const instagramUserId = owner?.instagramUserId || "Not available"
-  const selectedCount = accounts.filter((account) => account.connectionStatus === "connected").length
-
-  const getInitials = (name) =>
-    String(name || "IG")
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex max-w-full items-center gap-3 rounded-[22px] border border-[#f2d2e2] bg-white/92 px-3.5 py-2.5 text-left shadow-[0_22px_55px_-36px_rgba(106,54,87,0.4)] transition-all hover:-translate-y-0.5 hover:border-[#e9b7d0] hover:shadow-[0_26px_58px_-36px_rgba(106,54,87,0.46)] focus:outline-none focus:ring-2 focus:ring-[rgba(229,69,146,0.45)] focus:ring-offset-2"
-          aria-label="Open account menu"
-          disabled={isBusy}
-        >
-          <div className="relative">
-            <Avatar className="h-11 w-11 border border-slate-200 shadow-sm">
-              <AvatarImage src={owner?.avatarUrl || owner?.profilePictureUrl || ""} alt={instagramHandle} />
-                <AvatarFallback className="bg-gradient-to-br from-theme-primary to-theme-accent text-white">
-                  {getInitials(instagramHandle)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 rounded-full border border-white bg-white p-0.5 shadow-sm">
-                <InstagramBrandMark className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="hidden min-w-0 max-w-[180px] sm:block">
-            <p className="truncate text-sm font-semibold text-slate-900">{instagramHandle}</p>
-            <p className="truncate text-xs text-slate-500">
-              {selectedCount} connected account{selectedCount === 1 ? "" : "s"}
-            </p>
-          </div>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={14}
-        collisionPadding={20}
-        className="w-[290px] rounded-[24px] border border-[#f2d2e2] bg-white/98 p-2 shadow-[0_30px_90px_-56px_rgba(106,54,87,0.45)] backdrop-blur"
-      >
-        <DropdownMenuLabel className="rounded-[18px] bg-[#fff4fa] px-4 py-3">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-900">{instagramHandle}</p>
-            <p className="text-xs text-slate-500">IG ID: {instagramUserId}</p>
-            {gowner?.email ? <p className="text-xs text-slate-400">{gowner.email}</p> : null}
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {accounts.length > 0 ? (
-          <>
-            <DropdownMenuLabel className="px-3 pt-2 text-xs uppercase tracking-wide text-slate-500">
-              Workspace accounts
-            </DropdownMenuLabel>
-            {accounts.map((account) => (
-              <DropdownMenuItem
-                key={account.id}
-                className="flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-3 text-sm"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  if (!account.isSelected) {
-                    onSelectAccount?.(account.id);
-                  }
-                }}
-                disabled={isBusy || account.isSelected}
-              >
-                <Avatar className="h-9 w-9 border border-gray-200">
-                  <AvatarImage src={account.avatarUrl || account.profilePictureUrl || ""} alt={account.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-theme-primary to-theme-accent text-white">
-                    {getInitials(account.name || account.instagramHandle)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-900">{account.instagramHandle || account.name}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {account.connectionStatus === "token_expired" ? "Reconnect soon" : account.connectionStatus}
-                  </p>
-                </div>
-                {account.isSelected ? (
-                  <span className="rounded-full bg-[#fde8f2] px-2 py-1 text-xs font-medium text-[#9f3f70]">
-                    Active
-                  </span>
-                ) : null}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-          </>
-        ) : null}
-        <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm"
-          onSelect={(event) => {
-            event.preventDefault();
-            onSwitchAccount?.();
-          }}
-          disabled={isBusy}
-        >
-          <Repeat2 className="h-4 w-4" />
-          Manage accounts
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm"
-          onSelect={(event) => {
-            event.preventDefault();
-            onConnectInstagram?.();
-          }}
-          disabled={isBusy}
-        >
-          <InstagramBrandMark className="h-4 w-4" />
-          Connect another Instagram
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-red-600 focus:text-red-600"
-          onSelect={(event) => {
-            event.preventDefault();
-            onLogout?.();
-          }}
-          disabled={isBusy}
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-function DashboardRefreshBadge() {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-[#f2d2e2] bg-[#fff0f7] px-3 py-2 text-sm text-[#9f3f70] shadow-[0_14px_40px_-32px_rgba(214,64,134,0.45)]">
-      <Loader2 className="h-4 w-4 animate-spin text-theme-primary" />
-      <span className="font-medium">New data arriving...</span>
-    </div>
-  )
-}
 
 function DashboardLoadingState({ owner }) {
   const ownerLabel = owner?.instagramHandle || owner?.name || "Instagram workspace"
@@ -1190,11 +1013,11 @@ function DashboardLoadingState({ owner }) {
   );
 }
 
-function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pendingAction }) {
+function DashboardAccessGate({ errorMessage, onBackHome, onConnectInstagram, pendingAction, isDarkTheme }) {
   const isConnecting = pendingAction === "instagram_auth";
 
   return (
-    <div className="brand-shell-bg min-h-screen flex items-center justify-center p-6">
+    <div className={`brand-shell-bg min-h-screen flex items-center justify-center p-6 text-[#1B4965] dark:text-white ${isDarkTheme ? 'dark' : ''}`}>
       <Card className="brand-panel w-full max-w-md overflow-hidden rounded-[30px] border-0 bg-white/92">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
