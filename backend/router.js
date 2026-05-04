@@ -92,6 +92,36 @@ function buildOwnerResponse(owner) {
   }
 }
 
+function resolveRequestBaseUrl(req) {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim()
+  const forwardedHost = String(req.headers["x-forwarded-host"] || "").split(",")[0].trim()
+  const host = forwardedHost || String(req.headers.host || "").trim()
+  const protocol = forwardedProto || req.protocol || "https"
+
+  if (host) {
+    return `${protocol}://${host}`
+  }
+
+  return config.frontendOrigins[0] || ""
+}
+
+function shouldAttemptCommentAutomation(comment) {
+  const timestamp = String(comment?.timestamp || "").trim()
+
+  if (!timestamp) {
+    return true
+  }
+
+  const commentTime = new Date(timestamp).getTime()
+
+  if (!Number.isFinite(commentTime)) {
+    return true
+  }
+
+  const AUTOMATION_FALLBACK_WINDOW_MS = 30 * 60 * 1000
+  return Date.now() - commentTime <= AUTOMATION_FALLBACK_WINDOW_MS
+}
+
 function buildLegacyAccountSummary(owner) {
   const base = buildOwnerResponse(owner)
 
@@ -1044,6 +1074,33 @@ router.get(
       mediaLimit: 6,
       commentsPerMedia: 10,
     })
+
+    const baseUrl = resolveRequestBaseUrl(req)
+    const followConfirmBaseUrl = baseUrl ? `${baseUrl}/api/automation/follow-confirm` : ""
+
+    await Promise.all(
+      comments.comments
+        .filter(shouldAttemptCommentAutomation)
+        .map((comment) =>
+          triggerCommentAutomation({
+            instagramAccountId: owner.instagramUserId,
+            postId: comment.mediaId,
+            commentText: comment.text,
+            commenterId: comment.commenterId,
+            commenterUsername: comment.commenterUsername,
+            commentId: comment.id,
+            eventField: "comments_refresh",
+            followConfirmBaseUrl,
+          }).catch((error) => {
+            console.error("Comment automation fallback failed:", {
+              commentId: comment.id,
+              mediaId: comment.mediaId,
+              message: error?.message || "Unknown error",
+            })
+            return null
+          }),
+        ),
+    )
 
     return res.status(200).json({
       items: comments.comments,
