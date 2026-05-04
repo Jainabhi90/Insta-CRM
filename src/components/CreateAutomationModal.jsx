@@ -10,16 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { X, MessageSquare, Mail, Gift, Zap } from "lucide-react";
 
 const requiredText = (label, maxLength) => {
-  let field = z.preprocess(
+  const baseField =
+    typeof maxLength === "number"
+      ? z.string().min(1, `${label} is required`).max(maxLength, `${label} is too long`)
+      : z.string().min(1, `${label} is required`);
+
+  return z.preprocess(
     (value) => (typeof value === "string" ? value.trim() : ""),
-    z.string().min(1, `${label} is required`),
+    baseField,
   );
-
-  if (typeof maxLength === "number") {
-    field = field.max(maxLength, `${label} is too long`);
-  }
-
-  return field;
 };
 
 const automationSchema = z.object({
