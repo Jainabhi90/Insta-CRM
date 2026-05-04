@@ -311,7 +311,8 @@ async function triggerCommentAutomation({
 
   await sendInstagramReply({
     accessToken: owner.longLivedAccessToken,
-    recipientId: commenterId,
+    commentId: normalizeText(commentId) || undefined,
+    recipientId: normalizeText(commentId) ? undefined : commenterId,
     text: followMessage,
     instagramAccountId: owner.instagramAccountId || undefined,
     instagramUserId: owner.instagramUserId || undefined,
