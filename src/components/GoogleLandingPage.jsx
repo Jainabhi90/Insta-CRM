@@ -1,46 +1,34 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
 import {
-  ArrowRight,
   BarChart3,
   CheckCircle2,
-  MessageCircle,
-  Rocket,
+  ChevronDown,
+  Instagram,
+  MessageSquare,
   Sparkles,
   Target,
   Zap,
+  Play,
+  ArrowRight,
+  Menu
 } from "lucide-react";
 import { buildGoogleAuthorizeUrl } from "../lib/googleAuthConfig";
 
-const previewRows = [
-  { stage: "Comment captured", lead: "@stylebyria", badge: "New" },
-  { stage: "Warm lead scored", lead: "@urbanbrewco", badge: "Priority" },
-  { stage: "DM flow triggered", lead: "@mynaturebox", badge: "Auto" },
-];
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-100px" },
+  transition: { duration: 0.6, ease: "easeOut" }
+};
 
-const previewMetrics = [
-  { label: "Set up", value: "3 mins" },
-  { label: "Brands", value: "500+" },
-  { label: "Reply lift", value: "9x" },
-];
-
-const featureCards = [
-  {
-    icon: MessageCircle,
-    title: "Comment-to-DM journeys",
-    description: "Catch intent from comments, trigger the right next step, and keep follow-up beautifully structured.",
-  },
-  {
-    icon: Target,
-    title: "Lead scoring workspace",
-    description: "Surface who is warm, who is ready, and who needs a second touch without spreadsheet chaos.",
-  },
-  {
-    icon: BarChart3,
-    title: "Post-level signal tracking",
-    description: "See which content is producing quality conversations instead of vanity noise.",
-  },
-];
+const stagger = {
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
+  viewport: { once: true, margin: "-100px" },
+  transition: { staggerChildren: 0.1 }
+};
 
 export function GoogleLandingPage() {
   const handleGoogleLogin = () => {
@@ -53,198 +41,300 @@ export function GoogleLandingPage() {
   };
 
   return (
-    <div className="brand-shell-bg isolate min-h-screen overflow-x-hidden text-slate-900">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-120px] top-18 h-80 w-80 rounded-full bg-[rgba(229,69,146,0.16)] blur-3xl" />
-        <div className="absolute right-[-140px] top-40 h-[26rem] w-[26rem] rounded-full bg-[rgba(192,132,252,0.18)] blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(214,165,193,.14)_1px,transparent_1px),linear-gradient(90deg,rgba(214,165,193,.14)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_center,black_20%,transparent_76%)]" />
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-slate-900 selection:text-white">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f8fafc_1px,transparent_1px),linear-gradient(to_bottom,#f8fafc_1px,transparent_1px)] bg-[size:4rem_4rem]">
+        <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_50%_-100px,#f1f5f9,transparent)]"></div>
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/72 backdrop-blur-xl">
-        <div className="mx-auto flex h-[76px] w-full max-w-7xl items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_46px_-30px_rgba(214,64,134,0.6)]">
-              <Sparkles className="h-5 w-5" />
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+              <Sparkles className="h-4 w-4" />
             </div>
-            <div>
-              <p className="text-base font-semibold tracking-tight text-slate-900">InstaLead</p>
-              <p className="text-xs text-[#8d6780]">Google onboarding</p>
-            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900">InstaLead</span>
+            <span className="ml-2 text-xs font-medium text-slate-400 border border-slate-200 bg-slate-50 px-2 py-0.5 rounded-full hidden sm:inline-block">Instagram CRM</span>
           </div>
-          <nav className="flex items-center gap-3 text-sm">
-            <a href="/pricing" className="hidden text-[#8d6780] transition-colors hover:text-slate-900 sm:inline">
-              Pricing
-            </a>
-            <a href="/privacy" className="hidden text-[#8d6780] transition-colors hover:text-slate-900 md:inline">
-              Privacy
-            </a>
-            <Button
-              size="sm"
-              className="brand-button-gradient rounded-full px-5 font-semibold"
-              onClick={handleGoogleLogin}
-            >
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-500 md:flex">
+            <a href="/" className="hover:text-slate-900 transition-colors">Home</a>
+            <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
+            <a href="/pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Button className="hidden sm:inline-flex rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm px-6 h-10" onClick={handleGoogleLogin}>
               Get Started
             </Button>
-          </nav>
+            <Button variant="ghost" size="icon" className="sm:hidden">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="relative z-10">
-        <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 px-4 pb-18 pt-16 md:px-6 lg:grid-cols-[1.02fr_.98fr] lg:pt-24">
-          <div className="animate-rise-in space-y-8">
-            <div className="brand-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm shadow-sm">
-              <Zap className="h-4 w-4 text-theme-primary" />
-              Built for creators scaling from comments and DMs
-            </div>
-
-            <div className="space-y-5">
-              <h1 className="max-w-3xl text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                A softer, smarter Instagram CRM
-                <span className="mt-2 block bg-gradient-to-r from-theme-primary via-[#ec4899] to-theme-accent bg-clip-text text-transparent">
-                  that starts with Google
-                </span>
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-[#715667]">
-                Connect Google once, add your Instagram accounts into the same workspace, and keep every lead, comment, DM, and automation feeling organized from day one.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <Button
-                size="lg"
-                className="brand-button-gradient h-14 rounded-full px-8 text-base font-semibold"
+      <main className="relative z-10 overflow-hidden">
+        {/* Hero Section */}
+        <section className="relative pt-20 pb-0 px-4 sm:px-6 lg:px-8 text-center max-w-6xl mx-auto">
+          <motion.div {...fadeIn}>
+            <h1 className="text-[3.5rem] sm:text-[4.5rem] lg:text-[5.5rem] font-bold tracking-tight text-slate-900 mb-6 leading-[1.05]">
+              Turn <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">Instagram Comments</span> <br className="hidden sm:block" />
+              into Leads in Seconds
+            </h1>
+            <p className="max-w-2xl mx-auto text-lg sm:text-xl text-slate-500 mb-10 leading-relaxed font-medium">
+              Just connect your Instagram, we'll turn every comment and DM into a trackable lead, complete with auto-replies, scoring, and a clean pipeline.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button 
+                className="group flex h-14 items-center gap-3 rounded-full bg-slate-900 px-8 text-white hover:bg-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-transform hover:scale-105 active:scale-95"
                 onClick={handleGoogleLogin}
               >
-                <Rocket className="mr-2 h-5 w-5" />
-                Continue with Google
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <div className="inline-flex items-center gap-2 text-sm text-[#8d6780]">
-                <CheckCircle2 className="h-4 w-4 text-theme-primary" />
-                Free 14-day trial, no credit card
+                <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>
+                </div>
+                <div className="text-left leading-tight">
+                  <div className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Connect with</div>
+                  <div className="text-sm font-bold">Google Workspace</div>
+                </div>
+              </button>
+            </div>
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-500">
+              <CheckCircle2 className="w-4 h-4 text-green-500" /> Free 14-day trial, no credit card
+            </div>
+          </motion.div>
+
+          {/* Hero 3 Phones Mockup */}
+          <motion.div 
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+            className="mt-20 relative mx-auto max-w-5xl h-[450px] sm:h-[550px] lg:h-[600px]"
+          >
+            <div className="absolute inset-0 flex justify-center items-end gap-2 sm:gap-6">
+              
+              {/* Left Phone */}
+              <div className="hidden sm:block w-[260px] h-[450px] bg-white rounded-[2.5rem] border-[8px] border-slate-900 shadow-2xl rotate-[-6deg] translate-y-12 translate-x-8 overflow-hidden relative z-0">
+                <div className="absolute top-0 inset-x-0 h-6 bg-white z-10 flex justify-center">
+                  <div className="w-24 h-4 bg-slate-900 rounded-b-2xl"></div>
+                </div>
+                <div className="p-4 pt-10 h-full bg-slate-50 flex flex-col">
+                  <h3 className="font-bold text-lg mb-4">Recent DMs</h3>
+                  <div className="space-y-3">
+                    {[1,2,3,4].map(i => (
+                      <div key={i} className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-2 w-20 bg-slate-800 rounded-full"></div>
+                          <div className="h-2 w-full bg-slate-200 rounded-full"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Center Phone */}
+              <div className="w-[300px] sm:w-[320px] h-[500px] sm:h-[580px] bg-white rounded-[2.5rem] border-[10px] border-slate-900 shadow-[0_30px_60px_rgba(0,0,0,0.15)] z-10 overflow-hidden relative">
+                <div className="absolute top-0 inset-x-0 h-7 bg-white z-20 flex justify-center">
+                  <div className="w-28 h-5 bg-slate-900 rounded-b-2xl"></div>
+                </div>
+                <div className="p-6 pt-14 h-full bg-white flex flex-col text-center">
+                  <h3 className="font-bold text-2xl mb-2 text-slate-900 leading-tight">What Auto-Reply <br/> Will You Create?</h3>
+                  <p className="text-xs text-slate-500 mb-8">Active Leads: 418 today</p>
+                  
+                  <div className="w-16 h-16 bg-slate-900 rounded-full mx-auto mb-8 flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="h-10 bg-slate-50 rounded-full border border-slate-100 flex items-center px-4 gap-3">
+                      <div className="w-4 h-4 rounded-full bg-green-400"></div>
+                      <div className="h-2 w-32 bg-slate-300 rounded-full"></div>
+                    </div>
+                    <div className="h-10 bg-slate-50 rounded-full border border-slate-100 flex items-center px-4 gap-3">
+                      <div className="w-4 h-4 rounded-full bg-blue-400"></div>
+                      <div className="h-2 w-24 bg-slate-300 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Phone */}
+              <div className="hidden sm:block w-[260px] h-[450px] bg-white rounded-[2.5rem] border-[8px] border-slate-900 shadow-2xl rotate-[6deg] translate-y-12 -translate-x-8 overflow-hidden relative z-0">
+                <div className="absolute top-0 inset-x-0 h-6 bg-white z-10 flex justify-center">
+                  <div className="w-24 h-4 bg-slate-900 rounded-b-2xl"></div>
+                </div>
+                <div className="p-4 pt-10 h-full bg-slate-50 flex flex-col">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-lg">Lead Score</h3>
+                    <div className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">+12%</div>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-end gap-2 pb-4">
+                    <div className="flex items-end gap-2 h-32 px-2">
+                      <div className="w-full bg-slate-200 rounded-t-md h-[40%]"></div>
+                      <div className="w-full bg-slate-300 rounded-t-md h-[60%]"></div>
+                      <div className="w-full bg-slate-800 rounded-t-md h-[90%]"></div>
+                      <div className="w-full bg-slate-400 rounded-t-md h-[50%]"></div>
+                      <div className="w-full bg-slate-900 rounded-t-md h-[100%]"></div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                      <div className="h-2 w-16 bg-slate-800 rounded-full mb-2"></div>
+                      <div className="h-2 w-full bg-slate-200 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Massive White fade at bottom to blend phones into background */}
+            <div className="absolute inset-x-0 bottom-[-50px] h-64 bg-gradient-to-t from-white via-white to-transparent pointer-events-none z-20"></div>
+          </motion.div>
+        </section>
+
+        {/* Social Proof & Stats */}
+        <section className="bg-white pt-10 pb-20 relative z-30">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">
+              Loved by 500+ brands worldwide
+            </p>
+            <div className="flex justify-center mb-12">
+              <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-4 py-1.5 rounded-full">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                </div>
+                <span className="text-xs font-bold text-slate-700 ml-2">4.9/5 from 200+ reviews</span>
               </div>
             </div>
 
-            <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-              {previewMetrics.map((item, index) => (
-                <div
-                  key={item.label}
-                  className={`brand-panel-soft rounded-[24px] p-4 animate-rise-in ${
-                    index === 1 ? "animate-rise-in-delay" : index === 2 ? "animate-rise-in-delay-2" : ""
-                  }`}
-                >
-                  <p className="text-xs uppercase tracking-wide text-[#9a728a]">{item.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{item.value}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
+              {[
+                { label: "Active Brands", value: "500+" },
+                { label: "Comments Processed", value: "2.4M+" },
+                { label: "Reply Speed Uplift", value: "8.3x" },
+                { label: "Avg. Setup Time", value: "4 min" },
+              ].map((stat, i) => (
+                <div key={i} className="border border-slate-100 rounded-2xl py-8 px-4 shadow-sm bg-white hover:border-slate-200 transition-colors">
+                  <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">{stat.value}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="animate-rise-in-delay relative">
-            <div className="brand-hero-card overflow-hidden rounded-[34px] p-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#9a728a]">
-                    Live workspace
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-slate-900">Revenue-ready command view</p>
-                </div>
-                <span className="rounded-full bg-[#fde8f2] px-3 py-1 text-xs font-semibold text-[#9f3f70]">
-                  Pink mode
-                </span>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {previewRows.map((row, index) => (
-                  <div
-                    key={row.lead}
-                    className="brand-panel-soft rounded-[26px] p-4 animate-rise-in"
-                    style={{ animationDelay: `${index * 130}ms` }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900">{row.stage}</p>
-                      <span className="rounded-full bg-gradient-to-r from-theme-primary to-theme-accent px-3 py-1 text-xs font-semibold text-white">
-                        {row.badge}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-[#7e5b71]">{row.lead}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                {[
-                  { label: "Auto replies", amount: "2.4k" },
-                  { label: "Active leads", amount: "418" },
-                  { label: "Won today", amount: "27" },
-                ].map((metric) => (
-                  <div key={metric.label} className="brand-panel-soft rounded-[22px] p-3 text-center">
-                    <p className="text-[11px] uppercase tracking-wide text-[#9a728a]">{metric.label}</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-900">{metric.amount}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-4 pb-20 md:px-6">
-          <div className="mb-10 text-center">
-            <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Why it feels better</p>
-            <h2 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
-              One product language across the whole workspace
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {featureCards.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card
-                  key={feature.title}
-                  className={`brand-panel overflow-hidden rounded-[28px] border-0 animate-rise-in ${
-                    index === 1 ? "animate-rise-in-delay" : index === 2 ? "animate-rise-in-delay-2" : ""
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fde8f2] text-theme-primary ring-1 ring-[rgba(229,69,146,0.12)]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-slate-900">{feature.title}</h3>
-                    <p className="mt-3 leading-7 text-[#715667]">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
+        {/* Bento Features Section */}
+        <section id="features" className="py-24 bg-slate-50 border-y border-slate-100">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <motion.div {...fadeIn} className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">• Features</h2>
+              <h3 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
+                Everything You Need to <br/> Dominate Instagram DMs
+              </h3>
+              <p className="text-lg text-slate-500 font-medium">
+                One app. Every tool serious creators need to grow fast and <br/> handle DMs without burnout.
+              </p>
+            </motion.div>
 
-        <section className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6">
-          <div className="brand-panel overflow-hidden rounded-[34px] p-8 text-center sm:p-12">
-            <p className="text-sm uppercase tracking-[0.24em] text-[#9a728a]">Start softly, scale fast</p>
-            <h3 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
-              Bring Instagram into a calmer operating system
-            </h3>
-            <p className="mx-auto mt-4 max-w-2xl text-[#715667]">
-              Move from scattered replies to one polished CRM flow with Google onboarding, workspace switching, and a cleaner visual language from the first click.
-            </p>
-            <Button
-              size="lg"
-              className="brand-button-gradient mt-8 h-14 rounded-full px-10 text-base font-semibold"
-              onClick={handleGoogleLogin}
+            <motion.div 
+              variants={stagger}
+              initial="initial"
+              whileInView="whileInView"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
-              Start with Google
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+              {/* Feature 1 - Chart */}
+              <motion.div variants={fadeIn} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
+                <h4 className="text-lg font-bold text-slate-900 mb-2">Model Performance</h4>
+                <p className="text-sm text-slate-500 mb-8">Track how your AI replies perform over time and identify revenue lift.</p>
+                <div className="h-48 w-full flex items-end gap-2 px-4">
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[30%]"></div>
+                  <div className="w-full bg-slate-200 rounded-t-lg h-[45%]"></div>
+                  <div className="w-full bg-slate-300 rounded-t-lg h-[60%]"></div>
+                  <div className="w-full bg-slate-400 rounded-t-lg h-[80%]"></div>
+                  <div className="w-full bg-slate-900 rounded-t-lg h-[100%] shadow-lg"></div>
+                </div>
+              </motion.div>
+
+              {/* Feature 2 - Funnel */}
+              <motion.div variants={fadeIn} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
+                <h4 className="text-lg font-bold text-slate-900 mb-2">AI Workflow Funnel</h4>
+                <p className="text-sm text-slate-500 mb-8">Visualize how your data moves from comment to closed lead instantly.</p>
+                <div className="h-48 w-full flex flex-col gap-2 justify-center">
+                  <div className="w-full bg-slate-900 rounded-md h-8 text-white text-xs flex items-center px-4 font-bold">45,820 Impressions</div>
+                  <div className="w-[80%] bg-slate-600 rounded-md h-8 text-white text-xs flex items-center px-4 font-bold">8,234 Comments</div>
+                  <div className="w-[50%] bg-slate-400 rounded-md h-8 text-white text-xs flex items-center px-4 font-bold">2,456 DMs</div>
+                  <div className="w-[30%] bg-slate-200 rounded-md h-8 text-slate-900 text-xs flex items-center px-4 font-bold">1,364 Leads</div>
+                </div>
+              </motion.div>
+
+              {/* Feature 3 - Intelligence */}
+              <motion.div variants={fadeIn} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
+                <h4 className="text-lg font-bold text-slate-900 mb-2">User Intelligence</h4>
+                <p className="text-sm text-slate-500 mb-8">Understand follower sentiment and measure engagement accurately.</p>
+                <div className="flex gap-8 items-center h-32">
+                  <div className="w-24 h-24 rounded-full border-[12px] border-slate-100 border-t-slate-900 border-r-slate-900"></div>
+                  <div className="space-y-3 flex-1">
+                    <div className="h-3 bg-slate-900 rounded-full w-[80%]"></div>
+                    <div className="h-3 bg-slate-200 rounded-full w-[40%]"></div>
+                    <div className="h-3 bg-slate-100 rounded-full w-[60%]"></div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Feature 4 - Monitoring */}
+              <motion.div variants={fadeIn} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
+                <h4 className="text-lg font-bold text-slate-900 mb-2">System Monitoring</h4>
+                <p className="text-sm text-slate-500 mb-8">Maintain health across all connected Instagram workspaces.</p>
+                <div className="grid grid-cols-4 gap-2 h-32">
+                  {[...Array(16)].map((_, i) => (
+                    <div key={i} className={`rounded-md ${i % 3 === 0 ? 'bg-slate-900' : i % 5 === 0 ? 'bg-slate-400' : 'bg-slate-100'}`}></div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* CTA Section (Dark Mode Footer) */}
+        <section className="relative py-32 bg-slate-950 overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
+          <div className="absolute right-0 bottom-0 opacity-10">
+            {/* Fake overlapping squares decoration */}
+            <div className="w-64 h-64 border-4 border-white rounded-[3rem] rotate-12 translate-x-20 translate-y-20"></div>
+            <div className="w-64 h-64 border-4 border-white rounded-[3rem] rotate-45 absolute top-0 left-0"></div>
+          </div>
+          
+          <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
+            <motion.div {...fadeIn}>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">• Launch Your Growth</h2>
+              <h3 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-10 tracking-tight leading-[1.1]">
+                Start Creating <br/> Viral Leads Today
+              </h3>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+                <Button size="lg" className="h-14 px-8 rounded-full bg-white text-slate-900 hover:bg-slate-100 font-bold w-full sm:w-auto" onClick={handleGoogleLogin}>
+                  <div className="w-5 h-5 mr-2 rounded-full bg-slate-900 flex items-center justify-center"><div className="w-2.5 h-2.5 bg-white rounded-full"></div></div> 
+                  Connect Google Workspace
+                </Button>
+              </div>
+            </motion.div>
           </div>
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-white/70 bg-white/65 py-10 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-[#8d6780] md:flex-row md:px-6">
-          <p>© 2026 InstaLead. Built for modern Instagram teams.</p>
-          <div className="flex items-center gap-5">
-            <a href="/terms" className="transition-colors hover:text-slate-900">Terms</a>
-            <a href="/privacy" className="transition-colors hover:text-slate-900">Privacy</a>
+      {/* Footer Minimal */}
+      <footer className="bg-slate-950 pt-0 pb-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-slate-900 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800 text-white">
+              <Sparkles className="h-3 w-3" />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-white">InstaLead</span>
+          </div>
+          <div className="flex gap-6 text-sm font-medium text-slate-500">
+            <a href="#" className="hover:text-white transition-colors">X (Twitter)</a>
+            <a href="#" className="hover:text-white transition-colors">Instagram</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
           </div>
         </div>
       </footer>
