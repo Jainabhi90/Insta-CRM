@@ -149,34 +149,22 @@ export function DmInbox({
 
   return (
     <div className="p-8">
-      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">Conversations</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-            Direct Message Inbox
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Review incoming messages, keep context close, and respond without leaving the workspace.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-            <span>{inboxSummary.totalConversations} conversations</span>
-            <span>Latest activity: {inboxSummary.latestActivityLabel}</span>
-            {inboxSummary.accountUsername ? (
-              <span>Connected account: @{inboxSummary.accountUsername}</span>
-            ) : null}
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">Inbox Overview</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="text-gray-500 font-medium">
+            {inboxSummary.totalConversations} conversations
+          </Badge>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing || typeof onRefresh !== "function"}
+            className="rounded-lg border-gray-200 bg-white text-sm shadow-sm h-8 px-3"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={isRefreshing || typeof onRefresh !== "function"}
-          className="rounded-2xl border-[#f2d2e2] bg-white"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
       </div>
 
       {replyStatus.message ? (
@@ -191,7 +179,7 @@ export function DmInbox({
         </div>
       ) : null}
 
-      <div className="brand-panel-soft overflow-hidden rounded-[28px]">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-6">
         {normalizedConversations.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {normalizedConversations.map((conversation) => (
@@ -199,8 +187,8 @@ export function DmInbox({
                 key={conversation._rowId}
                 className={`p-5 cursor-pointer transition-colors ${
                   selectedConversation?._rowId === conversation._rowId
-                    ? "bg-[#fff0f7]"
-                    : "hover:bg-[#fff7fb]"
+                    ? "bg-indigo-50/50"
+                    : "hover:bg-gray-50"
                 }`}
                 onClick={() => handleSelectConversation(conversation)}
               >
@@ -242,11 +230,11 @@ export function DmInbox({
         )}
       </div>
 
-      <div className="brand-panel-soft mt-6 rounded-[28px] p-5">
-        <h2 className="text-lg mb-1" style={{ fontWeight: 600 }}>
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+        <h2 className="text-base font-semibold leading-6 text-gray-900 mb-1">
           Reply Composer
         </h2>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-gray-500 mb-4">
           Select a conversation above, draft a response, and send it when it feels right.
         </p>
 
@@ -305,7 +293,7 @@ export function DmInbox({
         ) : null}
 
         <Button
-          className="brand-button-gradient"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
           onClick={handleSendReply}
           disabled={isSendingReply || !selectedConversation || !selectedConversation?.canReply}
         >

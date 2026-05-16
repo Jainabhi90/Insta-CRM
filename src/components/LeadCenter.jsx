@@ -211,38 +211,25 @@ export function LeadCenter({
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <div className="brand-hero-card rounded-[28px] p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">Overview</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Lead Command Center</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Spot your strongest opportunities first, keep conversations moving, and reply from one calm workspace.</p>
-        </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">Quick Stats</h2>
         <div className="flex items-center gap-3">
-          <Badge className="border-transparent bg-[#fde8f2] text-[#9f3f70] hover:bg-[#fce1ee]">
+          <Badge variant="outline" className="text-gray-500 font-medium">
             Latest activity
           </Badge>
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="rounded-2xl border-[#f2d2e2] bg-white"
+            className="rounded-lg border-gray-200 bg-white text-sm shadow-sm h-8 px-3"
           >
             {isRefreshing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Refreshing
-              </>
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </>
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             )}
+            Refresh
           </Button>
-        </div>
-      </div>
         </div>
       </div>
       {replyStatus.message ? (
@@ -259,49 +246,66 @@ export function LeadCenter({
 
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <p className="text-sm text-gray-600 mb-1">Total Leads</p>
-          <p className="text-3xl font-bold" style={{ fontWeight: 700 }}>{leadSummary.totalLeads}</p>
-          <p className="text-sm text-green-600 mt-1">{leadSummary.weeklyGrowth}</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-gray-500 mb-2">Total Leads</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{leadSummary.totalLeads}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-green-50 text-green-700 md:mt-2 lg:mt-0">
+              {leadSummary.weeklyGrowth}
+            </span>
+          </div>
         </div>
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <p className="text-sm text-gray-600 mb-1">Hot Leads</p>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.hotLeads}</p>
-          <p className="text-sm text-orange-600 mt-1">{leadSummary.hotLeadLabel}</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-gray-500 mb-2">Hot Leads</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{leadSummary.hotLeads}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-orange-50 text-orange-700 md:mt-2 lg:mt-0">
+              {leadSummary.hotLeadLabel}
+            </span>
+          </div>
         </div>
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <p className="text-sm text-gray-600 mb-1">Response Rate</p>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.responseRate}</p>
-          <p className="text-sm text-green-600 mt-1">{leadSummary.responseTrend}</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-gray-500 mb-2">Response Rate</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{leadSummary.responseRate}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-green-50 text-green-700 md:mt-2 lg:mt-0">
+              {leadSummary.responseTrend}
+            </span>
+          </div>
         </div>
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <p className="text-sm text-gray-600 mb-1">Est. Revenue</p>
-          <p className="text-3xl" style={{ fontWeight: 700 }}>{leadSummary.estimatedRevenue}</p>
-          <p className="text-sm text-green-600 mt-1">{leadSummary.revenueLabel}</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-gray-500 mb-2">Est. Revenue</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{leadSummary.estimatedRevenue}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-green-50 text-green-700 md:mt-2 lg:mt-0">
+              {leadSummary.revenueLabel}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">Lead Activity</h2>
+        <div className="relative max-w-md w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Search by handle or post..."
-            className="pl-10 bg-white"
+            className="pl-10 bg-white rounded-lg border-gray-200 h-9 shadow-sm"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
       </div>
 
-      <div className="brand-panel-soft overflow-hidden rounded-[28px] mb-8">
+      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm mb-8">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead style={{ fontWeight: 600 }}>User Handle</TableHead>
-              <TableHead style={{ fontWeight: 600 }}>Last Interaction</TableHead>
-              <TableHead style={{ fontWeight: 600 }}>Lead Score</TableHead>
-              <TableHead style={{ fontWeight: 600 }}>Source Post</TableHead>
-              <TableHead style={{ fontWeight: 600 }}>Interactions</TableHead>
+            <TableRow className="bg-gray-50/50 border-b border-gray-200">
+              <TableHead className="font-semibold text-gray-900">User Handle</TableHead>
+              <TableHead className="font-semibold text-gray-900">Last Interaction</TableHead>
+              <TableHead className="font-semibold text-gray-900">Lead Score</TableHead>
+              <TableHead className="font-semibold text-gray-900">Source Post</TableHead>
+              <TableHead className="font-semibold text-gray-900">Interactions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -348,25 +352,23 @@ export function LeadCenter({
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="brand-panel-soft overflow-hidden rounded-[28px]">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageCircleReply className="w-5 h-5 text-[#2563eb]" />
-                  <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Comments</h2>
-                </div>
-                <p className="text-sm text-slate-500">
-                  Track fresh conversations on your recent posts and jump into private follow-up when needed.
-                </p>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+          <div className="border-b border-gray-100 p-6 bg-gray-50/50">
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <MessageCircleReply className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-base font-semibold leading-6 text-gray-900">Instagram Comments</h2>
               </div>
-              <Badge variant="outline">
+              <Badge variant="outline" className="bg-white">
                 {commentStats.totalComments} comments
               </Badge>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-              <span>Posts reviewed: {commentStats.mediaReviewed}</span>
-              <span>Latest activity: {commentStats.latestActivityLabel}</span>
+            <p className="text-sm text-gray-500 mb-4">
+              Track fresh conversations on your recent posts.
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>{commentStats.mediaReviewed} posts</span>
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>{commentStats.latestActivityLabel}</span>
             </div>
           </div>
 
@@ -434,26 +436,24 @@ export function LeadCenter({
           </div>
         </div>
 
-        <div className="brand-panel-soft overflow-hidden rounded-[28px]">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="w-5 h-5 text-[#f97316]" />
-                  <h2 className="text-xl" style={{ fontWeight: 600 }}>Instagram Inbox</h2>
-                </div>
-                <p className="text-sm text-slate-500">
-                  Stay close to active conversations and keep the latest replies easy to scan.
-                </p>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+          <div className="border-b border-gray-100 p-6 bg-gray-50/50">
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-base font-semibold leading-6 text-gray-900">Instagram Inbox</h2>
               </div>
-              <Badge variant="outline">
-                {inboxStats.totalConversations} conversations
+              <Badge variant="outline" className="bg-white">
+                {inboxStats.totalConversations} active
               </Badge>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
-              <span>Latest activity: {inboxStats.latestActivityLabel}</span>
+            <p className="text-sm text-gray-500 mb-4">
+              Stay close to active conversations.
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>{inboxStats.latestActivityLabel}</span>
               {inboxStats.accountUsername ? (
-                <span>Connected account: @{inboxStats.accountUsername}</span>
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>@{inboxStats.accountUsername}</span>
               ) : null}
             </div>
           </div>

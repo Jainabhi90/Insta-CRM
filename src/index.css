@@ -3155,32 +3155,25 @@ body {
 }
 
 .brand-shell-bg {
-  background:
-    radial-gradient(circle at top left, var(--color-theme-shell-glow), transparent 22%),
-    radial-gradient(circle at bottom right, var(--color-theme-shell-glow-alt), transparent 20%),
-    linear-gradient(180deg, var(--color-theme-shell-top) 0%, var(--color-theme-shell-bottom) 100%);
+  background-color: #F8FAFC;
 }
 
 .brand-panel {
-  border: 1px solid rgba(214, 165, 193, 0.22);
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 36px 120px -72px rgba(106, 54, 87, 0.45);
-  backdrop-filter: blur(18px);
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
 .brand-panel-soft {
-  border: 1px solid rgba(214, 165, 193, 0.18);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 24px 70px -56px rgba(106, 54, 87, 0.36);
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .brand-hero-card {
-  background:
-    radial-gradient(circle at top left, rgba(229, 69, 146, 0.11), transparent 38%),
-    radial-gradient(circle at bottom right, rgba(192, 132, 252, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,247,252,0.98) 100%);
-  border: 1px solid rgba(214, 165, 193, 0.2);
-  box-shadow: 0 34px 100px -70px rgba(106, 54, 87, 0.42);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .brand-button-gradient {

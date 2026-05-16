@@ -7,15 +7,16 @@ import {
   LogOut,
   MessageCircle,
   Repeat2,
+  Settings,
   Users,
   Zap,
+  Bell,
 } from "lucide-react";
 import { LandingPage } from "./components/LandingPage";
 import { DarkLandingPage } from "./components/DarkLandingPage";
 import { GoogleLandingPage } from "./components/GoogleLandingPage";
 import { PricingPage } from "./components/PricingPage";
 import { AuthModal } from "./components/AuthModal";
-import { DashboardSidebar } from "./components/DashboardSidebar";
 import { LeadCenter } from "./components/LeadCenter";
 import { CommentsInbox } from "./components/CommentsInbox";
 import { DmInbox } from "./components/DmInbox";
@@ -829,48 +830,53 @@ export default function App() {
 
   return (
     <div className="brand-shell-bg min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] gap-5 px-4 py-4 sm:px-5 lg:px-6">
-        <DashboardSidebar activeView={activeView} onViewChange={setActiveView} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="brand-panel sticky top-4 z-30 mb-6 overflow-hidden rounded-[32px]">
-            <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6 lg:px-7">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-theme-primary via-[#f472b6] to-theme-accent text-white shadow-[0_22px_44px_-26px_rgba(214,64,134,0.65)]">
-                    <ActiveViewIcon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">
-                      {activeViewMeta.eyebrow}
-                    </p>
-                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
-                      {activeViewMeta.title}
-                    </h1>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                      {activeViewMeta.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                  {isDashboardLoading ? <DashboardRefreshBadge /> : null}
-                  <DashboardAccountMenu
-                    gowner={session.gowner}
-                    owner={session.owner}
-                    accounts={session.accounts || []}
-                    pendingAction={pendingAction}
-                    onSwitchAccount={handleSwitchAccount}
-                    onSelectAccount={handleSelectWorkspaceAccount}
-                    onConnectInstagram={handleInstagramAuth}
-                    onLogout={handleLogout}
-                  />
-                </div>
-              </div>
+      <div className="flex min-h-screen w-full flex-col">
+        <header className="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-gray-200 pt-1">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-2 w-48 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
+              IL
             </div>
-            <DashboardMobileTabs activeView={activeView} onViewChange={setActiveView} />
-          </header>
+            <span className="text-xl font-bold text-gray-900">InstaLead</span>
+          </div>
 
-          <main className="min-w-0 flex-1 pb-6">
-            <div className="brand-panel rounded-[34px] border-0 bg-white/65">
+          {/* Center: Pill Navigation */}
+          <nav className="flex overflow-x-auto hide-scrollbar items-center gap-1 bg-white rounded-full p-1 border border-gray-200 shadow-sm mx-auto">
+            {Object.entries(DASHBOARD_VIEW_META).map(([key, meta]) => (
+              <button
+                key={key}
+                onClick={() => setActiveView(key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeView === key
+                    ? "bg-gray-900 text-white shadow"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                {meta.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right: Actions and Profile */}
+          <div className="flex items-center justify-end gap-3 w-48 shrink-0">
+            <button className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <Bell className="w-4 h-4" />
+            </button>
+            <DashboardAccountMenu
+              gowner={session.gowner}
+              owner={session.owner}
+              accounts={session.accounts || []}
+              pendingAction={pendingAction}
+              onSwitchAccount={handleSwitchAccount}
+              onSelectAccount={handleSelectWorkspaceAccount}
+              onConnectInstagram={handleInstagramAuth}
+              onLogout={handleLogout}
+            />
+          </div>
+        </header>
+        
+        <main className="min-w-0 flex-1 py-8 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
               {activeView === "leads" && (
                 <LeadCenter
                   owner={session.owner}
@@ -919,36 +925,6 @@ export default function App() {
               )}
             </div>
           </main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DashboardMobileTabs({ activeView, onViewChange }) {
-  return (
-    <div className="border-t border-slate-200/80 px-3 py-3 lg:hidden">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {Object.entries(DASHBOARD_VIEW_META).map(([key, meta]) => {
-          const Icon = meta.icon;
-          const isActive = key === activeView;
-
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onViewChange(key)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-all ${
-                isActive
-                  ? "bg-gradient-to-r from-theme-primary to-theme-accent text-white shadow-[0_18px_36px_-26px_rgba(214,64,134,0.5)]"
-                  : "bg-[#fff3f9] text-[#8d6780] hover:bg-[#fde8f2] hover:text-slate-900"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {meta.label}
-            </button>
-          );
-        })}
       </div>
     </div>
   );
@@ -974,41 +950,29 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex max-w-full items-center gap-3 rounded-[22px] border border-[#f2d2e2] bg-white/92 px-3.5 py-2.5 text-left shadow-[0_22px_55px_-36px_rgba(106,54,87,0.4)] transition-all hover:-translate-y-0.5 hover:border-[#e9b7d0] hover:shadow-[0_26px_58px_-36px_rgba(106,54,87,0.46)] focus:outline-none focus:ring-2 focus:ring-[rgba(229,69,146,0.45)] focus:ring-offset-2"
+          className="relative inline-flex items-center justify-center rounded-full h-10 w-10 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition-transform hover:scale-105"
           aria-label="Open account menu"
           disabled={isBusy}
         >
-          <div className="relative">
-            <Avatar className="h-11 w-11 border border-slate-200 shadow-sm">
-              <AvatarImage src={owner?.avatarUrl || owner?.profilePictureUrl || ""} alt={instagramHandle} />
-                <AvatarFallback className="bg-gradient-to-br from-theme-primary to-theme-accent text-white">
-                  {getInitials(instagramHandle)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 rounded-full border border-white bg-white p-0.5 shadow-sm">
-                <InstagramBrandMark className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="hidden min-w-0 max-w-[180px] sm:block">
-            <p className="truncate text-sm font-semibold text-slate-900">{instagramHandle}</p>
-            <p className="truncate text-xs text-slate-500">
-              {selectedCount} connected account{selectedCount === 1 ? "" : "s"}
-            </p>
-          </div>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <Avatar className="h-10 w-10 border border-gray-200 shadow-sm">
+            <AvatarImage src={owner?.avatarUrl || owner?.profilePictureUrl || ""} alt={instagramHandle} />
+            <AvatarFallback className="bg-gray-900 text-white text-xs font-medium">
+              {getInitials(instagramHandle)}
+            </AvatarFallback>
+          </Avatar>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         sideOffset={14}
         collisionPadding={20}
-        className="w-[290px] rounded-[24px] border border-[#f2d2e2] bg-white/98 p-2 shadow-[0_30px_90px_-56px_rgba(106,54,87,0.45)] backdrop-blur"
+        className="w-[320px] rounded-[24px] border border-gray-200 bg-white p-3 shadow-xl backdrop-blur"
       >
-        <DropdownMenuLabel className="rounded-[18px] bg-[#fff4fa] px-4 py-3">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-900">{instagramHandle}</p>
-            <p className="text-xs text-slate-500">IG ID: {instagramUserId}</p>
-            {gowner?.email ? <p className="text-xs text-slate-400">{gowner.email}</p> : null}
+        <DropdownMenuLabel className="rounded-[18px] bg-gray-50 px-4 py-4 mb-2">
+          <div className="space-y-1.5">
+            <p className="text-base font-semibold text-gray-900">{instagramHandle}</p>
+            <p className="text-sm text-gray-500">IG ID: {instagramUserId}</p>
+            {gowner?.email ? <p className="text-sm text-gray-400">{gowner.email}</p> : null}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -1052,36 +1016,36 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
           </>
         ) : null}
         <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm"
+          className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50"
           onSelect={(event) => {
             event.preventDefault();
             onSwitchAccount?.();
           }}
           disabled={isBusy}
         >
-          <Repeat2 className="h-4 w-4" />
+          <Repeat2 className="h-5 w-5 text-gray-400" />
           Manage accounts
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm"
+          className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50"
           onSelect={(event) => {
             event.preventDefault();
             onConnectInstagram?.();
           }}
           disabled={isBusy}
         >
-          <InstagramBrandMark className="h-4 w-4" />
+          <InstagramBrandMark className="h-5 w-5 text-gray-400" />
           Connect another Instagram
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-red-600 focus:text-red-600"
+          className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-red-600 focus:text-red-600 hover:bg-red-50 focus:bg-red-50"
           onSelect={(event) => {
             event.preventDefault();
             onLogout?.();
           }}
           disabled={isBusy}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-5 w-5" />
           Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
