@@ -28,8 +28,8 @@ function ReplyComposer({ comment, disabled, onCancel, onSubmit }) {
   };
 
   return (
-    <div className="mt-4 rounded-xl border border-[#f2d2e2] bg-[#fff0f7] p-4">
-      <p className="text-sm text-[#8e295c]" style={{ fontWeight: 600 }}>
+    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <p className="text-sm text-gray-900 font-semibold">
         Send private reply to @{comment.commenterUsername || "instagram_user"}
       </p>
       <Textarea
@@ -42,7 +42,7 @@ function ReplyComposer({ comment, disabled, onCancel, onSubmit }) {
       <div className="mt-3 flex items-center gap-2">
         <Button
           size="sm"
-          className="brand-button-gradient"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
           onClick={handleSubmit}
           disabled={disabled || !replyText.trim()}
         >
@@ -156,32 +156,22 @@ export function CommentsInbox({
 
   return (
     <div className="p-8">
-      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">Community</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-            Comments Inbox
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Stay on top of fresh comments, scan the context quickly, and send a private reply when needed.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-            <span>{commentSummary.totalComments} comments</span>
-            <span>{commentSummary.mediaReviewed} posts reviewed</span>
-            <span>Latest activity: {commentSummary.latestActivityLabel}</span>
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">Comments Overview</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="text-gray-500 font-medium">
+            {commentSummary.totalComments} comments
+          </Badge>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing || typeof onRefresh !== "function"}
+            className="rounded-lg border-gray-200 bg-white text-sm shadow-sm h-8 px-3"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={isRefreshing || typeof onRefresh !== "function"}
-          className="rounded-2xl border-[#f2d2e2] bg-white"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
       </div>
 
       {status.message ? (
@@ -196,7 +186,7 @@ export function CommentsInbox({
         </div>
       ) : null}
 
-      <div className="brand-panel-soft overflow-hidden rounded-[28px]">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-6">
         {comments.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {comments.map((comment, index) => {

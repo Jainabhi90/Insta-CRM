@@ -150,25 +150,20 @@ export function Automations({
   return (
     <>
       <div className="p-8">
-        <div className="mb-8">
-          <div className="brand-hero-card rounded-[28px] p-6">
-            <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Automation studio</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Automation Playbook</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                Build polished reply flows for specific posts, keep message quality high, and switch rules on when the timing is right.
-              </p>
-            </div>
-            <Button 
-              className="brand-button-gradient rounded-2xl px-5"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Automation
-            </Button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8 mt-2">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Automation Playbook</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Build reply flows and switch rules on when the timing is right.
+            </p>
           </div>
-          </div>
+          <Button 
+            className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Automation
+          </Button>
         </div>
 
         {status.message ? (
@@ -185,20 +180,20 @@ export function Automations({
 
         {/* Stats */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-          <div className="brand-panel-soft rounded-[24px] p-6">
-            <p className="text-sm text-slate-500 mb-1">Active automations</p>
-            <p className="text-3xl font-bold text-slate-900">{enabledCount}/{templates.length}</p>
-            <p className="text-sm text-emerald-600 mt-1">Ready when new replies arrive</p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Active automations</p>
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{enabledCount}/{templates.length}</p>
+            <p className="text-sm text-emerald-600 mt-2">Ready when new replies arrive</p>
           </div>
-          <div className="brand-panel-soft rounded-[24px] p-6">
-            <p className="text-sm text-slate-500 mb-1">Replies today</p>
-            <p className="text-3xl font-bold text-slate-900">{stats.autoRepliesToday}</p>
-            <p className="text-sm text-slate-500 mt-1">Average response: {stats.averageResponseTime}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Replies today</p>
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{stats.autoRepliesToday}</p>
+            <p className="text-sm text-gray-500 mt-2">Average response: {stats.averageResponseTime}</p>
           </div>
-          <div className="brand-panel-soft rounded-[24px] p-6">
-            <p className="text-sm text-slate-500 mb-1">Time saved</p>
-            <p className="text-3xl font-bold text-slate-900">{stats.timeSaved}</p>
-            <p className="text-sm text-slate-500 mt-1">{stats.timeSavedLabel}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-2">Time saved</p>
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{stats.timeSaved}</p>
+            <p className="text-sm text-gray-500 mt-2">{stats.timeSavedLabel}</p>
           </div>
         </div>
 
@@ -209,20 +204,20 @@ export function Automations({
             return (
               <Card
                 key={template.id}
-                className={`overflow-hidden border transition-all duration-200 ${
+                className={`overflow-hidden border transition-all duration-200 rounded-2xl ${
                   template.enabled
-                    ? "border-[#e9b7d0] bg-[linear-gradient(180deg,#ffffff_0%,#fff5fb_100%)] shadow-[0_24px_60px_-48px_rgba(106,54,87,0.35)]"
-                    : "border-[#f2d2e2] bg-white shadow-sm"
+                    ? "border-indigo-200 bg-indigo-50/30 shadow-md ring-1 ring-inset ring-indigo-100"
+                    : "border-gray-200 bg-white shadow-sm"
                 }`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                           template.enabled
-                            ? "bg-gradient-to-br from-theme-primary to-theme-accent text-white"
-                            : "bg-[#fff1f8] text-[#9f3f70]"
+                            ? "bg-indigo-600 text-white shadow-sm"
+                            : "bg-gray-100 text-gray-500"
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -295,9 +290,9 @@ export function Automations({
         </div>
 
         {/* Info Banner */}
-        <div className="mt-8 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.1),_transparent_35%),linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] p-6">
-          <h3 className="text-lg mb-2 font-semibold text-slate-900">{tipContent.title}</h3>
-          <p className="text-slate-700">
+        <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/50 p-6 shadow-sm">
+          <h3 className="text-base font-semibold leading-6 text-gray-900 mb-2">{tipContent.title}</h3>
+          <p className="text-sm text-gray-700">
             {tipContent.body}
           </p>
         </div>

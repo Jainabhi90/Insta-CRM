@@ -48,57 +48,65 @@ export function PostPerformance({ summary, posts, insight }) {
 
   return (
     <div className="p-8">
-      <div className="brand-hero-card mb-8 rounded-[28px] p-6">
-        <p className="text-sm font-medium text-slate-500">Insights</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Post Performance</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Keep an eye on reach, engagement, and which posts are creating the strongest response.
-        </p>
-      </div>
-
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Eye className="w-5 h-5 text-theme-primary" />
-            <p className="text-sm text-gray-600">Total Views</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 mt-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Eye className="w-4 h-4 text-indigo-600" />
+            <p className="text-sm font-medium text-gray-500">Total Views</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalViews}</p>
-          <p className="text-sm text-gray-600 mt-1">Last 30 days</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{summaryCards.totalViews}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-gray-50 text-gray-600">
+              Last 30 days
+            </span>
+          </div>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Heart className="w-5 h-5 text-red-500" />
-            <p className="text-sm text-gray-600">Total Likes</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-rose-500" />
+            <p className="text-sm font-medium text-gray-500">Total Likes</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalLikes}</p>
-          <p className="text-sm text-green-600 mt-1">{summaryCards.likesTrend}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{summaryCards.totalLikes}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-green-50 text-green-700">
+              {summaryCards.likesTrend}
+            </span>
+          </div>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-theme-accent" />
-            <p className="text-sm text-gray-600">Total Comments</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <MessageSquare className="w-4 h-4 text-blue-500" />
+            <p className="text-sm font-medium text-gray-500">Total Comments</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.totalComments}</p>
-          <p className="text-sm text-green-600 mt-1">{summaryCards.commentsTrend}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{summaryCards.totalComments}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-green-50 text-green-700">
+              {summaryCards.commentsTrend}
+            </span>
+          </div>
         </div>
         
-        <div className="brand-panel-soft rounded-[24px] p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-gray-600">Avg Engagement</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-4 h-4 text-emerald-600" />
+            <p className="text-sm font-medium text-gray-500">Avg Engagement</p>
           </div>
-          <p className="text-3xl font-bold">{summaryCards.averageEngagement}</p>
-          <p className="text-sm text-gray-600 mt-1">{summaryCards.engagementLabel}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{summaryCards.averageEngagement}</p>
+            <span className="inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium bg-gray-50 text-gray-600">
+              {summaryCards.engagementLabel}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {performancePosts.length > 0 ? performancePosts.map((post) => (
-          <Card key={post.id} className="brand-panel-soft overflow-hidden border-0 transition-all hover:-translate-y-0.5">
+          <Card key={post.id} className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md">
             <div className="relative">
               <ImageWithFallback
                 src={post.thumbnail}
@@ -172,12 +180,12 @@ export function PostPerformance({ summary, posts, insight }) {
         )}
       </div>
 
-        <div className="brand-hero-card mt-8 rounded-[28px] p-6">
-        <h3 className="text-lg mb-2 font-semibold text-slate-900">{insightContent.title}</h3>
-        <p className="text-gray-700 mb-2">
+        <div className="rounded-2xl border border-gray-200 bg-indigo-50/50 mt-8 p-6 shadow-sm">
+        <h3 className="text-base font-semibold leading-6 text-gray-900 mb-2">{insightContent.title}</h3>
+        <p className="text-sm text-gray-700 mb-2">
           {insightContent.body}
         </p>
-        <p className="text-gray-600 text-sm">
+        <p className="text-xs text-gray-500">
           {insightContent.note}
         </p>
       </div>
