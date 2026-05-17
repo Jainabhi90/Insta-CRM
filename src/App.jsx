@@ -63,6 +63,8 @@ import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 import { normalizeSession } from "./adapters/ownerAdapter";
 
+import { buildGoogleAuthorizeUrl } from "./lib/googleAuthConfig";
+
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
 
@@ -246,6 +248,15 @@ export default function App() {
     setShowAuthModal(false);
   };
 
+  const handleGoogleLogin = () => {
+    const authorizeUrl = buildGoogleAuthorizeUrl();
+    if (!authorizeUrl) {
+      window.alert("Google login is not configured. Set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI.");
+      return;
+    }
+    window.location.assign(authorizeUrl);
+  };
+
   const openInstagramModal = () => {
     if (pendingAction) {
       return;
@@ -261,7 +272,7 @@ export default function App() {
       return;
     }
 
-    navigate("/google-auth");
+    handleGoogleLogin();
   };
 
   const openSignupModal = () => {
@@ -342,7 +353,7 @@ export default function App() {
       return;
     }
 
-    navigate("/google-auth");
+    handleGoogleLogin();
   };
 
   const handleInstagramAuth = async () => {
