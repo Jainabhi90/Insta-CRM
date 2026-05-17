@@ -112,6 +112,10 @@ const automationSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    dmLimit: {
+      type: Number,
+      default: 3,
+    },
     workflowKey: {
       type: String,
       default: "comment_listener",

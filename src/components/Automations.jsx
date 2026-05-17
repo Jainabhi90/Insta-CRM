@@ -35,6 +35,8 @@ function mapTemplate(template, index) {
     iconName: template.iconName || template.icon || "MessageSquare",
     category: template.category,
     enabled: Boolean(template.enabled),
+    sentCount: Number(template.sentCount || 0),
+    dmLimit: Number(template.dmLimit || 3),
   };
 }
 
@@ -268,16 +270,28 @@ export function Automations({
                         </Badge>
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 -mt-2 -mr-2 h-8 w-8"
-                      onClick={() => handleDeleteTemplate(template.id)}
-                      title="Delete automation"
-                      disabled={deletingId === template.id}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2 -mt-1 -mr-2">
+                      {template.sentCount >= template.dmLimit ? (
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/10">
+                          DM limit exceeds ({template.sentCount}/{template.dmLimit})
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                          DMs: {template.sentCount}/{template.dmLimit}
+                        </span>
+                      )}
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
+                        onClick={() => handleDeleteTemplate(template.id)}
+                        title="Delete automation"
+                        disabled={deletingId === template.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
                 </CardHeader>
@@ -301,7 +315,15 @@ export function Automations({
                     </div>
 
                     <div className="pt-4 mt-2 border-t border-gray-100">
-                      {template.enabled ? (
+                      {template.sentCount >= template.dmLimit ? (
+                        <Button 
+                          className="w-full bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed font-medium shadow-none"
+                          disabled
+                        >
+                          <Square className="w-4 h-4 mr-2" />
+                          DM Limit Exceeded
+                        </Button>
+                      ) : template.enabled ? (
                         <Button 
                           variant="outline" 
                           className="w-full text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-gray-200"

@@ -66,7 +66,7 @@ function buildAutomationDocument(owner, payload, currentAutomation = null) {
   }
 }
 
-function buildAutomationResponse(automation) {
+function buildAutomationResponse(automation, sentCount = 0) {
   return {
     id: automation._id.toString(),
     automation_id: automation._id.toString(),
@@ -93,6 +93,8 @@ function buildAutomationResponse(automation) {
     active: Boolean(automation.active),
     enabled: Boolean(automation.enabled),
     workflowKey: automation.workflowKey,
+    sentCount: Number(sentCount || 0),
+    dmLimit: Number(automation.dmLimit || 3),
     createdAt: automation.createdAt,
     updatedAt: automation.updatedAt,
   }
@@ -102,6 +104,29 @@ async function listOwnerAutomations(owner) {
   const automations = await Automation.find({
     ownerId: owner._id,
   }).sort({ updatedAt: -1, createdAt: -1 })
+
+  // Aggregate sent DMs per automation
+  const sentCounts = await DmLog.aggregate([
+    {
+      $match: {
+        ownerId: owner._id,
+        stage: "sent",
+      },
+    },
+    {
+      $group: {
+        _id: "$automationId",
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  const sentCountMap = sentCounts.reduce((accumulator, entry) => {
+    if (entry._id) {
+      accumulator[entry._id.toString()] = entry.count
+    }
+    return accumulator
+  }, {})
 
   const stats = await DmLog.aggregate([
     {
@@ -123,7 +148,9 @@ async function listOwnerAutomations(owner) {
   }, {})
 
   return {
-    automations: automations.map(buildAutomationResponse),
+    automations: automations.map((auto) =>
+      buildAutomationResponse(auto, sentCountMap[auto._id.toString()] || 0)
+    ),
     summary: {
       autoRepliesToday: Number(statMap.sent || 0),
       averageResponseTime: "Instant",
@@ -163,7 +190,7 @@ async function createOwnerAutomation(owner, payload) {
   }
 
   const automation = await Automation.create(automationData)
-  return buildAutomationResponse(automation)
+  return buildAutomationResponse(automation, 0)
 }
 
 async function updateOwnerAutomation(owner, automationId, payload) {
@@ -178,6 +205,20 @@ async function updateOwnerAutomation(owner, automationId, payload) {
     throw error
   }
 
+  // Prevent enabling/starting if the limit has already been exceeded
+  if (payload.enabled === true || payload.active === true) {
+    const sentCount = await DmLog.countDocuments({
+      automationId: automation._id,
+      stage: "sent",
+    })
+    const limit = automation.dmLimit || 3;
+    if (sentCount >= limit) {
+      const error = new Error("This automation has exceeded its DM limit and cannot be started.")
+      error.status = 400
+      throw error
+    }
+  }
+
   const nextValues = buildAutomationDocument(owner, {
     ...automation.toObject(),
     ...payload,
@@ -186,7 +227,12 @@ async function updateOwnerAutomation(owner, automationId, payload) {
   Object.assign(automation, nextValues)
   await automation.save()
 
-  return buildAutomationResponse(automation)
+  const sentCount = await DmLog.countDocuments({
+    automationId: automation._id,
+    stage: "sent",
+  })
+
+  return buildAutomationResponse(automation, sentCount)
 }
 
 async function deleteOwnerAutomation(owner, automationId) {
@@ -356,6 +402,43 @@ async function triggerCommentAutomation({
     return {
       action: "ignore",
       reason: "no_matching_automation",
+    }
+  }
+
+  // Enforce DM limits on trigger comment event
+  const sentCount = await DmLog.countDocuments({
+    automationId: automation._id,
+    stage: "sent",
+  })
+  const limit = automation.dmLimit || 3
+
+  if (sentCount >= limit) {
+    // Automatically stop/disable the automation
+    automation.enabled = false
+    automation.active = false
+    await automation.save()
+
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "ignore",
+      reason: "dm_limit_exceeded",
+    })
+
+    return {
+      action: "ignore",
+      reason: "dm_limit_exceeded",
+      automationId: automation._id.toString(),
     }
   }
 
