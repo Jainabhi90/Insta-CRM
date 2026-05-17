@@ -1,8 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Switch } from "./ui/switch";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
@@ -238,11 +237,6 @@ export function Automations({
                         </Badge>
                       </div>
                     </div>
-                    <Switch
-                      checked={template.enabled}
-                      onCheckedChange={() => toggleTemplate(template.id)}
-                      disabled={togglingId === template.id}
-                    />
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
                 </CardHeader>
@@ -263,6 +257,29 @@ export function Automations({
                       <div className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700">
                         {template.response}
                       </div>
+                    </div>
+
+                    <div className="pt-4 mt-2 border-t border-gray-100">
+                      {template.enabled ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-gray-200"
+                          onClick={() => toggleTemplate(template.id)}
+                          disabled={togglingId === template.id}
+                        >
+                          <Square className="w-4 h-4 mr-2" />
+                          Stop Automation
+                        </Button>
+                      ) : (
+                        <Button 
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                          onClick={() => toggleTemplate(template.id)}
+                          disabled={togglingId === template.id}
+                        >
+                          <Play className="w-4 h-4 mr-2 fill-current" />
+                          Start Automation
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

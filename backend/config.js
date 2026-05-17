@@ -30,7 +30,7 @@ const config = {
   port: Number(process.env.PORT || 4000),
   mongoUri: process.env.MONGODB_URI || "",
   frontendOrigins: readOrigins(
-    process.env.FRONTEND_ORIGINS || process.env.FRONTEND_ORIGIN || "http://localhost:3000",
+    process.env.FRONTEND_ORIGINS || process.env.FRONTEND_ORIGIN || "http://localhost:3000,http://localhost:3001",
   ),
   tempRecordTtlHours: Number(process.env.TEMP_RECORD_TTL_HOURS || 24),
   sessionSecret: process.env.SESSION_SECRET || "",
