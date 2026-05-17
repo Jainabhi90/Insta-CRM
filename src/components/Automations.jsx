@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
