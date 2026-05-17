@@ -5,8 +5,6 @@ import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
-const MAX_AUTOMATIONS_PER_ACCOUNT = 3;
-
 const iconMap = {
   MessageSquare,
   Mail,
@@ -44,6 +42,7 @@ export function Automations({
   summary,
   initialTemplates,
   tip,
+  limits,
   availablePosts = [],
   onCreateAutomation,
   onToggleAutomation,
@@ -139,11 +138,21 @@ export function Automations({
   };
 
   const enabledCount = templates.filter((t) => t.enabled).length;
-  const maxAutomationsReached = templates.length >= MAX_AUTOMATIONS_PER_ACCOUNT;
   const stats = {
     ...defaultSummary,
     ...summary,
   };
+  const fallbackAutomationLimit = Number(limits?.automationLimit || 1);
+  const resolvedLimits = {
+    planName: limits?.planName || "Free",
+    automationLimit: fallbackAutomationLimit,
+    automationRemaining: Math.max(
+      0,
+      Number(limits?.automationRemaining ?? (fallbackAutomationLimit - templates.length)),
+    ),
+    dmLimitPerAutomation: Number(limits?.dmLimitPerAutomation || 10),
+  };
+  const maxAutomationsReached = templates.length >= resolvedLimits.automationLimit;
   const tipContent = {
     ...defaultTip,
     ...tip,
@@ -182,14 +191,14 @@ export function Automations({
         ) : null}
 
         <div className="mb-6 rounded-2xl border border-rose-100 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
-          Max 3 automations per Instagram account. Each automation can send up to 3 automatic DMs.
+          {resolvedLimits.planName} plan: {resolvedLimits.automationRemaining} automation slot{resolvedLimits.automationRemaining === 1 ? "" : "s"} left. Each automation can send up to {resolvedLimits.dmLimitPerAutomation} automatic DMs.
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-gray-500 mb-2">Active automations</p>
-            <p className="text-3xl font-semibold tracking-tight text-gray-900">{enabledCount}/{templates.length}</p>
+            <p className="text-3xl font-semibold tracking-tight text-gray-900">{enabledCount}/{resolvedLimits.automationLimit}</p>
             <p className="text-sm text-emerald-600 mt-2">Ready when new replies arrive</p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

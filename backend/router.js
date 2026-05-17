@@ -15,6 +15,7 @@ const {
   triggerCommentAutomation,
   updateOwnerAutomation,
 } = require("./services/automationService")
+const { buildOwnerPlanSnapshot, isSupportedPlanTier, normalizePlanTier } = require("./services/subscriptionPlanService")
 const {
   buildAccountSummary,
   buildGOwnerResponse,
@@ -75,6 +76,8 @@ function buildOwnerResponse(owner) {
     throw new Error("buildOwnerResponse: invalid owner object")
   }
 
+  const plan = buildOwnerPlanSnapshot(owner)
+
   return {
     id: owner._id?.toString() ?? "unknown",
     name: buildOwnerDisplayName(owner),
@@ -90,6 +93,14 @@ function buildOwnerResponse(owner) {
     avatarUrl: owner.profilePictureUrl || "",
     profilePictureUrl: owner.profilePictureUrl || "",
     accountType: owner.accountType || "UNKNOWN",
+    plan: plan.planName,
+    planName: plan.planName,
+    subscriptionTier: plan.tier,
+    subscriptionStatus: plan.subscriptionStatus,
+    limits: {
+      automationLimit: plan.automationLimit,
+      dmLimitPerAutomation: plan.dmLimitPerAutomation,
+    },
   }
 }
 
@@ -1066,6 +1077,72 @@ router.get(
       total: workspace.automations.length,
       summary: workspace.summary,
       tip: workspace.tip,
+      limits: workspace.limits,
+    })
+  }),
+)
+
+router.get(
+  "/subscription",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const plan = buildOwnerPlanSnapshot(req.owner)
+
+    return res.status(200).json({
+      ok: true,
+      ownerId: req.owner._id.toString(),
+      instagramUserId: String(req.owner.instagramUserId || ""),
+      instagramUsername: String(req.owner.instagramUsername || ""),
+      tier: plan.tier,
+      planName: plan.planName,
+      status: plan.subscriptionStatus,
+      limits: {
+        automationLimit: plan.automationLimit,
+        dmLimitPerAutomation: plan.dmLimitPerAutomation,
+      },
+      subscribedAt: plan.subscribedAt,
+      expiresAt: plan.expiresAt,
+    })
+  }),
+)
+
+router.patch(
+  "/subscription/plan",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const requestedTier = String(req.body?.tier || req.body?.plan || req.body?.subscriptionTier || "").trim()
+
+    if (!requestedTier || !isSupportedPlanTier(requestedTier)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Plan tier must be one of: free, premium, premium_plus.",
+      })
+    }
+
+    const tier = normalizePlanTier(requestedTier)
+
+    req.owner.subscriptionTier = tier
+    req.owner.subscriptionStatus = "active"
+    req.owner.subscriptionSource = req.owner.subscriptionSource || "manual"
+    req.owner.subscriptionPurchasedAt = req.owner.subscriptionPurchasedAt || new Date()
+    await req.owner.save()
+
+    const plan = buildOwnerPlanSnapshot(req.owner)
+
+    return res.status(200).json({
+      ok: true,
+      owner: buildOwnerResponse(req.owner),
+      subscription: {
+        tier: plan.tier,
+        planName: plan.planName,
+        status: plan.subscriptionStatus,
+        limits: {
+          automationLimit: plan.automationLimit,
+          dmLimitPerAutomation: plan.dmLimitPerAutomation,
+        },
+        subscribedAt: plan.subscribedAt,
+        expiresAt: plan.expiresAt,
+      },
     })
   }),
 )

@@ -13,6 +13,7 @@ function buildEmptyAutomationWorkspace() {
       title: "No automations yet",
       body: "Create your first automation rule to start replying faster inside InstaLead.",
     },
+    limits: null,
     isFallback: false,
   }
 }
@@ -27,6 +28,7 @@ export function buildAutomationWorkspace(automationPayload, fallbackWorkspace, o
         templates: fallbackWorkspace.automations,
         summary: fallbackWorkspace.automationSummary,
         tip: fallbackWorkspace.automationTip,
+        limits: fallbackWorkspace.automationLimits || null,
         isFallback: true,
       }
     }
@@ -84,6 +86,7 @@ export function buildAutomationWorkspace(automationPayload, fallbackWorkspace, o
       ...fallbackWorkspace.automationTip,
       ...(automationPayload?.tip || {}),
     },
+    limits: automationPayload?.limits || fallbackWorkspace.automationLimits || null,
     isFallback: false,
   }
 }

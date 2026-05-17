@@ -924,6 +924,7 @@ export default function App() {
                   summary={workspace.automationSummary}
                   initialTemplates={workspace.automations}
                   tip={workspace.automationTip}
+                  limits={workspace.automationLimits}
                   availablePosts={workspace.posts}
                   onCreateAutomation={handleCreateAutomation}
                   onToggleAutomation={handleToggleAutomation}

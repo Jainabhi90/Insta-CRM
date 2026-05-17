@@ -72,6 +72,50 @@ const iownerSchema = new mongoose.Schema(
       default: "connected",
       index: true,
     },
+    subscriptionTier: {
+      type: String,
+      enum: ["free", "premium", "premium_plus"],
+      default: "free",
+      index: true,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ["active", "inactive", "expired", "canceled", "past_due"],
+      default: "active",
+    },
+    subscriptionSource: {
+      type: String,
+      default: "manual",
+      trim: true,
+    },
+    subscriptionPurchasedAt: {
+      type: Date,
+      default: null,
+    },
+    subscriptionExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    razorpayCustomerId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    razorpayOrderId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    razorpaySubscriptionId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     connectedAt: {
       type: Date,
       default: null,

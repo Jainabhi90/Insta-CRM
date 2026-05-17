@@ -370,6 +370,7 @@ export async function loadAuthenticatedWorkspace() {
       automations: automations.templates,
       automationSummary: automations.summary,
       automationTip: automations.tip,
+      automationLimits: automations.limits,
       posts: performance.posts,
       performanceSummary: performance.summary,
       performanceInsight: performance.insight,
