@@ -5,6 +5,8 @@ import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "luci
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
+const MAX_AUTOMATIONS_PER_ACCOUNT = 3;
+
 const iconMap = {
   MessageSquare,
   Mail,
@@ -61,6 +63,8 @@ export function Automations({
   useEffect(() => {
     setTemplates((initialTemplates || []).map(mapTemplate));
   }, [initialTemplates]);
+
+  const maxAutomationsReached = templates.length >= MAX_AUTOMATIONS_PER_ACCOUNT;
 
   const toggleTemplate = async (id) => {
     const currentTemplate = templates.find((template) => template.id === id);
@@ -149,6 +153,8 @@ export function Automations({
           iconName: automation.icon,
           category: automation.category,
           enabled: true,
+          sentCount: 0,
+          dmLimit: 3,
         };
 
         setTemplates((prev) => [...prev, newTemplate]);
@@ -189,12 +195,13 @@ export function Automations({
               Build reply flows and switch rules on when the timing is right.
             </p>
           </div>
-          <Button 
+          <Button
             className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
             onClick={() => setShowCreateModal(true)}
+            disabled={maxAutomationsReached}
           >
             <Plus className="w-4 h-4 mr-2" />
-            New Automation
+            {maxAutomationsReached ? "Automation limit reached" : "New Automation"}
           </Button>
         </div>
 
@@ -209,6 +216,10 @@ export function Automations({
             {status.message}
           </div>
         ) : null}
+
+        <div className="mb-6 rounded-2xl border border-rose-100 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
+          Max 3 automations per Instagram account. Each automation can send up to 3 automatic DMs.
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
@@ -232,12 +243,15 @@ export function Automations({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {templates.length > 0 ? templates.map((template) => {
             const Icon = template.icon;
-            
+            const isLimitExceeded = template.sentCount >= template.dmLimit;
+
             return (
               <Card
                 key={template.id}
                 className={`overflow-hidden border transition-all duration-200 rounded-2xl ${
-                  template.enabled
+                  isLimitExceeded
+                    ? "border-red-200 bg-red-50/20 shadow-sm"
+                    : template.enabled
                     ? "border-indigo-200 bg-indigo-50/30 shadow-md ring-1 ring-inset ring-indigo-100"
                     : "border-gray-200 bg-white shadow-sm"
                 }`}
@@ -247,7 +261,9 @@ export function Automations({
                     <div className="flex items-start gap-3">
                       <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                          template.enabled
+                          isLimitExceeded
+                            ? "bg-red-100 text-red-500"
+                            : template.enabled
                             ? "bg-indigo-600 text-white shadow-sm"
                             : "bg-gray-100 text-gray-500"
                         }`}
@@ -270,8 +286,10 @@ export function Automations({
                         </Badge>
                       </div>
                     </div>
+
+                    {/* DM counter badge + delete button */}
                     <div className="flex items-center gap-2 -mt-1 -mr-2">
-                      {template.sentCount >= template.dmLimit ? (
+                      {isLimitExceeded ? (
                         <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/10">
                           DM limit exceeds ({template.sentCount}/{template.dmLimit})
                         </span>
@@ -280,10 +298,10 @@ export function Automations({
                           DMs: {template.sentCount}/{template.dmLimit}
                         </span>
                       )}
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="text-gray-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
                         onClick={() => handleDeleteTemplate(template.id)}
                         title="Delete automation"
@@ -315,8 +333,8 @@ export function Automations({
                     </div>
 
                     <div className="pt-4 mt-2 border-t border-gray-100">
-                      {template.sentCount >= template.dmLimit ? (
-                        <Button 
+                      {isLimitExceeded ? (
+                        <Button
                           className="w-full bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed font-medium shadow-none"
                           disabled
                         >
@@ -324,8 +342,8 @@ export function Automations({
                           DM Limit Exceeded
                         </Button>
                       ) : template.enabled ? (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="w-full text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-gray-200"
                           onClick={() => toggleTemplate(template.id)}
                           disabled={togglingId === template.id}
@@ -334,7 +352,7 @@ export function Automations({
                           Stop Automation
                         </Button>
                       ) : (
-                        <Button 
+                        <Button
                           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                           onClick={() => toggleTemplate(template.id)}
                           disabled={togglingId === template.id}
@@ -358,11 +376,12 @@ export function Automations({
                   Create your first automation to start handling common Instagram replies automatically.
                 </p>
                 <Button
-                        className="bg-slate-900 hover:bg-slate-800"
+                  className="bg-slate-900 hover:bg-slate-800"
                   onClick={() => setShowCreateModal(true)}
+                  disabled={maxAutomationsReached}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create First Automation
+                  {maxAutomationsReached ? "Automation limit reached" : "Create First Automation"}
                 </Button>
               </CardContent>
             </Card>

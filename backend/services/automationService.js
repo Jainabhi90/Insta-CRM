@@ -171,6 +171,18 @@ async function listOwnerAutomations(owner) {
 }
 
 async function createOwnerAutomation(owner, payload) {
+  const MAX_AUTOMATIONS_PER_OWNER = 3
+
+  const existingAutomationCount = await Automation.countDocuments({
+    ownerId: owner._id,
+  })
+
+  if (existingAutomationCount >= MAX_AUTOMATIONS_PER_OWNER) {
+    const error = new Error(`You can create up to ${MAX_AUTOMATIONS_PER_OWNER} automations per Instagram account.`)
+    error.status = 400
+    throw error
+  }
+
   const automationData = buildAutomationDocument(owner, payload)
 
   if (!automationData.name) {
