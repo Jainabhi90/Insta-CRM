@@ -123,8 +123,8 @@ export function CreateAutomationModal({ onClose, onSave, availablePosts = [], is
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/55 p-4 py-6 backdrop-blur-sm sm:items-center">
-      <Card className="relative my-auto flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fff7fb_45%,#fff1f8_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
+    <div className="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm">
+      <Card className="relative flex max-h-[min(calc(100vh-2rem),920px)] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fff7fb_45%,#fff1f8_100%)] shadow-[0_40px_120px_-65px_rgba(15,23,42,0.85)]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
