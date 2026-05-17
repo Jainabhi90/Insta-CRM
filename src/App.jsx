@@ -45,7 +45,7 @@ import Accounts from "./pages/Accounts";
 import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
 import { getInstagramInbox } from "./api/instagram/inboxApi";
-import { createAutomation, updateAutomation } from "./api/automations/automationApi";
+import { createAutomation, updateAutomation, deleteAutomation } from "./api/automations/automationApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -489,6 +489,21 @@ export default function App() {
     return updatedAutomation;
   };
 
+  const handleDeleteAutomation = async (automationId) => {
+    await deleteAutomation(automationId);
+
+    setWorkspace((currentWorkspace) =>
+      currentWorkspace
+        ? {
+            ...currentWorkspace,
+            automations: (currentWorkspace.automations || []).filter(
+              (automation) => automation.id !== automationId && automation.automation_id !== automationId
+            ),
+          }
+        : currentWorkspace,
+    );
+  };
+
   const handleGoToPricing = () => {
     navigate("/pricing");
   };
@@ -914,6 +929,7 @@ export default function App() {
                   availablePosts={workspace.posts}
                   onCreateAutomation={handleCreateAutomation}
                   onToggleAutomation={handleToggleAutomation}
+                  onDeleteAutomation={handleDeleteAutomation}
                 />
               )}
               {activeView === "performance" && (

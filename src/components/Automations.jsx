@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
@@ -45,6 +45,7 @@ export function Automations({
   availablePosts = [],
   onCreateAutomation,
   onToggleAutomation,
+  onDeleteAutomation,
 }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [templates, setTemplates] = useState(() =>
@@ -53,6 +54,7 @@ export function Automations({
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [togglingId, setTogglingId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     setTemplates((initialTemplates || []).map(mapTemplate));
@@ -91,6 +93,35 @@ export function Automations({
       });
     } finally {
       setTogglingId("");
+    }
+  };
+
+  const handleDeleteTemplate = async (id) => {
+    const removedTemplate = templates.find((t) => t.id === id);
+    if (!removedTemplate) return;
+
+    // Optimistically remove it from the UI immediately
+    setDeletingId(id);
+    setStatus({ type: "", message: "" });
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+
+    try {
+      if (typeof onDeleteAutomation === "function") {
+        await onDeleteAutomation(id);
+      }
+      setStatus({ type: "success", message: "Automation deleted." });
+    } catch (error) {
+      // Restore the card if deletion failed
+      setTemplates((prev) => {
+        const alreadyPresent = prev.find((t) => t.id === id);
+        return alreadyPresent ? prev : [...prev, removedTemplate];
+      });
+      setStatus({
+        type: "error",
+        message: error?.message || "Could not delete automation.",
+      });
+    } finally {
+      setDeletingId("");
     }
   };
 
@@ -237,6 +268,16 @@ export function Automations({
                         </Badge>
                       </div>
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 -mt-2 -mr-2 h-8 w-8"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      title="Delete automation"
+                      disabled={deletingId === template.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
                 </CardHeader>

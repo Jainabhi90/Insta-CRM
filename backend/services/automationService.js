@@ -189,6 +189,21 @@ async function updateOwnerAutomation(owner, automationId, payload) {
   return buildAutomationResponse(automation)
 }
 
+async function deleteOwnerAutomation(owner, automationId) {
+  const result = await Automation.deleteOne({
+    _id: automationId,
+    ownerId: owner._id,
+  })
+
+  if (result.deletedCount === 0) {
+    const error = new Error("Automation was not found for this account.")
+    error.status = 404
+    throw error
+  }
+
+  return { ok: true }
+}
+
 async function findOwnerForInstagramAccount(instagramAccountId) {
   const normalizedAccountId = normalizeText(instagramAccountId)
   const iowner = await IOwner.findOne({
@@ -618,4 +633,5 @@ module.exports = {
   normalizeKeywords,
   triggerCommentAutomation,
   updateOwnerAutomation,
+  deleteOwnerAutomation,
 }
