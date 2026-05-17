@@ -4,6 +4,7 @@ const DmLog = require("../models/DmLog")
 const IOwner = require("../models/IOwner")
 const Owner = require("../models/Owner")
 const { sendInstagramReply } = require("./instagramMessagingService")
+const { buildOwnerPlanSnapshot } = require("./subscriptionPlanService")
 
 function normalizeText(value) {
   return String(value || "").trim()
@@ -66,7 +67,10 @@ function buildAutomationDocument(owner, payload, currentAutomation = null) {
   }
 }
 
-function buildAutomationResponse(automation, sentCount = 0) {
+function buildAutomationResponse(automation, { sentCount = 0, plan = null } = {}) {
+  const resolvedPlan = plan || buildOwnerPlanSnapshot(automation)
+  const dmRemaining = Math.max(0, resolvedPlan.dmLimitPerAutomation - Number(sentCount || 0))
+
   return {
     id: automation._id.toString(),
     automation_id: automation._id.toString(),
@@ -93,40 +97,21 @@ function buildAutomationResponse(automation, sentCount = 0) {
     active: Boolean(automation.active),
     enabled: Boolean(automation.enabled),
     workflowKey: automation.workflowKey,
-    sentCount: Number(sentCount || 0),
-    dmLimit: Number(automation.dmLimit || 3),
+    planTier: resolvedPlan.tier,
+    planName: resolvedPlan.planName,
+    dmSentCount: Number(sentCount || 0),
+    dmLimitPerAutomation: resolvedPlan.dmLimitPerAutomation,
+    dmRemaining,
     createdAt: automation.createdAt,
     updatedAt: automation.updatedAt,
   }
 }
 
 async function listOwnerAutomations(owner) {
+  const plan = buildOwnerPlanSnapshot(owner)
   const automations = await Automation.find({
     ownerId: owner._id,
   }).sort({ updatedAt: -1, createdAt: -1 })
-
-  // Aggregate sent DMs per automation
-  const sentCounts = await DmLog.aggregate([
-    {
-      $match: {
-        ownerId: owner._id,
-        stage: "sent",
-      },
-    },
-    {
-      $group: {
-        _id: "$automationId",
-        count: { $sum: 1 },
-      },
-    },
-  ])
-
-  const sentCountMap = sentCounts.reduce((accumulator, entry) => {
-    if (entry._id) {
-      accumulator[entry._id.toString()] = entry.count
-    }
-    return accumulator
-  }, {})
 
   const stats = await DmLog.aggregate([
     {
@@ -147,9 +132,34 @@ async function listOwnerAutomations(owner) {
     return accumulator
   }, {})
 
+  const sendCounts = await DmLog.aggregate([
+    {
+      $match: {
+        ownerId: owner._id,
+        stage: "sent",
+      },
+    },
+    {
+      $group: {
+        _id: "$automationId",
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  const sendCountMap = sendCounts.reduce((accumulator, entry) => {
+    accumulator[String(entry._id || "")] = Number(entry.count || 0)
+    return accumulator
+  }, {})
+  const automationUsed = automations.length
+  const automationRemaining = Math.max(0, plan.automationLimit - automationUsed)
+
   return {
-    automations: automations.map((auto) =>
-      buildAutomationResponse(auto, sentCountMap[auto._id.toString()] || 0)
+    automations: automations.map((automation) =>
+      buildAutomationResponse(automation, {
+        sentCount: sendCountMap[automation._id.toString()] || 0,
+        plan,
+      }),
     ),
     summary: {
       autoRepliesToday: Number(statMap.sent || 0),
@@ -167,18 +177,25 @@ async function listOwnerAutomations(owner) {
           ? "These rules are now stored in MongoDB and matched directly by the backend when new comments arrive."
           : "Create a rule, connect it to a post, and the backend can start matching incoming comments automatically.",
     },
+    limits: {
+      tier: plan.tier,
+      planName: plan.planName,
+      automationLimit: plan.automationLimit,
+      automationUsed,
+      automationRemaining,
+      dmLimitPerAutomation: plan.dmLimitPerAutomation,
+    },
   }
 }
 
 async function createOwnerAutomation(owner, payload) {
-  const MAX_AUTOMATIONS_PER_OWNER = 3
-
+  const plan = buildOwnerPlanSnapshot(owner)
   const existingAutomationCount = await Automation.countDocuments({
     ownerId: owner._id,
   })
 
-  if (existingAutomationCount >= MAX_AUTOMATIONS_PER_OWNER) {
-    const error = new Error(`You can create up to ${MAX_AUTOMATIONS_PER_OWNER} automations per Instagram account.`)
+  if (existingAutomationCount >= plan.automationLimit) {
+    const error = new Error(`Your ${plan.planName} plan allows up to ${plan.automationLimit} automations for this Instagram account.`)
     error.status = 400
     throw error
   }
@@ -202,7 +219,7 @@ async function createOwnerAutomation(owner, payload) {
   }
 
   const automation = await Automation.create(automationData)
-  return buildAutomationResponse(automation, 0)
+  return buildAutomationResponse(automation, { plan })
 }
 
 async function updateOwnerAutomation(owner, automationId, payload) {
@@ -217,20 +234,6 @@ async function updateOwnerAutomation(owner, automationId, payload) {
     throw error
   }
 
-  // Prevent enabling/starting if the limit has already been exceeded
-  if (payload.enabled === true || payload.active === true) {
-    const sentCount = await DmLog.countDocuments({
-      automationId: automation._id,
-      stage: "sent",
-    })
-    const limit = automation.dmLimit || 3;
-    if (sentCount >= limit) {
-      const error = new Error("This automation has exceeded its DM limit and cannot be started.")
-      error.status = 400
-      throw error
-    }
-  }
-
   const nextValues = buildAutomationDocument(owner, {
     ...automation.toObject(),
     ...payload,
@@ -239,27 +242,7 @@ async function updateOwnerAutomation(owner, automationId, payload) {
   Object.assign(automation, nextValues)
   await automation.save()
 
-  const sentCount = await DmLog.countDocuments({
-    automationId: automation._id,
-    stage: "sent",
-  })
-
-  return buildAutomationResponse(automation, sentCount)
-}
-
-async function deleteOwnerAutomation(owner, automationId) {
-  const result = await Automation.deleteOne({
-    _id: automationId,
-    ownerId: owner._id,
-  })
-
-  if (result.deletedCount === 0) {
-    const error = new Error("Automation was not found for this account.")
-    error.status = 404
-    throw error
-  }
-
-  return { ok: true }
+  return buildAutomationResponse(automation, { plan: buildOwnerPlanSnapshot(owner) })
 }
 
 async function findOwnerForInstagramAccount(instagramAccountId) {
@@ -417,43 +400,6 @@ async function triggerCommentAutomation({
     }
   }
 
-  // Enforce DM limits on trigger comment event
-  const sentCount = await DmLog.countDocuments({
-    automationId: automation._id,
-    stage: "sent",
-  })
-  const limit = automation.dmLimit || 3
-
-  if (sentCount >= limit) {
-    // Automatically stop/disable the automation
-    automation.enabled = false
-    automation.active = false
-    await automation.save()
-
-    await recordAutomationEvent({
-      source: triggerSource,
-      eventField,
-      owner,
-      automation,
-      instagramAccountId,
-      postId,
-      commentId,
-      commentText,
-      commenterId,
-      commenterUsername,
-      listened: true,
-      matched: true,
-      action: "ignore",
-      reason: "dm_limit_exceeded",
-    })
-
-    return {
-      action: "ignore",
-      reason: "dm_limit_exceeded",
-      automationId: automation._id.toString(),
-    }
-  }
-
   const existingStage = await findExistingDmStage({
     automationId: automation._id,
     mediaId: postId,
@@ -482,6 +428,37 @@ async function triggerCommentAutomation({
     return {
       action: "ignore",
       reason: "already_sent",
+      automationId: automation._id.toString(),
+    }
+  }
+
+  const sentCount = await DmLog.countDocuments({
+    automationId: automation._id,
+    stage: "sent",
+  })
+  const plan = buildOwnerPlanSnapshot(owner)
+
+  if (sentCount >= plan.dmLimitPerAutomation) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "ignore",
+      reason: "automation_send_limit_reached",
+    })
+
+    return {
+      action: "ignore",
+      reason: "automation_send_limit_reached",
       automationId: automation._id.toString(),
     }
   }
@@ -653,6 +630,33 @@ async function confirmCommentAutomation({
     }
   }
 
+  const sentCount = await DmLog.countDocuments({
+    automationId: automation._id,
+    stage: "sent",
+  })
+  const plan = buildOwnerPlanSnapshot(owner)
+
+  if (sentCount >= plan.dmLimitPerAutomation) {
+    await recordAutomationEvent({
+      source: "follow_confirm",
+      eventField: "follow_confirm",
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commenterId: igUserId,
+      listened: true,
+      matched: true,
+      action: "ignore",
+      reason: "automation_send_limit_reached",
+    })
+
+    return {
+      action: "ignore",
+      message: `${plan.planName} plan DM limit reached for this automation.`,
+    }
+  }
+
   try {
     await sendInstagramReply({
       accessToken: owner.longLivedAccessToken,
@@ -728,5 +732,4 @@ module.exports = {
   normalizeKeywords,
   triggerCommentAutomation,
   updateOwnerAutomation,
-  deleteOwnerAutomation,
 }
