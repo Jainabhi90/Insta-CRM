@@ -14,7 +14,6 @@ const {
   listOwnerAutomations,
   triggerCommentAutomation,
   updateOwnerAutomation,
-  deleteOwnerAutomation,
 } = require("./services/automationService")
 const {
   buildAccountSummary,
@@ -1149,18 +1148,6 @@ router.patch(
     return res.status(200).json({
       ok: true,
       automation,
-    })
-  }),
-)
-
-router.delete(
-  "/automations/:automationId",
-  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
-  asyncHandler(async (req, res) => {
-    await deleteOwnerAutomation(req.owner, req.params.automationId)
-
-    return res.status(200).json({
-      ok: true,
     })
   }),
 )

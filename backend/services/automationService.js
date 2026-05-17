@@ -5,6 +5,9 @@ const IOwner = require("../models/IOwner")
 const Owner = require("../models/Owner")
 const { sendInstagramReply } = require("./instagramMessagingService")
 
+const MAX_AUTOMATIONS_PER_OWNER = 3
+const MAX_AUTOMATION_SENDS = 10
+
 function normalizeText(value) {
   return String(value || "").trim()
 }
@@ -144,6 +147,16 @@ async function listOwnerAutomations(owner) {
 }
 
 async function createOwnerAutomation(owner, payload) {
+  const existingAutomationCount = await Automation.countDocuments({
+    ownerId: owner._id,
+  })
+
+  if (existingAutomationCount >= MAX_AUTOMATIONS_PER_OWNER) {
+    const error = new Error(`You can create up to ${MAX_AUTOMATIONS_PER_OWNER} automations per Instagram account.`)
+    error.status = 400
+    throw error
+  }
+
   const automationData = buildAutomationDocument(owner, payload)
 
   if (!automationData.name) {
@@ -187,21 +200,6 @@ async function updateOwnerAutomation(owner, automationId, payload) {
   await automation.save()
 
   return buildAutomationResponse(automation)
-}
-
-async function deleteOwnerAutomation(owner, automationId) {
-  const result = await Automation.deleteOne({
-    _id: automationId,
-    ownerId: owner._id,
-  })
-
-  if (result.deletedCount === 0) {
-    const error = new Error("Automation was not found for this account.")
-    error.status = 404
-    throw error
-  }
-
-  return { ok: true }
 }
 
 async function findOwnerForInstagramAccount(instagramAccountId) {
@@ -387,6 +385,36 @@ async function triggerCommentAutomation({
     return {
       action: "ignore",
       reason: "already_sent",
+      automationId: automation._id.toString(),
+    }
+  }
+
+  const sentCount = await DmLog.countDocuments({
+    automationId: automation._id,
+    stage: "sent",
+  })
+
+  if (sentCount >= MAX_AUTOMATION_SENDS) {
+    await recordAutomationEvent({
+      source: triggerSource,
+      eventField,
+      owner,
+      automation,
+      instagramAccountId,
+      postId,
+      commentId,
+      commentText,
+      commenterId,
+      commenterUsername,
+      listened: true,
+      matched: true,
+      action: "ignore",
+      reason: "automation_send_limit_reached",
+    })
+
+    return {
+      action: "ignore",
+      reason: "automation_send_limit_reached",
       automationId: automation._id.toString(),
     }
   }
@@ -633,5 +661,4 @@ module.exports = {
   normalizeKeywords,
   triggerCommentAutomation,
   updateOwnerAutomation,
-  deleteOwnerAutomation,
 }
