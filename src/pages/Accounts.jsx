@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, ChevronRight, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
@@ -36,6 +37,98 @@ function formatExpiry(value) {
   }
 }
 
+const RADIUS = 54;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+function LoadingOverlay() {
+  const [percent, setPercent] = useState(0);
+  const rafRef = useRef(null);
+  const startRef = useRef(null);
+  const DURATION = 7000; // Match the actual ~7s loading time
+
+  useEffect(() => {
+    function tick(now) {
+      if (!startRef.current) startRef.current = now;
+      const elapsed = now - startRef.current;
+      // Smooth curve that reaches 99% over the 7 seconds
+      const progress = Math.min(1, elapsed / DURATION);
+      const eased = 1 - Math.pow(1 - progress, 2);
+      setPercent(Math.floor(eased * 99));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 9999,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#ffffff",
+      animation: "ilFadeIn 0.25s ease",
+    }}>
+      <style>{`
+        @keyframes ilFadeIn { from { opacity:0 } to { opacity:1 } }
+      `}</style>
+
+      {/* Circular fluid container */}
+      <div style={{ position: "relative", width: 160, height: 160, marginBottom: 48, borderRadius: "50%", overflow: "hidden", background: "#ffffff" }}>
+        
+        <svg width="160" height="160" viewBox="0 0 160 160" style={{ position: "absolute", inset: 0 }}>
+          <defs>
+            <mask id="wave-mask">
+              <g style={{ transform: `translateY(${160 - (percent / 100) * 180}px)`, transition: 'transform 0.1s linear' }}>
+                <path d="M 0 15 Q 40 -15 80 15 T 160 15 T 240 15 T 320 15 L 320 200 L 0 200 Z" fill="white">
+                  <animateTransform attributeName="transform" type="translate" from="0 0" to="-160 0" dur="1.5s" repeatCount="indefinite" />
+                </path>
+              </g>
+            </mask>
+          </defs>
+
+          {/* Background outlined text */}
+          <text x="80" y="80" fill="transparent" stroke="#001d36" strokeWidth="2.5" textAnchor="middle" dominantBaseline="central" fontSize="56" fontWeight="600" fontFamily="'Inter', sans-serif" letterSpacing="-1">
+            {percent}
+          </text>
+
+          {/* Liquid fill */}
+          <rect x="0" y="0" width="160" height="160" fill="#001d36" mask="url(#wave-mask)" />
+          
+          {/* White solid text */}
+          <text x="80" y="80" fill="#ffffff" textAnchor="middle" dominantBaseline="central" fontSize="56" fontWeight="600" fontFamily="'Inter', sans-serif" letterSpacing="-1" mask="url(#wave-mask)">
+            {percent}
+          </text>
+        </svg>
+      </div>
+
+      {/* Bottom progress bar */}
+      <div style={{
+        width: 220,
+        height: 14,
+        borderRadius: 99,
+        border: "2px solid #001d36",
+        background: "#ffffff",
+        padding: 2,
+        display: "flex",
+      }}>
+        <div style={{
+          height: "100%",
+          width: `${Math.max(3, percent)}%`,
+          background: "#001d36",
+          borderRadius: 99,
+          transition: "width 0.1s linear",
+        }} />
+      </div>
+    </div>
+  );
+}
+
 export default function Accounts({
   gowner,
   accounts = [],
@@ -46,10 +139,15 @@ export default function Accounts({
   onSelectAccount,
   onBackToHome,
 }) {
+  const isPreview = new URLSearchParams(window.location.search).get("previewLoading") === "1";
+  const [loadingId, setLoadingId] = useState(isPreview ? "preview" : "");
   const isBusy = Boolean(pendingAction)
 
   return (
-    <div className="brand-shell-bg min-h-screen px-4 py-12 sm:px-6">
+    <>
+      {loadingId && <LoadingOverlay />}
+
+      <div className="brand-shell-bg min-h-screen px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-md">
         <div className="brand-panel overflow-hidden rounded-[30px] border-0">
           <div className="border-b border-slate-200 px-6 py-6 sm:px-8">
@@ -96,7 +194,10 @@ export default function Accounts({
                     <button
                       key={account.id}
                       type="button"
-                      onClick={() => onSelectAccount?.(account.id)}
+                      onClick={() => {
+                        setLoadingId(account.id);
+                        onSelectAccount?.(account.id);
+                      }}
                       disabled={isBusy || !isConnected}
                       className={`group flex w-full items-center gap-4 rounded-2xl border px-4 py-4 text-left transition-all ${
                         isSelected
@@ -191,6 +292,7 @@ export default function Accounts({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
