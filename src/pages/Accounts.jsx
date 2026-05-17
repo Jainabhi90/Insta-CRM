@@ -142,10 +142,18 @@ export default function Accounts({
   const isPreview = new URLSearchParams(window.location.search).get("previewLoading") === "1";
   const [loadingId, setLoadingId] = useState(isPreview ? "preview" : "");
   const isBusy = Boolean(pendingAction)
+  const isSelectingAccount = pendingAction === "select_account"
+  const showLoadingOverlay = Boolean(loadingId || isSelectingAccount)
+
+  useEffect(() => {
+    if (!isSelectingAccount && !isPreview) {
+      setLoadingId("");
+    }
+  }, [isSelectingAccount, isPreview]);
 
   return (
     <>
-      {loadingId && <LoadingOverlay />}
+      {showLoadingOverlay && <LoadingOverlay />}
 
       <div className="brand-shell-bg min-h-screen px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-md">

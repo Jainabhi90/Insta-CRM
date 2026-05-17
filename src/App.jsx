@@ -224,6 +224,7 @@ export default function App() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const dashboardLoadSequence = useRef(0);
+  const skipNextDashboardHydration = useRef(false);
   const instagramAuthInFlight = useRef(false);
 
   const applyCachedWorkspace = (sessionPayload) => {
@@ -291,10 +292,10 @@ export default function App() {
     }
   };
 
-  const hydrateDashboard = async (search = window.location.search) => {
+  const hydrateDashboard = async (search = window.location.search, sessionOverride = null) => {
     const requestId = dashboardLoadSequence.current + 1;
     dashboardLoadSequence.current = requestId;
-    applyCachedWorkspace(session)
+    applyCachedWorkspace(sessionOverride || session)
     setIsDashboardLoading(true);
     setDashboardError("");
 
@@ -663,6 +664,11 @@ export default function App() {
         return;
       }
 
+      if (skipNextDashboardHydration.current) {
+        skipNextDashboardHydration.current = false;
+        return;
+      }
+
       if (isMounted) {
         await hydrateDashboard(route.search);
       }
@@ -691,16 +697,12 @@ export default function App() {
         setWorkspace(null);
       }
       setHasGoogleLogin(Boolean(nextSession?.gowner));
-      
-      // If already on dashboard, hydrate immediately
-      // Otherwise navigate first and let the useEffect handle hydration
-      if (route.page === "dashboard") {
-        await hydrateDashboard("");
-      } else {
+
+      await hydrateDashboard("", nextSession);
+
+      if (route.page !== "dashboard") {
+        skipNextDashboardHydration.current = true;
         navigate("/dashboard");
-        // Small delay to ensure route updates before hydration
-        await new Promise(resolve => setTimeout(resolve, 50));
-        await hydrateDashboard("");
       }
     } catch (error) {
       setSelectError(error?.message || "Unable to open that Instagram account right now.");

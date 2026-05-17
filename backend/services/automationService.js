@@ -6,7 +6,7 @@ const Owner = require("../models/Owner")
 const { sendInstagramReply } = require("./instagramMessagingService")
 
 const MAX_AUTOMATIONS_PER_OWNER = 3
-const MAX_AUTOMATION_SENDS = 10
+const MAX_AUTOMATION_SENDS = 3
 
 function normalizeText(value) {
   return String(value || "").trim()

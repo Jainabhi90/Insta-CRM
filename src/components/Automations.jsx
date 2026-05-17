@@ -182,7 +182,7 @@ export function Automations({
         ) : null}
 
         <div className="mb-6 rounded-2xl border border-rose-100 bg-rose-50/70 px-4 py-3 text-sm text-rose-700">
-          Max 3 automations per Instagram account. Each automation can send up to 10 automatic DMs.
+          Max 3 automations per Instagram account. Each automation can send up to 3 automatic DMs.
         </div>
 
         {/* Stats */}
