@@ -4,7 +4,28 @@ import { Card, CardContent } from "./ui/card";
 import { Check, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
-export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccount }) {
+const PLAN_TIER_MAP = {
+  free: "free",
+  pro: "premium",
+  platinum: "premium_plus",
+}
+
+const PLAN_RANK = {
+  free: 0,
+  premium: 1,
+  premium_plus: 2,
+}
+
+export function PricingPage({
+  onGetStarted,
+  onBackToHome,
+  onLogin,
+  onCreateAccount,
+  onSelectPlan,
+  currentSubscription = null,
+  checkoutState = null,
+  pricingContext = null,
+}) {
   const [billingCycle, setBillingCycle] = useState("monthly");
 
   const pricingPlans = {
@@ -127,6 +148,19 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
   };
 
   const currentPlans = pricingPlans[billingCycle];
+  const currentTier = currentSubscription?.tier || currentSubscription?.subscriptionTier || ""
+  const currentPlanName = currentSubscription?.planName || "Free"
+  const currentBillingCycle = currentSubscription?.billingCycle || "monthly"
+  const currentPlanRank = PLAN_RANK[currentTier] ?? -1
+  const pricingMessage =
+    checkoutState?.message ||
+    (pricingContext?.reason === "dm_limit"
+      ? `You have reached the DM send cap on your ${currentPlanName} plan. Upgrade to unlock more sends per automation.`
+      : pricingContext?.reason === "automation_limit"
+        ? `You have reached the automation cap on your ${currentPlanName} plan. Upgrade to create more rules for this Instagram account.`
+        : currentSubscription
+          ? `Current status: ${currentPlanName} plan · ${currentSubscription?.limits?.automationLimit || 1} automation${currentSubscription?.limits?.automationLimit === 1 ? "" : "s"} · ${currentSubscription?.limits?.dmLimitPerAutomation || 10} DMs per automation.`
+          : "")
 
   return (
     <div className="w-full min-h-screen bg-slate-50 font-sans antialiased">
@@ -247,6 +281,16 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
               >
                 Choose a plan that fits your business needs and budget. No hidden fees, no surprises—just straightforward pricing for powerful DM automation.
               </motion.p>
+              {pricingMessage ? (
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.35 }}
+                  className="mt-4 text-sm md:text-base text-slate-300 font-medium leading-relaxed max-w-3xl mx-auto"
+                >
+                  {pricingMessage}
+                </motion.p>
+              ) : null}
 
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
@@ -284,9 +328,39 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
       {/* PRICING CARDS - Positioned with negative margin to overlap the banner */}
       <div className="max-w-7xl mx-auto px-6 -mt-44 relative z-20 pb-20">
         <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
-          {Object.values(currentPlans).map((plan, index) => (
+          {Object.entries(currentPlans).map(([planKey, plan], index) => {
+            const tier = PLAN_TIER_MAP[planKey] || "free"
+            const isCurrentPlan =
+              Boolean(currentTier) &&
+              tier === currentTier &&
+              (tier === "free" || billingCycle === currentBillingCycle)
+            const isLowerOrIncluded = Boolean(currentTier) && PLAN_RANK[tier] < currentPlanRank
+            const isCheckoutPending = checkoutState?.pendingPlanKey === `${tier}:${billingCycle}`
+            const buttonText = isCurrentPlan
+              ? "Current Plan"
+              : isLowerOrIncluded
+                ? `Included in ${currentPlanName}`
+                : isCheckoutPending
+                  ? "Opening checkout..."
+                  : plan.buttonText
+            const buttonDisabled = isCurrentPlan || isLowerOrIncluded || isCheckoutPending
+            const handlePlanAction = () => {
+              if (tier === "free") {
+                ;(onCreateAccount || onGetStarted)?.()
+                return
+              }
+
+              if (typeof onSelectPlan === "function") {
+                onSelectPlan({ tier, billingCycle })
+                return
+              }
+
+              ;(onCreateAccount || onGetStarted)?.()
+            }
+
+            return (
             <motion.div
-              key={plan.name}
+              key={`${billingCycle}-${plan.name}`}
               initial={{ y: 40, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
@@ -337,14 +411,15 @@ export function PricingPage({ onGetStarted, onBackToHome, onLogin, onCreateAccou
                       ? "bg-slate-900 text-white  shadow-xl shadow-slate-500/20" 
                       : "bg-transparent text-slate-900 border-2 border-slate-100 hover:border-slate-900 "
                     }`}
-                    onClick={onCreateAccount || onGetStarted}
+                    onClick={handlePlanAction}
+                    disabled={buttonDisabled}
                   >
-                    {plan.buttonText}
+                    {buttonText}
                   </Button>
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          )})}
         </div>
         </div>
       </div>

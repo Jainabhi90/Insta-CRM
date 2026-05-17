@@ -19,6 +19,19 @@ const PLAN_DEFINITIONS = Object.freeze({
   }),
 })
 const DEFAULT_SUBSCRIPTION_WINDOW_DAYS = 30
+const YEARLY_SUBSCRIPTION_WINDOW_DAYS = 365
+
+function normalizeBillingCycle(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+
+  if (normalized === "year" || normalized === "annual" || normalized === "annually") {
+    return "yearly"
+  }
+
+  return normalized === "yearly" ? "yearly" : "monthly"
+}
 
 function normalizePlanTier(value) {
   const normalized = String(value || "")
@@ -68,12 +81,19 @@ function getOwnerPlanDefinition(owner) {
 
 function buildOwnerPlanSnapshot(owner) {
   const definition = getOwnerPlanDefinition(owner)
+  const billingCycle = normalizeBillingCycle(
+    owner?.subscriptionBillingCycle ||
+      owner?.subscription_billing_cycle ||
+      owner?.billingCycle ||
+      owner?.billing_cycle,
+  )
 
   return {
     tier: definition.tier,
     planName: definition.name,
     automationLimit: definition.automationLimit,
     dmLimitPerAutomation: definition.dmLimitPerAutomation,
+    billingCycle,
     subscriptionStatus: String(owner?.subscriptionStatus || "active").trim().toLowerCase() || "active",
     subscribedAt: owner?.subscriptionPurchasedAt || null,
     expiresAt: owner?.subscriptionExpiresAt || null,
@@ -81,7 +101,7 @@ function buildOwnerPlanSnapshot(owner) {
   }
 }
 
-function getDefaultSubscriptionExpiry(tier, purchasedAt = new Date()) {
+function getDefaultSubscriptionExpiry(tier, purchasedAt = new Date(), billingCycle = "monthly") {
   const definition = getPlanDefinition(tier)
 
   if (definition.tier === "free") {
@@ -90,12 +110,18 @@ function getDefaultSubscriptionExpiry(tier, purchasedAt = new Date()) {
 
   const baseDate = purchasedAt instanceof Date ? purchasedAt : new Date(purchasedAt)
   const expiresAt = new Date(baseDate.getTime())
-  expiresAt.setDate(expiresAt.getDate() + DEFAULT_SUBSCRIPTION_WINDOW_DAYS)
+  const normalizedBillingCycle = normalizeBillingCycle(billingCycle)
+  const durationDays =
+    normalizedBillingCycle === "yearly"
+      ? YEARLY_SUBSCRIPTION_WINDOW_DAYS
+      : DEFAULT_SUBSCRIPTION_WINDOW_DAYS
+  expiresAt.setDate(expiresAt.getDate() + durationDays)
   return expiresAt
 }
 
 async function applyOwnerSubscription(owner, {
   tier,
+  billingCycle = "monthly",
   source = "manual",
   purchasedAt = new Date(),
   expiresAt,
@@ -105,14 +131,16 @@ async function applyOwnerSubscription(owner, {
   razorpaySubscriptionId = "",
 } = {}) {
   const normalizedTier = normalizePlanTier(tier)
+  const normalizedBillingCycle = normalizeBillingCycle(billingCycle)
 
   owner.subscriptionTier = normalizedTier
+  owner.subscriptionBillingCycle = normalizedBillingCycle
   owner.subscriptionStatus = "active"
   owner.subscriptionSource = String(source || "manual").trim().toLowerCase() || "manual"
   owner.subscriptionPurchasedAt = purchasedAt instanceof Date ? purchasedAt : new Date(purchasedAt)
   owner.subscriptionExpiresAt =
     expiresAt === undefined
-      ? getDefaultSubscriptionExpiry(normalizedTier, owner.subscriptionPurchasedAt)
+      ? getDefaultSubscriptionExpiry(normalizedTier, owner.subscriptionPurchasedAt, normalizedBillingCycle)
       : expiresAt
 
   if (razorpayCustomerId) {
@@ -143,5 +171,6 @@ module.exports = {
   getOwnerPlanDefinition,
   getPlanDefinition,
   isSupportedPlanTier,
+  normalizeBillingCycle,
   normalizePlanTier,
 }

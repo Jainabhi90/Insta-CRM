@@ -83,6 +83,11 @@ const iownerSchema = new mongoose.Schema(
       enum: ["active", "inactive", "expired", "canceled", "past_due"],
       default: "active",
     },
+    subscriptionBillingCycle: {
+      type: String,
+      enum: ["monthly", "yearly"],
+      default: "monthly",
+    },
     subscriptionSource: {
       type: String,
       default: "manual",

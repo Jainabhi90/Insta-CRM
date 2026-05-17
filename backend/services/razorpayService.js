@@ -5,14 +5,32 @@ const { getPlanDefinition, normalizePlanTier } = require("./subscriptionPlanServ
 const RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
 const PLAN_PRICING = Object.freeze({
   premium: Object.freeze({
-    tier: "premium",
-    amount: 19900,
-    currency: "INR",
+    monthly: Object.freeze({
+      tier: "premium",
+      billingCycle: "monthly",
+      amount: 19900,
+      currency: "INR",
+    }),
+    yearly: Object.freeze({
+      tier: "premium",
+      billingCycle: "yearly",
+      amount: 199900,
+      currency: "INR",
+    }),
   }),
   premium_plus: Object.freeze({
-    tier: "premium_plus",
-    amount: 49900,
-    currency: "INR",
+    monthly: Object.freeze({
+      tier: "premium_plus",
+      billingCycle: "monthly",
+      amount: 49900,
+      currency: "INR",
+    }),
+    yearly: Object.freeze({
+      tier: "premium_plus",
+      billingCycle: "yearly",
+      amount: 499900,
+      currency: "INR",
+    }),
   }),
 })
 
@@ -30,8 +48,11 @@ function getRazorpayAuthHeader() {
   return `Basic ${token}`
 }
 
-function getPaidPlanCheckoutConfig(tier) {
+function getPaidPlanCheckoutConfig(tier, billingCycle = "monthly") {
   const normalizedTier = normalizePlanTier(tier)
+  const normalizedBillingCycle = String(billingCycle || "").trim().toLowerCase() === "yearly"
+    ? "yearly"
+    : "monthly"
 
   if (normalizedTier === "free") {
     const error = new Error("Free plan does not require Razorpay checkout.")
@@ -39,7 +60,7 @@ function getPaidPlanCheckoutConfig(tier) {
     throw error
   }
 
-  const pricing = PLAN_PRICING[normalizedTier]
+  const pricing = PLAN_PRICING[normalizedTier]?.[normalizedBillingCycle]
 
   if (!pricing) {
     const error = new Error("Unsupported paid plan.")
