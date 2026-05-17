@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
@@ -35,6 +35,8 @@ function mapTemplate(template, index) {
     iconName: template.iconName || template.icon || "MessageSquare",
     category: template.category,
     enabled: Boolean(template.enabled),
+    dmSentCount: Number(template.dmSentCount || 0),
+    dmLimitPerAutomation: Number(template.dmLimitPerAutomation || 10),
   };
 }
 
@@ -92,6 +94,33 @@ export function Automations({
       });
     } finally {
       setTogglingId("");
+    }
+  };
+
+  const handleDeleteTemplate = async (id) => {
+    const removedTemplate = templates.find((t) => t.id === id);
+    if (!removedTemplate) return;
+
+    setDeletingId(id);
+    setStatus({ type: "", message: "" });
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+
+    try {
+      if (typeof onDeleteAutomation === "function") {
+        await onDeleteAutomation(id);
+      }
+      setStatus({ type: "success", message: "Automation deleted." });
+    } catch (error) {
+      setTemplates((prev) => {
+        const alreadyPresent = prev.find((t) => t.id === id);
+        return alreadyPresent ? prev : [...prev, removedTemplate];
+      });
+      setStatus({
+        type: "error",
+        message: error?.message || "Could not delete automation.",
+      });
+    } finally {
+      setDeletingId("");
     }
   };
 
@@ -227,7 +256,8 @@ export function Automations({
                 }`}
               >
                 <CardHeader>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
                       <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                           template.enabled
@@ -252,6 +282,30 @@ export function Automations({
                           {template.category}
                         </Badge>
                       </div>
+                    </div>
+
+                    {/* DM counter badge + delete */}
+                    <div className="flex items-center gap-2 -mt-1 -mr-2">
+                      {template.dmSentCount >= template.dmLimitPerAutomation ? (
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/10">
+                          DM limit exceeded ({template.dmSentCount}/{template.dmLimitPerAutomation})
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                          DMs: {template.dmSentCount}/{template.dmLimitPerAutomation}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
+                        onClick={() => handleDeleteTemplate(template.id)}
+                        title="Delete automation"
+                        disabled={deletingId === template.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
                 </CardHeader>
@@ -275,7 +329,15 @@ export function Automations({
                     </div>
 
                     <div className="pt-4 mt-2 border-t border-gray-100">
-                      {template.enabled ? (
+                      {template.dmSentCount >= template.dmLimitPerAutomation ? (
+                        <Button
+                          className="w-full bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed font-medium shadow-none"
+                          disabled
+                        >
+                          <Square className="w-4 h-4 mr-2" />
+                          DM Limit Exceeded
+                        </Button>
+                      ) : template.enabled ? (
                         <Button 
                           variant="outline" 
                           className="w-full text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-gray-200"
