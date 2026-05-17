@@ -56,6 +56,18 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     fallbackOwner.tokenExpiresAt || null,
   )
 
+  const subscriptionStatus = pickValue(
+    rawOwner,
+    ["subscriptionStatus", "subscription_status", "status"],
+    fallbackOwner.subscriptionStatus || "active",
+  )
+
+  const subscriptionBillingCycle = pickValue(
+    rawOwner,
+    ["subscriptionBillingCycle", "subscription_billing_cycle", "billingCycle", "billing_cycle"],
+    fallbackOwner.subscriptionBillingCycle || "monthly",
+  )
+
   const avatarUrl = pickValue(
     rawOwner,
     [
@@ -116,6 +128,8 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     connectedAt,
     plan,
     subscriptionTier,
+    subscriptionStatus,
+    subscriptionBillingCycle,
     avatarUrl,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
     connectionStatus,

@@ -15,7 +15,13 @@ const {
   triggerCommentAutomation,
   updateOwnerAutomation,
 } = require("./services/automationService")
-const { buildOwnerPlanSnapshot, isSupportedPlanTier, normalizePlanTier } = require("./services/subscriptionPlanService")
+const {
+  applyOwnerSubscription,
+  buildOwnerPlanSnapshot,
+  isSupportedPlanTier,
+  normalizeBillingCycle,
+  normalizePlanTier,
+} = require("./services/subscriptionPlanService")
 const {
   buildAccountSummary,
   buildGOwnerResponse,
@@ -45,7 +51,6 @@ const {
   clearSessionCookie,
 } = require("./services/sessionService")
 const { getOwnerScopedWorkspace } = require("./services/workspaceDataService")
-const { applyOwnerSubscription } = require("./services/subscriptionPlanService")
 const {
   getInstagramProfile,
   listInstagramComments,
@@ -104,6 +109,7 @@ function buildOwnerResponse(owner) {
     planName: plan.planName,
     subscriptionTier: plan.tier,
     subscriptionStatus: plan.subscriptionStatus,
+    subscriptionBillingCycle: plan.billingCycle,
     limits: {
       automationLimit: plan.automationLimit,
       dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -1146,6 +1152,7 @@ router.get(
       tier: plan.tier,
       planName: plan.planName,
       status: plan.subscriptionStatus,
+      billingCycle: plan.billingCycle,
       limits: {
         automationLimit: plan.automationLimit,
         dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -1161,6 +1168,7 @@ router.patch(
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
     const requestedTier = String(req.body?.tier || req.body?.plan || req.body?.subscriptionTier || "").trim()
+    const billingCycle = normalizeBillingCycle(req.body?.billingCycle || req.body?.cycle)
 
     if (!requestedTier || !isSupportedPlanTier(requestedTier)) {
       return res.status(400).json({
@@ -1172,6 +1180,7 @@ router.patch(
     const tier = normalizePlanTier(requestedTier)
 
     req.owner.subscriptionTier = tier
+    req.owner.subscriptionBillingCycle = billingCycle
     req.owner.subscriptionStatus = "active"
     req.owner.subscriptionSource = req.owner.subscriptionSource || "manual"
     req.owner.subscriptionPurchasedAt = req.owner.subscriptionPurchasedAt || new Date()
@@ -1186,6 +1195,7 @@ router.patch(
         tier: plan.tier,
         planName: plan.planName,
         status: plan.subscriptionStatus,
+        billingCycle: plan.billingCycle,
         limits: {
           automationLimit: plan.automationLimit,
           dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -1210,7 +1220,10 @@ router.post(
       })
     }
 
-    const checkoutPlan = getPaidPlanCheckoutConfig(req.body?.tier || req.body?.plan || req.body?.subscriptionTier)
+    const checkoutPlan = getPaidPlanCheckoutConfig(
+      req.body?.tier || req.body?.plan || req.body?.subscriptionTier,
+      req.body?.billingCycle || req.body?.cycle,
+    )
     const receipt = `instalead_${req.owner._id}_${Date.now()}`
 
     const apiCall = await ApiCall.create({
@@ -1223,6 +1236,7 @@ router.post(
       instagramUserId: req.owner.instagramUserId || "",
       requestPayload: {
         tier: checkoutPlan.tier,
+        billingCycle: checkoutPlan.billingCycle,
         amount: checkoutPlan.amount,
         currency: checkoutPlan.currency,
       },
@@ -1238,6 +1252,7 @@ router.post(
           ownerModel: req.owner.gownerId ? "iowner" : "owner",
           instagramUserId: String(req.owner.instagramUserId || ""),
           subscriptionTier: checkoutPlan.tier,
+          billingCycle: checkoutPlan.billingCycle,
         },
       })
 
@@ -1266,6 +1281,7 @@ router.post(
         plan: {
           tier: checkoutPlan.tier,
           planName: checkoutPlan.planName,
+          billingCycle: checkoutPlan.billingCycle,
           automationLimit: checkoutPlan.automationLimit,
           dmLimitPerAutomation: checkoutPlan.dmLimitPerAutomation,
         },
@@ -1299,7 +1315,10 @@ router.post(
     const orderId = String(req.body?.razorpay_order_id || req.body?.orderId || "").trim()
     const paymentId = String(req.body?.razorpay_payment_id || req.body?.paymentId || "").trim()
     const signature = String(req.body?.razorpay_signature || req.body?.signature || "").trim()
-    const checkoutPlan = getPaidPlanCheckoutConfig(req.body?.tier || req.body?.plan || req.body?.subscriptionTier)
+    const checkoutPlan = getPaidPlanCheckoutConfig(
+      req.body?.tier || req.body?.plan || req.body?.subscriptionTier,
+      req.body?.billingCycle || req.body?.cycle,
+    )
 
     const apiCall = await ApiCall.create({
       requestType: "razorpay_verify",
@@ -1311,6 +1330,7 @@ router.post(
       instagramUserId: req.owner.instagramUserId || "",
       requestPayload: {
         tier: checkoutPlan.tier,
+        billingCycle: checkoutPlan.billingCycle,
         orderId,
         paymentId,
       },
@@ -1329,6 +1349,7 @@ router.post(
 
     const subscription = await applyOwnerSubscription(req.owner, {
       tier: checkoutPlan.tier,
+      billingCycle: checkoutPlan.billingCycle,
       source: "razorpay",
       purchasedAt: new Date(),
       razorpayOrderId: orderId,
@@ -1351,6 +1372,7 @@ router.post(
         tier: subscription.tier,
         planName: subscription.planName,
         status: subscription.subscriptionStatus,
+        billingCycle: subscription.billingCycle,
         limits: {
           automationLimit: subscription.automationLimit,
           dmLimitPerAutomation: subscription.dmLimitPerAutomation,
@@ -1387,6 +1409,7 @@ router.post(
     const notes = paymentEntity?.notes || orderEntity?.notes || {}
     const ownerId = String(notes?.ownerId || "").trim()
     const requestedTier = String(notes?.subscriptionTier || "").trim()
+    const billingCycle = normalizeBillingCycle(notes?.billingCycle)
 
     const apiCall = await ApiCall.create({
       requestType: "razorpay_webhook",
@@ -1399,6 +1422,7 @@ router.post(
         paymentId: paymentEntity?.id || "",
         ownerId,
         subscriptionTier: requestedTier,
+        billingCycle,
       },
     })
 
@@ -1443,13 +1467,14 @@ router.post(
       })
     }
 
-    const checkoutPlan = getPaidPlanCheckoutConfig(requestedTier)
+    const checkoutPlan = getPaidPlanCheckoutConfig(requestedTier, billingCycle)
     const paymentId = String(paymentEntity?.id || "").trim()
     const orderId = String(orderEntity?.id || paymentEntity?.order_id || "").trim()
     const customerId = String(paymentEntity?.customer_id || "").trim()
 
     const subscription = await applyOwnerSubscription(owner, {
       tier: checkoutPlan.tier,
+      billingCycle: checkoutPlan.billingCycle,
       source: "razorpay_webhook",
       purchasedAt: new Date(),
       razorpayOrderId: orderId,

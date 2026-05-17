@@ -48,6 +48,7 @@ export function Automations({
   availablePosts = [],
   onCreateAutomation,
   onToggleAutomation,
+  onUpgrade,
 }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [templates, setTemplates] = useState(() =>
@@ -159,6 +160,14 @@ export function Automations({
     ...defaultTip,
     ...tip,
   };
+  const handleOpenCreate = () => {
+    if (maxAutomationsReached) {
+      onUpgrade?.({ reason: "automation_limit" })
+      return
+    }
+
+    setShowCreateModal(true)
+  }
 
   return (
     <>
@@ -172,11 +181,10 @@ export function Automations({
           </div>
           <Button 
             className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
-            onClick={() => setShowCreateModal(true)}
-            disabled={maxAutomationsReached}
+            onClick={handleOpenCreate}
           >
             <Plus className="w-4 h-4 mr-2" />
-            {maxAutomationsReached ? "Automation limit reached" : "New Automation"}
+            {maxAutomationsReached ? "Upgrade to add automation" : "New Automation"}
           </Button>
         </div>
 
@@ -292,11 +300,16 @@ export function Automations({
                     <div className="pt-4 mt-2 border-t border-gray-100">
                       {template.dmSentCount >= template.dmLimitPerAutomation ? (
                         <Button
-                          className="w-full bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed font-medium shadow-none"
-                          disabled
+                          className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm"
+                          onClick={() =>
+                            onUpgrade?.({
+                              reason: "dm_limit",
+                              automationId: template.id,
+                            })
+                          }
                         >
-                          <Square className="w-4 h-4 mr-2" />
-                          DM Limit Exceeded
+                          <Zap className="w-4 h-4 mr-2" />
+                          Upgrade to send more DMs
                         </Button>
                       ) : template.enabled ? (
                         <Button 
@@ -333,12 +346,11 @@ export function Automations({
                   Create your first automation to start handling common Instagram replies automatically.
                 </p>
                 <Button
-                        className="bg-slate-900 hover:bg-slate-800"
-                  onClick={() => setShowCreateModal(true)}
-                  disabled={maxAutomationsReached}
+                  className="bg-slate-900 hover:bg-slate-800"
+                  onClick={handleOpenCreate}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  {maxAutomationsReached ? "Automation limit reached" : "Create First Automation"}
+                  {maxAutomationsReached ? "Upgrade to add automation" : "Create First Automation"}
                 </Button>
               </CardContent>
             </Card>

@@ -46,6 +46,8 @@ import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
 import { getInstagramInbox } from "./api/instagram/inboxApi";
 import { createAutomation, updateAutomation } from "./api/automations/automationApi";
+import { createRazorpayCheckoutOrder, verifyRazorpayCheckoutPayment } from "./api/payments/razorpayApi";
+import { getSubscriptionStatus } from "./api/subscription/subscriptionApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -59,6 +61,7 @@ import {
   writeCachedWorkspace,
 } from "./services/dashboardWorkspaceService";
 import { ensureDemoPreviewSession } from "./services/demoSessionService";
+import { loadRazorpayCheckout } from "./services/razorpayCheckoutService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 import { normalizeSession } from "./adapters/ownerAdapter";
@@ -209,6 +212,35 @@ function getDashboardViewMeta(activeView) {
   return DASHBOARD_VIEW_META[activeView] || DASHBOARD_VIEW_META.leads;
 }
 
+function buildSubscriptionSnapshot(owner) {
+  if (!owner) {
+    return null
+  }
+
+  return {
+    tier: owner.subscriptionTier || "free",
+    planName: owner.plan || owner.planName || "Free",
+    status: owner.subscriptionStatus || "active",
+    billingCycle: owner.subscriptionBillingCycle || "monthly",
+    limits: owner.limits || {
+      automationLimit: 1,
+      dmLimitPerAutomation: 10,
+    },
+    subscribedAt: owner.subscriptionPurchasedAt || null,
+    expiresAt: owner.subscriptionExpiresAt || null,
+  }
+}
+
+function getPricingContext(search = "") {
+  const params = new URLSearchParams(search || "")
+
+  return {
+    reason: params.get("reason") || "",
+    sourceView: params.get("sourceView") || "",
+    automationId: params.get("automationId") || "",
+  }
+}
+
 export default function App() {
   const [route, setRoute] = useState(() => getCurrentRoute());
   const [hasGoogleLogin, setHasGoogleLogin] = useState(() => hasCompletedGoogleLogin());
@@ -223,6 +255,12 @@ export default function App() {
   const [selectError, setSelectError] = useState("");
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
+  const [pricingSubscription, setPricingSubscription] = useState(null);
+  const [pricingCheckoutState, setPricingCheckoutState] = useState({
+    status: "",
+    message: "",
+    pendingPlanKey: "",
+  });
   const dashboardLoadSequence = useRef(0);
   const skipNextDashboardHydration = useRef(false);
   const instagramAuthInFlight = useRef(false);
@@ -242,6 +280,25 @@ export default function App() {
     const historyMethod = options.replace ? "replaceState" : "pushState";
     window.history[historyMethod]({}, "", path);
     setRoute(getCurrentRoute());
+  };
+
+  const navigateToPricing = ({ reason = "", sourceView = activeView, automationId = "" } = {}) => {
+    const params = new URLSearchParams()
+
+    if (reason) {
+      params.set("reason", reason)
+    }
+
+    if (sourceView) {
+      params.set("sourceView", sourceView)
+    }
+
+    if (automationId) {
+      params.set("automationId", automationId)
+    }
+
+    const nextPath = params.toString() ? `/pricing?${params.toString()}` : "/pricing"
+    navigate(nextPath)
   };
 
   const closeAuthModal = () => {
@@ -283,6 +340,7 @@ export default function App() {
   const applyWorkspaceResult = (result) => {
     setSession(result.session);
     setWorkspace(result.workspace);
+    setPricingSubscription(buildSubscriptionSnapshot(result.session?.owner));
     setShowAuthModal(false);
     setAuthError("");
     setDashboardError(!result.session && result.warnings?.length ? result.warnings[0] : "");
@@ -333,6 +391,23 @@ export default function App() {
     const result = await loadAuthenticatedWorkspace();
     applyWorkspaceResult(result);
     return result;
+  };
+
+  const refreshSubscriptionStatus = async () => {
+    if (!session?.owner) {
+      setPricingSubscription(null)
+      return null
+    }
+
+    try {
+      const subscription = await getSubscriptionStatus()
+      setPricingSubscription(subscription)
+      return subscription
+    } catch (error) {
+      const fallbackSubscription = buildSubscriptionSnapshot(session.owner)
+      setPricingSubscription(fallbackSubscription)
+      return fallbackSubscription
+    }
   };
 
   const openLoginModal = () => {
@@ -462,19 +537,34 @@ export default function App() {
   };
 
   const handleCreateAutomation = async (payload) => {
-    const response = await createAutomation(payload);
-    const createdAutomation = response?.automation || response;
+    try {
+      const response = await createAutomation(payload);
+      const createdAutomation = response?.automation || response;
 
-    setWorkspace((currentWorkspace) =>
-      currentWorkspace
-        ? {
-            ...currentWorkspace,
-            automations: [...(currentWorkspace.automations || []), createdAutomation],
-          }
-        : currentWorkspace,
-    );
+      setWorkspace((currentWorkspace) =>
+        currentWorkspace
+          ? {
+              ...currentWorkspace,
+              automations: [...(currentWorkspace.automations || []), createdAutomation],
+            }
+          : currentWorkspace,
+      );
 
-    return createdAutomation;
+      return createdAutomation;
+    } catch (error) {
+      const errorMessage = String(error?.message || "")
+
+      if (errorMessage.includes("allows up to")) {
+        setPricingCheckoutState({
+          status: "limit",
+          message: errorMessage,
+          pendingPlanKey: "",
+        })
+        navigateToPricing({ reason: "automation_limit", sourceView: "automations" })
+      }
+
+      throw error;
+    }
   };
 
   const handleToggleAutomation = async (automationId, enabled) => {
@@ -504,8 +594,104 @@ export default function App() {
     navigate("/pricing");
   };
 
+  const handleUpgradeFromAutomations = ({ reason = "automation_limit", automationId = "" } = {}) => {
+    setPricingCheckoutState({
+      status: "limit",
+      message:
+        reason === "dm_limit"
+          ? "This automation has reached its DM send cap. Upgrade to unlock more sends."
+          : "Your current plan has reached its automation cap. Upgrade to create more rules.",
+      pendingPlanKey: "",
+    })
+    navigateToPricing({ reason, sourceView: "automations", automationId })
+  };
+
   const handleGoToGoogleLanding = () => {
     navigate("/google-auth");
+  };
+
+  const handleSelectPaidPlan = async ({ tier, billingCycle }) => {
+    if (!session?.owner) {
+      handleGetStarted()
+      return
+    }
+
+    const planKey = `${tier}:${billingCycle || "monthly"}`
+    setPricingCheckoutState({
+      status: "pending",
+      message: "",
+      pendingPlanKey: planKey,
+    })
+
+    try {
+      const orderPayload = await createRazorpayCheckoutOrder({
+        tier,
+        billingCycle,
+      })
+      const RazorpayCheckout = await loadRazorpayCheckout()
+      const keyId = orderPayload?.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || ""
+
+      if (!keyId) {
+        throw new Error("Razorpay checkout is not configured. Set VITE_RAZORPAY_KEY_ID.")
+      }
+
+      await new Promise((resolve, reject) => {
+        const razorpay = new RazorpayCheckout({
+          key: keyId,
+          amount: orderPayload?.order?.amount,
+          currency: orderPayload?.order?.currency || "INR",
+          name: "InstaLead",
+          description: `${orderPayload?.plan?.planName || "Premium"} plan (${billingCycle || "monthly"})`,
+          order_id: orderPayload?.order?.id,
+          handler: async (response) => {
+            try {
+              const verifyPayload = await verifyRazorpayCheckoutPayment({
+                tier,
+                billingCycle,
+                razorpay_order_id: response?.razorpay_order_id,
+                razorpay_payment_id: response?.razorpay_payment_id,
+                razorpay_signature: response?.razorpay_signature,
+              })
+
+              setPricingSubscription(verifyPayload?.subscription || buildSubscriptionSnapshot(verifyPayload?.owner))
+              setPricingCheckoutState({
+                status: "success",
+                message: `${verifyPayload?.subscription?.planName || "Plan"} is now active for this Instagram account.`,
+                pendingPlanKey: "",
+              })
+              await refreshWorkspace().catch(() => null)
+              resolve(verifyPayload)
+            } catch (error) {
+              reject(error)
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              reject(new Error("Razorpay checkout was closed before payment finished."))
+            },
+          },
+          prefill: {
+            email: session?.owner?.email || session?.gowner?.email || "",
+            name: session?.owner?.name || session?.gowner?.name || "",
+          },
+          notes: {
+            subscriptionTier: tier,
+            billingCycle: billingCycle || "monthly",
+          },
+          theme: {
+            color: "#0f172a",
+          },
+        })
+
+        razorpay.open()
+      })
+    } catch (error) {
+      setPricingCheckoutState({
+        status: "error",
+        message: error?.message || "Checkout could not be completed right now.",
+        pendingPlanKey: "",
+      })
+    }
   };
 
   const handleLandingLogout = async () => {
@@ -536,6 +722,7 @@ export default function App() {
     window.localStorage.setItem(GOOGLE_AUTH_COMPLETED_KEY, "true");
     setHasGoogleLogin(Boolean(normalizedSession?.gowner));
     setSession(normalizedSession);
+    setPricingSubscription(buildSubscriptionSnapshot(normalizedSession?.owner));
     setWorkspace(null);
     setDashboardError("");
     navigate("/accounts", { replace: true });
@@ -548,6 +735,7 @@ export default function App() {
   const handleInstagramWorkspaceReady = (sessionPayload) => {
     const normalizedSession = normalizeSession(sessionPayload);
     setSession(normalizedSession);
+    setPricingSubscription(buildSubscriptionSnapshot(normalizedSession?.owner));
     if (!applyCachedWorkspace(normalizedSession)) {
       setWorkspace(null);
     }
@@ -605,6 +793,19 @@ export default function App() {
   }, [session, workspace]);
 
   useEffect(() => {
+    if (route.page !== "pricing") {
+      return
+    }
+
+    if (!session?.owner) {
+      setPricingSubscription(null)
+      return
+    }
+
+    refreshSubscriptionStatus().catch(() => null)
+  }, [route.page, session?.owner?.id]);
+
+  useEffect(() => {
     let isActive = true;
 
     const restoreSession = async () => {
@@ -616,6 +817,7 @@ export default function App() {
         }
 
         setSession(restoredSession);
+        setPricingSubscription(buildSubscriptionSnapshot(restoredSession?.owner));
         if (restoredSession?.owner) {
           applyCachedWorkspace(restoredSession)
         }
@@ -726,6 +928,10 @@ export default function App() {
             onBackToHome={handleBackToHome}
             onLogin={openLoginModal}
             onCreateAccount={openSignupModal}
+            onSelectPlan={handleSelectPaidPlan}
+            currentSubscription={pricingSubscription}
+            checkoutState={pricingCheckoutState}
+            pricingContext={getPricingContext(route.search)}
           />
         ) : route.page === "google-landing" ? (
           <GoogleLandingPage />
@@ -927,6 +1133,7 @@ export default function App() {
                   availablePosts={workspace.posts}
                   onCreateAutomation={handleCreateAutomation}
                   onToggleAutomation={handleToggleAutomation}
+                  onUpgrade={handleUpgradeFromAutomations}
                 />
               )}
               {activeView === "performance" && (
