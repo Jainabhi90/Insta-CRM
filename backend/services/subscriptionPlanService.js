@@ -18,6 +18,7 @@ const PLAN_DEFINITIONS = Object.freeze({
     dmLimitPerAutomation: 30,
   }),
 })
+const DEFAULT_SUBSCRIPTION_WINDOW_DAYS = 30
 
 function normalizePlanTier(value) {
   const normalized = String(value || "")
@@ -80,9 +81,65 @@ function buildOwnerPlanSnapshot(owner) {
   }
 }
 
+function getDefaultSubscriptionExpiry(tier, purchasedAt = new Date()) {
+  const definition = getPlanDefinition(tier)
+
+  if (definition.tier === "free") {
+    return null
+  }
+
+  const baseDate = purchasedAt instanceof Date ? purchasedAt : new Date(purchasedAt)
+  const expiresAt = new Date(baseDate.getTime())
+  expiresAt.setDate(expiresAt.getDate() + DEFAULT_SUBSCRIPTION_WINDOW_DAYS)
+  return expiresAt
+}
+
+async function applyOwnerSubscription(owner, {
+  tier,
+  source = "manual",
+  purchasedAt = new Date(),
+  expiresAt,
+  razorpayCustomerId = "",
+  razorpayOrderId = "",
+  razorpayPaymentId = "",
+  razorpaySubscriptionId = "",
+} = {}) {
+  const normalizedTier = normalizePlanTier(tier)
+
+  owner.subscriptionTier = normalizedTier
+  owner.subscriptionStatus = "active"
+  owner.subscriptionSource = String(source || "manual").trim().toLowerCase() || "manual"
+  owner.subscriptionPurchasedAt = purchasedAt instanceof Date ? purchasedAt : new Date(purchasedAt)
+  owner.subscriptionExpiresAt =
+    expiresAt === undefined
+      ? getDefaultSubscriptionExpiry(normalizedTier, owner.subscriptionPurchasedAt)
+      : expiresAt
+
+  if (razorpayCustomerId) {
+    owner.razorpayCustomerId = String(razorpayCustomerId).trim()
+  }
+
+  if (razorpayOrderId) {
+    owner.razorpayOrderId = String(razorpayOrderId).trim()
+  }
+
+  if (razorpayPaymentId) {
+    owner.razorpayPaymentId = String(razorpayPaymentId).trim()
+  }
+
+  if (razorpaySubscriptionId) {
+    owner.razorpaySubscriptionId = String(razorpaySubscriptionId).trim()
+  }
+
+  await owner.save()
+  return buildOwnerPlanSnapshot(owner)
+}
+
 module.exports = {
   PLAN_DEFINITIONS,
+  applyOwnerSubscription,
   buildOwnerPlanSnapshot,
+  getDefaultSubscriptionExpiry,
   getOwnerPlanDefinition,
   getPlanDefinition,
   isSupportedPlanTier,
