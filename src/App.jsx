@@ -45,7 +45,7 @@ import Accounts from "./pages/Accounts";
 import { sendInstagramReply } from "./api/instagram/replyApi";
 import { getInstagramComments } from "./api/instagram/commentsApi";
 import { getInstagramInbox } from "./api/instagram/inboxApi";
-import { createAutomation, updateAutomation, deleteAutomation } from "./api/automations/automationApi";
+import { createAutomation, updateAutomation } from "./api/automations/automationApi";
 import {
   logoutSession,
   restoreExistingSession,
@@ -62,6 +62,8 @@ import { ensureDemoPreviewSession } from "./services/demoSessionService";
 import { buildCommentWorkspace } from "./adapters/commentAdapter";
 import { buildInboxWorkspace } from "./adapters/inboxAdapter";
 import { normalizeSession } from "./adapters/ownerAdapter";
+
+import { buildGoogleAuthorizeUrl } from "./lib/googleAuthConfig";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
@@ -222,6 +224,7 @@ export default function App() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const dashboardLoadSequence = useRef(0);
+  const skipNextDashboardHydration = useRef(false);
   const instagramAuthInFlight = useRef(false);
 
   const applyCachedWorkspace = (sessionPayload) => {
@@ -246,6 +249,15 @@ export default function App() {
     setShowAuthModal(false);
   };
 
+  const handleGoogleLogin = () => {
+    const authorizeUrl = buildGoogleAuthorizeUrl();
+    if (!authorizeUrl) {
+      window.alert("Google login is not configured. Set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI.");
+      return;
+    }
+    window.location.assign(authorizeUrl);
+  };
+
   const openInstagramModal = () => {
     if (pendingAction) {
       return;
@@ -261,7 +273,7 @@ export default function App() {
       return;
     }
 
-    navigate("/google-auth");
+    handleGoogleLogin();
   };
 
   const openSignupModal = () => {
@@ -280,10 +292,10 @@ export default function App() {
     }
   };
 
-  const hydrateDashboard = async (search = window.location.search) => {
+  const hydrateDashboard = async (search = window.location.search, sessionOverride = null) => {
     const requestId = dashboardLoadSequence.current + 1;
     dashboardLoadSequence.current = requestId;
-    applyCachedWorkspace(session)
+    applyCachedWorkspace(sessionOverride || session)
     setIsDashboardLoading(true);
     setDashboardError("");
 
@@ -342,7 +354,7 @@ export default function App() {
       return;
     }
 
-    navigate("/google-auth");
+    handleGoogleLogin();
   };
 
   const handleInstagramAuth = async () => {
@@ -487,21 +499,6 @@ export default function App() {
     );
 
     return updatedAutomation;
-  };
-
-  const handleDeleteAutomation = async (automationId) => {
-    await deleteAutomation(automationId);
-
-    setWorkspace((currentWorkspace) =>
-      currentWorkspace
-        ? {
-            ...currentWorkspace,
-            automations: (currentWorkspace.automations || []).filter(
-              (automation) => automation.id !== automationId && automation.automation_id !== automationId
-            ),
-          }
-        : currentWorkspace,
-    );
   };
 
   const handleGoToPricing = () => {
@@ -667,6 +664,11 @@ export default function App() {
         return;
       }
 
+      if (skipNextDashboardHydration.current) {
+        skipNextDashboardHydration.current = false;
+        return;
+      }
+
       if (isMounted) {
         await hydrateDashboard(route.search);
       }
@@ -695,16 +697,12 @@ export default function App() {
         setWorkspace(null);
       }
       setHasGoogleLogin(Boolean(nextSession?.gowner));
-      
-      // If already on dashboard, hydrate immediately
-      // Otherwise navigate first and let the useEffect handle hydration
-      if (route.page === "dashboard") {
-        await hydrateDashboard("");
-      } else {
+
+      await hydrateDashboard("", nextSession);
+
+      if (route.page !== "dashboard") {
+        skipNextDashboardHydration.current = true;
         navigate("/dashboard");
-        // Small delay to ensure route updates before hydration
-        await new Promise(resolve => setTimeout(resolve, 50));
-        await hydrateDashboard("");
       }
     } catch (error) {
       setSelectError(error?.message || "Unable to open that Instagram account right now.");
@@ -926,10 +924,10 @@ export default function App() {
                   summary={workspace.automationSummary}
                   initialTemplates={workspace.automations}
                   tip={workspace.automationTip}
+                  limits={workspace.automationLimits}
                   availablePosts={workspace.posts}
                   onCreateAutomation={handleCreateAutomation}
                   onToggleAutomation={handleToggleAutomation}
-                  onDeleteAutomation={handleDeleteAutomation}
                 />
               )}
               {activeView === "performance" && (

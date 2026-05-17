@@ -33,10 +33,21 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     instagramUsername || fallbackOwner.instagramHandle || "instagram_account",
   )
 
+  const subscriptionTier = pickValue(
+    rawOwner,
+    ["subscriptionTier", "subscription_tier", "tier"],
+    fallbackOwner.subscriptionTier || "free",
+  )
+
   const plan = pickValue(
     rawOwner,
-    ["plan", "plan_name", "subscription_tier", "tier"],
-    fallbackOwner.plan || "Growth Plan",
+    ["plan", "planName", "plan_name"],
+    fallbackOwner.plan ||
+      (subscriptionTier === "premium_plus"
+        ? "Premium Plus"
+        : subscriptionTier === "premium"
+          ? "Premium"
+          : "Free"),
   )
 
   const tokenExpiresAt = pickValue(
@@ -88,6 +99,8 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     fallbackOwner.accountType || "UNKNOWN",
   )
 
+  const limits = pickValue(rawOwner, ["limits"], fallbackOwner.limits || null)
+
   const isSelected = Boolean(
     pickValue(rawOwner, ["isSelected", "selected"], fallbackOwner.isSelected || false),
   )
@@ -102,10 +115,12 @@ export function normalizeOwner(rawOwner, fallbackOwner = {}) {
     tokenExpiresAt,
     connectedAt,
     plan,
+    subscriptionTier,
     avatarUrl,
     avatarInitials: fallbackOwner.avatarInitials || getInitials(name),
     connectionStatus,
     accountType,
+    limits,
     isSelected,
   }
 }

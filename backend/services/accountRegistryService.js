@@ -1,5 +1,6 @@
 const GOwner = require("../models/GOwner")
 const IOwner = require("../models/IOwner")
+const { buildOwnerPlanSnapshot } = require("./subscriptionPlanService")
 
 function normalizeText(value) {
   return String(value || "").trim()
@@ -35,6 +36,7 @@ function buildAccountSummary(iowner, { selectedOwnerId = "" } = {}) {
 
   const id = iowner._id.toString()
   const username = normalizeText(iowner.instagramUsername)
+  const plan = buildOwnerPlanSnapshot(iowner)
 
   return {
     id,
@@ -54,6 +56,14 @@ function buildAccountSummary(iowner, { selectedOwnerId = "" } = {}) {
     tokenExpiresAt: iowner.tokenExpiresAt || null,
     connectedAt: iowner.connectedAt || null,
     permissions: Array.isArray(iowner.permissions) ? iowner.permissions : [],
+    plan: plan.planName,
+    planName: plan.planName,
+    subscriptionTier: plan.tier,
+    subscriptionStatus: plan.subscriptionStatus,
+    limits: {
+      automationLimit: plan.automationLimit,
+      dmLimitPerAutomation: plan.dmLimitPerAutomation,
+    },
     isSelected: String(selectedOwnerId || "") === id,
   }
 }
@@ -89,6 +99,7 @@ async function syncGOwnerAccountsSummary(gowner) {
     instagramHandle: formatHandle(account.instagramUsername),
     profilePictureUrl: normalizeText(account.profilePictureUrl),
     connectionStatus: normalizeText(account.connectionStatus || "pending"),
+    subscriptionTier: buildOwnerPlanSnapshot(account).tier,
     tokenExpiresAt: account.tokenExpiresAt || null,
   }))
 

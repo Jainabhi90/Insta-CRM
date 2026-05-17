@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
@@ -48,7 +48,6 @@ export function Automations({
   availablePosts = [],
   onCreateAutomation,
   onToggleAutomation,
-  onDeleteAutomation,
 }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [templates, setTemplates] = useState(() =>
@@ -57,7 +56,6 @@ export function Automations({
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [togglingId, setTogglingId] = useState("");
-  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     setTemplates((initialTemplates || []).map(mapTemplate));
