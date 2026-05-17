@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Check, Sparkles } from "lucide-react";
@@ -26,7 +26,20 @@ export function PricingPage({
   checkoutState = null,
   pricingContext = null,
 }) {
-  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [billingCycle, setBillingCycle] = useState(
+    pricingContext?.billingCycle === "yearly" ? "yearly" : "monthly",
+  );
+
+  useEffect(() => {
+    if (pricingContext?.billingCycle === "yearly") {
+      setBillingCycle("yearly");
+      return;
+    }
+
+    if (pricingContext?.billingCycle === "monthly") {
+      setBillingCycle("monthly");
+    }
+  }, [pricingContext?.billingCycle]);
 
   const pricingPlans = {
     monthly: {

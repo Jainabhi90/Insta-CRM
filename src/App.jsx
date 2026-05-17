@@ -70,6 +70,7 @@ import { buildGoogleAuthorizeUrl } from "./lib/googleAuthConfig";
 
 const THEME_STORAGE_KEY = "instalead.theme";
 const GOOGLE_AUTH_COMPLETED_KEY = "google_login_completed";
+const PENDING_PRICING_SELECTION_KEY = "instalead.pending_pricing_selection";
 
 function hasCompletedGoogleLogin() {
   if (typeof window === "undefined") {
@@ -77,6 +78,70 @@ function hasCompletedGoogleLogin() {
   }
 
   return window.localStorage.getItem(GOOGLE_AUTH_COMPLETED_KEY) === "true";
+}
+
+function readPendingPricingSelection() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawSelection = window.localStorage.getItem(PENDING_PRICING_SELECTION_KEY);
+
+    if (!rawSelection) {
+      return null;
+    }
+
+    const parsedSelection = JSON.parse(rawSelection);
+    const tier = String(parsedSelection?.tier || "").trim();
+
+    if (!tier) {
+      return null;
+    }
+
+    return {
+      tier,
+      billingCycle:
+        String(parsedSelection?.billingCycle || "monthly").trim().toLowerCase() === "yearly"
+          ? "yearly"
+          : "monthly",
+      createdAt: Number(parsedSelection?.createdAt || 0) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePendingPricingSelection(selection) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const tier = String(selection?.tier || "").trim();
+
+  if (!tier) {
+    return;
+  }
+
+  window.localStorage.setItem(
+    PENDING_PRICING_SELECTION_KEY,
+    JSON.stringify({
+      tier,
+      billingCycle:
+        String(selection?.billingCycle || "monthly").trim().toLowerCase() === "yearly"
+          ? "yearly"
+          : "monthly",
+      createdAt: Date.now(),
+    }),
+  );
+}
+
+function clearPendingPricingSelection() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_PRICING_SELECTION_KEY);
 }
 
 function hasActiveSession(session) {
@@ -238,6 +303,9 @@ function getPricingContext(search = "") {
     reason: params.get("reason") || "",
     sourceView: params.get("sourceView") || "",
     automationId: params.get("automationId") || "",
+    tier: params.get("tier") || "",
+    billingCycle: params.get("billingCycle") || "monthly",
+    intent: params.get("intent") || "",
   }
 }
 
@@ -264,6 +332,7 @@ export default function App() {
   const dashboardLoadSequence = useRef(0);
   const skipNextDashboardHydration = useRef(false);
   const instagramAuthInFlight = useRef(false);
+  const pricingResumeAttempted = useRef(false);
 
   const applyCachedWorkspace = (sessionPayload) => {
     const cachedWorkspace = readCachedWorkspace(sessionPayload)
@@ -282,7 +351,14 @@ export default function App() {
     setRoute(getCurrentRoute());
   };
 
-  const navigateToPricing = ({ reason = "", sourceView = activeView, automationId = "" } = {}) => {
+  const navigateToPricing = ({
+    reason = "",
+    sourceView = activeView,
+    automationId = "",
+    tier = "",
+    billingCycle = "",
+    intent = "",
+  } = {}) => {
     const params = new URLSearchParams()
 
     if (reason) {
@@ -295,6 +371,18 @@ export default function App() {
 
     if (automationId) {
       params.set("automationId", automationId)
+    }
+
+    if (tier) {
+      params.set("tier", tier)
+    }
+
+    if (billingCycle) {
+      params.set("billingCycle", billingCycle)
+    }
+
+    if (intent) {
+      params.set("intent", intent)
     }
 
     const nextPath = params.toString() ? `/pricing?${params.toString()}` : "/pricing"
@@ -477,6 +565,7 @@ export default function App() {
     setShowAuthModal(false);
     setAuthError("");
     setDashboardError("");
+    clearPendingPricingSelection();
 
     try {
       await logoutSession();
@@ -612,6 +701,12 @@ export default function App() {
 
   const handleSelectPaidPlan = async ({ tier, billingCycle }) => {
     if (!session?.owner) {
+      writePendingPricingSelection({ tier, billingCycle })
+      setPricingCheckoutState({
+        status: "auth_required",
+        message: "Finish login and connect Instagram to continue this upgrade.",
+        pendingPlanKey: "",
+      })
       handleGetStarted()
       return
     }
@@ -659,6 +754,7 @@ export default function App() {
                 message: `${verifyPayload?.subscription?.planName || "Plan"} is now active for this Instagram account.`,
                 pendingPlanKey: "",
               })
+              clearPendingPricingSelection()
               await refreshWorkspace().catch(() => null)
               resolve(verifyPayload)
             } catch (error) {
@@ -707,6 +803,7 @@ export default function App() {
     setAuthError("");
     setDashboardError("");
     window.localStorage.removeItem(GOOGLE_AUTH_COMPLETED_KEY);
+    clearPendingPricingSelection();
     setHasGoogleLogin(false);
 
     try {
@@ -744,6 +841,19 @@ export default function App() {
 
     if (normalizedSession?.gowner) {
       setHasGoogleLogin(true);
+    }
+
+    const pendingPricingSelection = readPendingPricingSelection();
+
+    if (pendingPricingSelection) {
+      navigateToPricing({
+        reason: "upgrade",
+        sourceView: "pricing",
+        tier: pendingPricingSelection.tier,
+        billingCycle: pendingPricingSelection.billingCycle,
+        intent: "resume",
+      });
+      return;
     }
 
     navigate("/dashboard", { replace: true });
@@ -794,6 +904,7 @@ export default function App() {
 
   useEffect(() => {
     if (route.page !== "pricing") {
+      pricingResumeAttempted.current = false
       return
     }
 
@@ -804,6 +915,31 @@ export default function App() {
 
     refreshSubscriptionStatus().catch(() => null)
   }, [route.page, session?.owner?.id]);
+
+  useEffect(() => {
+    const pricingContext = getPricingContext(route.search)
+
+    if (route.page !== "pricing" || pricingContext.intent !== "resume" || !session?.owner) {
+      return
+    }
+
+    if (pricingResumeAttempted.current || pricingCheckoutState.pendingPlanKey) {
+      return
+    }
+
+    const pendingSelection = readPendingPricingSelection()
+
+    if (!pendingSelection?.tier) {
+      return
+    }
+
+    pricingResumeAttempted.current = true
+    clearPendingPricingSelection()
+    void handleSelectPaidPlan({
+      tier: pendingSelection.tier,
+      billingCycle: pendingSelection.billingCycle,
+    })
+  }, [route.page, route.search, session?.owner?.id, pricingCheckoutState.pendingPlanKey]);
 
   useEffect(() => {
     let isActive = true;
@@ -900,6 +1036,19 @@ export default function App() {
       setHasGoogleLogin(Boolean(nextSession?.gowner));
 
       await hydrateDashboard("", nextSession);
+
+      const pendingPricingSelection = readPendingPricingSelection();
+
+      if (pendingPricingSelection) {
+        navigateToPricing({
+          reason: "upgrade",
+          sourceView: "pricing",
+          tier: pendingPricingSelection.tier,
+          billingCycle: pendingPricingSelection.billingCycle,
+          intent: "resume",
+        });
+        return;
+      }
 
       if (route.page !== "dashboard") {
         skipNextDashboardHydration.current = true;
@@ -1077,6 +1226,13 @@ export default function App() {
 
           {/* Right: Actions and Profile */}
           <div className="flex items-center justify-end gap-3 w-48 shrink-0">
+            <button
+              type="button"
+              onClick={handleGoToPricing}
+              className="hidden md:inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900"
+            >
+              Manage plan
+            </button>
             <button className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
               <Bell className="w-4 h-4" />
             </button>
@@ -1087,6 +1243,7 @@ export default function App() {
               pendingAction={pendingAction}
               onSwitchAccount={handleSwitchAccount}
               onSelectAccount={handleSelectWorkspaceAccount}
+              onGoToPricing={handleGoToPricing}
               onConnectInstagram={handleInstagramAuth}
               onLogout={handleLogout}
             />
@@ -1150,11 +1307,23 @@ export default function App() {
   );
 }
 
-function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, onSelectAccount, onConnectInstagram, onLogout, pendingAction }) {
+function DashboardAccountMenu({
+  gowner,
+  owner,
+  accounts = [],
+  onSwitchAccount,
+  onSelectAccount,
+  onGoToPricing,
+  onConnectInstagram,
+  onLogout,
+  pendingAction,
+}) {
   const isBusy = Boolean(pendingAction)
   const instagramHandle = owner?.instagramHandle || owner?.name || "Instagram account"
   const instagramUserId = owner?.instagramUserId || "Not available"
   const selectedCount = accounts.filter((account) => account.connectionStatus === "connected").length
+  const planName = owner?.planName || owner?.plan || "Free"
+  const billingCycle = owner?.subscriptionBillingCycle === "yearly" ? "yearly" : "monthly"
 
   const getInitials = (name) =>
     String(name || "IG")
@@ -1193,6 +1362,9 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
             <p className="text-base font-semibold text-gray-900">{instagramHandle}</p>
             <p className="text-sm text-gray-500">IG ID: {instagramUserId}</p>
             {gowner?.email ? <p className="text-sm text-gray-400">{gowner.email}</p> : null}
+            <p className="text-xs font-medium text-[#9f3f70]">
+              {planName} plan · {billingCycle}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -1235,6 +1407,17 @@ function DashboardAccountMenu({ gowner, owner, accounts = [], onSwitchAccount, o
             <DropdownMenuSeparator />
           </>
         ) : null}
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50"
+          onSelect={(event) => {
+            event.preventDefault();
+            onGoToPricing?.();
+          }}
+          disabled={isBusy}
+        >
+          <Settings className="h-5 w-5 text-gray-400" />
+          Manage plan & billing
+        </DropdownMenuItem>
         <DropdownMenuItem
           className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50"
           onSelect={(event) => {
