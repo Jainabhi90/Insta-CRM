@@ -20,3 +20,9 @@ export function updateAutomation(automationId, payload) {
     body: payload,
   })
 }
+
+export function deleteAutomation(automationId) {
+  return apiRequest(`/api/automations/${automationId}`, {
+    method: "DELETE",
+  })
+}
