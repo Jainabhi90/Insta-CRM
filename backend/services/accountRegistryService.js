@@ -60,6 +60,7 @@ function buildAccountSummary(iowner, { selectedOwnerId = "" } = {}) {
     planName: plan.planName,
     subscriptionTier: plan.tier,
     subscriptionStatus: plan.subscriptionStatus,
+    subscriptionBillingCycle: plan.billingCycle,
     limits: {
       automationLimit: plan.automationLimit,
       dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -92,16 +93,17 @@ async function syncGOwnerAccountsSummary(gowner) {
   const accounts = await getGOwnerAccounts(resolvedGOwner._id)
   const selectedOwnerId = resolvedGOwner.defaultIOwnerId?.toString() || accounts[0]?._id?.toString() || ""
 
-  resolvedGOwner.accountsSummary = accounts.map((account) => ({
-    iownerId: account._id,
-    instagramUserId: normalizeText(account.instagramUserId),
-    instagramUsername: normalizeText(account.instagramUsername),
-    instagramHandle: formatHandle(account.instagramUsername),
-    profilePictureUrl: normalizeText(account.profilePictureUrl),
-    connectionStatus: normalizeText(account.connectionStatus || "pending"),
-    subscriptionTier: buildOwnerPlanSnapshot(account).tier,
-    tokenExpiresAt: account.tokenExpiresAt || null,
-  }))
+    resolvedGOwner.accountsSummary = accounts.map((account) => ({
+      iownerId: account._id,
+      instagramUserId: normalizeText(account.instagramUserId),
+      instagramUsername: normalizeText(account.instagramUsername),
+      instagramHandle: formatHandle(account.instagramUsername),
+      profilePictureUrl: normalizeText(account.profilePictureUrl),
+      connectionStatus: normalizeText(account.connectionStatus || "pending"),
+      subscriptionTier: buildOwnerPlanSnapshot(account).tier,
+      subscriptionBillingCycle: buildOwnerPlanSnapshot(account).billingCycle,
+      tokenExpiresAt: account.tokenExpiresAt || null,
+    }))
 
   if (accounts.length === 0) {
     resolvedGOwner.defaultIOwnerId = null

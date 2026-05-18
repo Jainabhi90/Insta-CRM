@@ -15,7 +15,13 @@ const {
   triggerCommentAutomation,
   updateOwnerAutomation,
 } = require("./services/automationService")
-const { buildOwnerPlanSnapshot, isSupportedPlanTier, normalizePlanTier } = require("./services/subscriptionPlanService")
+const {
+  applyOwnerSubscription,
+  buildOwnerPlanSnapshot,
+  isSupportedPlanTier,
+  normalizeBillingCycle,
+  normalizePlanTier,
+} = require("./services/subscriptionPlanService")
 const {
   buildAccountSummary,
   buildGOwnerResponse,
@@ -32,6 +38,12 @@ const {
   exchangeCodeForLongLivedToken,
 } = require("./services/instagramAuthService")
 const { sendInstagramReply } = require("./services/instagramMessagingService")
+const {
+  createRazorpayOrder,
+  getPaidPlanCheckoutConfig,
+  verifyRazorpayPaymentSignature,
+  verifyRazorpayWebhookSignature,
+} = require("./services/razorpayService")
 const {
   readSessionToken,
   verifySessionToken,
@@ -97,6 +109,7 @@ function buildOwnerResponse(owner) {
     planName: plan.planName,
     subscriptionTier: plan.tier,
     subscriptionStatus: plan.subscriptionStatus,
+    subscriptionBillingCycle: plan.billingCycle,
     limits: {
       automationLimit: plan.automationLimit,
       dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -241,6 +254,33 @@ function validateAutomationPayload(payload) {
   return ""
 }
 
+function validateRazorpayOrderPayload(payload) {
+  const tier = String(payload?.tier || payload?.plan || payload?.subscriptionTier || "").trim()
+
+  if (!tier) {
+    return "Select a plan before creating a Razorpay order."
+  }
+
+  return ""
+}
+
+function validateRazorpayVerifyPayload(payload) {
+  const orderId = String(payload?.razorpay_order_id || payload?.orderId || "").trim()
+  const paymentId = String(payload?.razorpay_payment_id || payload?.paymentId || "").trim()
+  const signature = String(payload?.razorpay_signature || payload?.signature || "").trim()
+  const tier = String(payload?.tier || payload?.plan || payload?.subscriptionTier || "").trim()
+
+  if (!orderId || !paymentId || !signature) {
+    return "Razorpay order, payment, and signature are required."
+  }
+
+  if (!tier) {
+    return "Plan tier is required for payment verification."
+  }
+
+  return ""
+}
+
 function buildAutomationEventResponse(event) {
   return {
     id: event._id?.toString() || "",
@@ -286,6 +326,22 @@ function buildAutomationStatusAnswer(events) {
     latestReason: latestEvent?.reason || latestEvent?.errorMessage || "",
     latestEventAt: latestEvent?.createdAt || null,
   }
+}
+
+async function findSubscriptionOwnerById(ownerId) {
+  const normalizedOwnerId = String(ownerId || "").trim()
+
+  if (!normalizedOwnerId) {
+    return null
+  }
+
+  const iowner = await IOwner.findById(normalizedOwnerId)
+
+  if (iowner) {
+    return iowner
+  }
+
+  return Owner.findById(normalizedOwnerId)
 }
 
 function escapeHtml(value) {
@@ -1096,6 +1152,7 @@ router.get(
       tier: plan.tier,
       planName: plan.planName,
       status: plan.subscriptionStatus,
+      billingCycle: plan.billingCycle,
       limits: {
         automationLimit: plan.automationLimit,
         dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -1111,6 +1168,7 @@ router.patch(
   asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
   asyncHandler(async (req, res) => {
     const requestedTier = String(req.body?.tier || req.body?.plan || req.body?.subscriptionTier || "").trim()
+    const billingCycle = normalizeBillingCycle(req.body?.billingCycle || req.body?.cycle)
 
     if (!requestedTier || !isSupportedPlanTier(requestedTier)) {
       return res.status(400).json({
@@ -1122,6 +1180,7 @@ router.patch(
     const tier = normalizePlanTier(requestedTier)
 
     req.owner.subscriptionTier = tier
+    req.owner.subscriptionBillingCycle = billingCycle
     req.owner.subscriptionStatus = "active"
     req.owner.subscriptionSource = req.owner.subscriptionSource || "manual"
     req.owner.subscriptionPurchasedAt = req.owner.subscriptionPurchasedAt || new Date()
@@ -1136,6 +1195,7 @@ router.patch(
         tier: plan.tier,
         planName: plan.planName,
         status: plan.subscriptionStatus,
+        billingCycle: plan.billingCycle,
         limits: {
           automationLimit: plan.automationLimit,
           dmLimitPerAutomation: plan.dmLimitPerAutomation,
@@ -1143,6 +1203,301 @@ router.patch(
         subscribedAt: plan.subscribedAt,
         expiresAt: plan.expiresAt,
       },
+    })
+  }),
+)
+
+router.post(
+  "/payments/razorpay/order",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const validationError = validateRazorpayOrderPayload(req.body)
+
+    if (validationError) {
+      return res.status(400).json({
+        ok: false,
+        message: validationError,
+      })
+    }
+
+    const checkoutPlan = getPaidPlanCheckoutConfig(
+      req.body?.tier || req.body?.plan || req.body?.subscriptionTier,
+      req.body?.billingCycle || req.body?.cycle,
+    )
+    const receipt = `instalead_${req.owner._id}_${Date.now()}`
+
+    const apiCall = await ApiCall.create({
+      requestType: "razorpay_order",
+      status: "received",
+      email: req.owner.email || "",
+      ownerId: req.owner.gownerId ? null : req.owner._id,
+      gownerId: req.owner.gownerId || null,
+      iownerId: req.owner.gownerId ? req.owner._id : null,
+      instagramUserId: req.owner.instagramUserId || "",
+      requestPayload: {
+        tier: checkoutPlan.tier,
+        billingCycle: checkoutPlan.billingCycle,
+        amount: checkoutPlan.amount,
+        currency: checkoutPlan.currency,
+      },
+    })
+
+    try {
+      const order = await createRazorpayOrder({
+        amount: checkoutPlan.amount,
+        currency: checkoutPlan.currency,
+        receipt,
+        notes: {
+          ownerId: req.owner._id.toString(),
+          ownerModel: req.owner.gownerId ? "iowner" : "owner",
+          instagramUserId: String(req.owner.instagramUserId || ""),
+          subscriptionTier: checkoutPlan.tier,
+          billingCycle: checkoutPlan.billingCycle,
+        },
+      })
+
+      req.owner.razorpayOrderId = String(order.id || "").trim()
+      await req.owner.save()
+
+      apiCall.status = "completed"
+      apiCall.responsePayload = {
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        status: order.status,
+      }
+      await apiCall.save()
+
+      return res.status(200).json({
+        ok: true,
+        keyId: config.razorpay.keyId,
+        order: {
+          id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          receipt: order.receipt,
+          status: order.status,
+        },
+        plan: {
+          tier: checkoutPlan.tier,
+          planName: checkoutPlan.planName,
+          billingCycle: checkoutPlan.billingCycle,
+          automationLimit: checkoutPlan.automationLimit,
+          dmLimitPerAutomation: checkoutPlan.dmLimitPerAutomation,
+        },
+      })
+    } catch (error) {
+      apiCall.status = "failed"
+      apiCall.errorMessage = error.message
+      apiCall.responsePayload = {
+        status: error.status || 500,
+        data: error.data || null,
+      }
+      await apiCall.save()
+      throw error
+    }
+  }),
+)
+
+router.post(
+  "/payments/razorpay/verify",
+  asyncHandler(async (req, res, next) => requireAuthenticatedOwner(req, res, next)),
+  asyncHandler(async (req, res) => {
+    const validationError = validateRazorpayVerifyPayload(req.body)
+
+    if (validationError) {
+      return res.status(400).json({
+        ok: false,
+        message: validationError,
+      })
+    }
+
+    const orderId = String(req.body?.razorpay_order_id || req.body?.orderId || "").trim()
+    const paymentId = String(req.body?.razorpay_payment_id || req.body?.paymentId || "").trim()
+    const signature = String(req.body?.razorpay_signature || req.body?.signature || "").trim()
+    const checkoutPlan = getPaidPlanCheckoutConfig(
+      req.body?.tier || req.body?.plan || req.body?.subscriptionTier,
+      req.body?.billingCycle || req.body?.cycle,
+    )
+
+    const apiCall = await ApiCall.create({
+      requestType: "razorpay_verify",
+      status: "received",
+      email: req.owner.email || "",
+      ownerId: req.owner.gownerId ? null : req.owner._id,
+      gownerId: req.owner.gownerId || null,
+      iownerId: req.owner.gownerId ? req.owner._id : null,
+      instagramUserId: req.owner.instagramUserId || "",
+      requestPayload: {
+        tier: checkoutPlan.tier,
+        billingCycle: checkoutPlan.billingCycle,
+        orderId,
+        paymentId,
+      },
+    })
+
+    if (!verifyRazorpayPaymentSignature({ orderId, paymentId, signature })) {
+      apiCall.status = "failed"
+      apiCall.errorMessage = "Razorpay payment signature verification failed."
+      await apiCall.save()
+
+      return res.status(400).json({
+        ok: false,
+        message: "Razorpay payment signature verification failed.",
+      })
+    }
+
+    const subscription = await applyOwnerSubscription(req.owner, {
+      tier: checkoutPlan.tier,
+      billingCycle: checkoutPlan.billingCycle,
+      source: "razorpay",
+      purchasedAt: new Date(),
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+    })
+
+    apiCall.status = "completed"
+    apiCall.responsePayload = {
+      tier: subscription.tier,
+      planName: subscription.planName,
+      status: subscription.subscriptionStatus,
+      expiresAt: subscription.expiresAt,
+    }
+    await apiCall.save()
+
+    return res.status(200).json({
+      ok: true,
+      owner: buildOwnerResponse(req.owner),
+      subscription: {
+        tier: subscription.tier,
+        planName: subscription.planName,
+        status: subscription.subscriptionStatus,
+        billingCycle: subscription.billingCycle,
+        limits: {
+          automationLimit: subscription.automationLimit,
+          dmLimitPerAutomation: subscription.dmLimitPerAutomation,
+        },
+        subscribedAt: subscription.subscribedAt,
+        expiresAt: subscription.expiresAt,
+      },
+    })
+  }),
+)
+
+router.post(
+  "/payments/razorpay/webhook",
+  asyncHandler(async (req, res) => {
+    const signature = String(req.headers["x-razorpay-signature"] || "").trim()
+
+    if (!signature) {
+      return res.status(400).json({
+        ok: false,
+        message: "Missing Razorpay webhook signature.",
+      })
+    }
+
+    if (!verifyRazorpayWebhookSignature(req.rawBody, signature)) {
+      return res.status(403).json({
+        ok: false,
+        message: "Razorpay webhook signature verification failed.",
+      })
+    }
+
+    const eventType = String(req.body?.event || "").trim()
+    const paymentEntity = req.body?.payload?.payment?.entity || null
+    const orderEntity = req.body?.payload?.order?.entity || null
+    const notes = paymentEntity?.notes || orderEntity?.notes || {}
+    const ownerId = String(notes?.ownerId || "").trim()
+    const requestedTier = String(notes?.subscriptionTier || "").trim()
+    const billingCycle = normalizeBillingCycle(notes?.billingCycle)
+
+    const apiCall = await ApiCall.create({
+      requestType: "razorpay_webhook",
+      status: "received",
+      email: "",
+      instagramUserId: String(notes?.instagramUserId || ""),
+      requestPayload: {
+        event: eventType,
+        orderId: orderEntity?.id || paymentEntity?.order_id || "",
+        paymentId: paymentEntity?.id || "",
+        ownerId,
+        subscriptionTier: requestedTier,
+        billingCycle,
+      },
+    })
+
+    if (!ownerId || !requestedTier) {
+      apiCall.status = "completed"
+      apiCall.responsePayload = {
+        ignored: true,
+        reason: "missing_owner_or_tier",
+      }
+      await apiCall.save()
+
+      return res.status(200).json({
+        ok: true,
+        ignored: true,
+      })
+    }
+
+    if (!["payment.captured", "order.paid"].includes(eventType)) {
+      apiCall.status = "completed"
+      apiCall.responsePayload = {
+        ignored: true,
+        reason: "event_not_used_for_subscription_activation",
+      }
+      await apiCall.save()
+
+      return res.status(200).json({
+        ok: true,
+        ignored: true,
+      })
+    }
+
+    const owner = await findSubscriptionOwnerById(ownerId)
+
+    if (!owner) {
+      apiCall.status = "failed"
+      apiCall.errorMessage = "Webhook owner was not found."
+      await apiCall.save()
+
+      return res.status(404).json({
+        ok: false,
+        message: "Webhook owner was not found.",
+      })
+    }
+
+    const checkoutPlan = getPaidPlanCheckoutConfig(requestedTier, billingCycle)
+    const paymentId = String(paymentEntity?.id || "").trim()
+    const orderId = String(orderEntity?.id || paymentEntity?.order_id || "").trim()
+    const customerId = String(paymentEntity?.customer_id || "").trim()
+
+    const subscription = await applyOwnerSubscription(owner, {
+      tier: checkoutPlan.tier,
+      billingCycle: checkoutPlan.billingCycle,
+      source: "razorpay_webhook",
+      purchasedAt: new Date(),
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      razorpayCustomerId: customerId,
+    })
+
+    apiCall.status = "completed"
+    apiCall.email = owner.email || ""
+    apiCall.ownerId = owner.gownerId ? null : owner._id
+    apiCall.gownerId = owner.gownerId || null
+    apiCall.iownerId = owner.gownerId ? owner._id : null
+    apiCall.responsePayload = {
+      tier: subscription.tier,
+      planName: subscription.planName,
+      status: subscription.subscriptionStatus,
+      expiresAt: subscription.expiresAt,
+    }
+    await apiCall.save()
+
+    return res.status(200).json({
+      ok: true,
+      processed: true,
     })
   }),
 )

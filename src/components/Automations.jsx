@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square, Trash2 } from "lucide-react";
+import { MessageSquare, Mail, Gift, Plus, Zap, Play, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CreateAutomationModal } from "./CreateAutomationModal";
 
@@ -48,6 +48,7 @@ export function Automations({
   availablePosts = [],
   onCreateAutomation,
   onToggleAutomation,
+  onUpgrade,
 }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [templates, setTemplates] = useState(() =>
@@ -95,33 +96,6 @@ export function Automations({
       });
     } finally {
       setTogglingId("");
-    }
-  };
-
-  const handleDeleteTemplate = async (id) => {
-    const removedTemplate = templates.find((t) => t.id === id);
-    if (!removedTemplate) return;
-
-    setDeletingId(id);
-    setStatus({ type: "", message: "" });
-    setTemplates((prev) => prev.filter((t) => t.id !== id));
-
-    try {
-      if (typeof onDeleteAutomation === "function") {
-        await onDeleteAutomation(id);
-      }
-      setStatus({ type: "success", message: "Automation deleted." });
-    } catch (error) {
-      setTemplates((prev) => {
-        const alreadyPresent = prev.find((t) => t.id === id);
-        return alreadyPresent ? prev : [...prev, removedTemplate];
-      });
-      setStatus({
-        type: "error",
-        message: error?.message || "Could not delete automation.",
-      });
-    } finally {
-      setDeletingId("");
     }
   };
 
@@ -187,6 +161,14 @@ export function Automations({
     ...defaultTip,
     ...tip,
   };
+  const handleOpenCreate = () => {
+    if (maxAutomationsReached) {
+      onUpgrade?.({ reason: "automation_limit" })
+      return
+    }
+
+    setShowCreateModal(true)
+  }
 
   return (
     <>
@@ -200,11 +182,10 @@ export function Automations({
           </div>
           <Button 
             className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
-            onClick={() => setShowCreateModal(true)}
-            disabled={maxAutomationsReached}
+            onClick={handleOpenCreate}
           >
             <Plus className="w-4 h-4 mr-2" />
-            {maxAutomationsReached ? "Automation limit reached" : "New Automation"}
+            {maxAutomationsReached ? "Upgrade to add automation" : "New Automation"}
           </Button>
         </div>
 
@@ -284,8 +265,6 @@ export function Automations({
                         </Badge>
                       </div>
                     </div>
-
-                    {/* DM counter badge + delete */}
                     <div className="flex items-center gap-2 -mt-1 -mr-2">
                       {template.dmSentCount >= template.dmLimitPerAutomation ? (
                         <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/10">
@@ -296,16 +275,6 @@ export function Automations({
                           DMs: {template.dmSentCount}/{template.dmLimitPerAutomation}
                         </span>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
-                        onClick={() => handleDeleteTemplate(template.id)}
-                        title="Delete automation"
-                        disabled={deletingId === template.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                   <CardDescription className="mt-2">{template.description}</CardDescription>
@@ -332,11 +301,16 @@ export function Automations({
                     <div className="pt-4 mt-2 border-t border-gray-100">
                       {template.dmSentCount >= template.dmLimitPerAutomation ? (
                         <Button
-                          className="w-full bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed font-medium shadow-none"
-                          disabled
+                          className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm"
+                          onClick={() =>
+                            onUpgrade?.({
+                              reason: "dm_limit",
+                              automationId: template.id,
+                            })
+                          }
                         >
-                          <Square className="w-4 h-4 mr-2" />
-                          DM Limit Exceeded
+                          <Zap className="w-4 h-4 mr-2" />
+                          Upgrade to send more DMs
                         </Button>
                       ) : template.enabled ? (
                         <Button 
@@ -373,12 +347,11 @@ export function Automations({
                   Create your first automation to start handling common Instagram replies automatically.
                 </p>
                 <Button
-                        className="bg-slate-900 hover:bg-slate-800"
-                  onClick={() => setShowCreateModal(true)}
-                  disabled={maxAutomationsReached}
+                  className="bg-slate-900 hover:bg-slate-800"
+                  onClick={handleOpenCreate}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  {maxAutomationsReached ? "Automation limit reached" : "Create First Automation"}
+                  {maxAutomationsReached ? "Upgrade to add automation" : "Create First Automation"}
                 </Button>
               </CardContent>
             </Card>
