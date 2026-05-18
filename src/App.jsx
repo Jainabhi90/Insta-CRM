@@ -12,6 +12,7 @@ import {
   Zap,
   Bell,
   Menu,
+  CreditCard,
 } from "lucide-react";
 import { LandingPage } from "./components/LandingPage";
 import { DarkLandingPage } from "./components/DarkLandingPage";
@@ -908,8 +909,42 @@ export default function App() {
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden lg:flex sticky top-0 z-30 h-16 shrink-0 items-center justify-end px-8 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-gray-200">
-          <div className="flex items-center gap-3">
+        <header className="hidden lg:flex sticky top-0 z-30 h-20 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-gray-200 pt-1">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-2 w-48 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
+              IL
+            </div>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">InstaLead</span>
+          </div>
+
+          {/* Center: Pill Navigation */}
+          <nav className="flex overflow-x-auto hide-scrollbar items-center gap-1 bg-white rounded-full p-1 border border-gray-200 shadow-sm mx-auto">
+            {Object.entries(DASHBOARD_VIEW_META).map(([key, meta]) => (
+              <button
+                key={key}
+                onClick={() => setActiveView(key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeView === key
+                    ? "bg-gray-900 text-white shadow"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                {meta.label}
+              </button>
+            ))}
+            <div className="w-px h-5 bg-gray-200 mx-1"></div>
+            <button
+              onClick={handleGoToPricing}
+              className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 group"
+            >
+              <CreditCard className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+              Manage plan
+            </button>
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center justify-end gap-3 w-48 shrink-0">
             <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
               <Bell className="w-4 h-4" />
             </button>

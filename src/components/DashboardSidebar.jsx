@@ -21,7 +21,7 @@ export function DashboardSidebar({ activeView, onViewChange, onGoToPricing, isOp
       )}
 
       {/* Sidebar Content */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-gray-100 lg:border-transparent lg:mt-2">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
