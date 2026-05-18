@@ -11,6 +11,8 @@ import {
   Users,
   Zap,
   Bell,
+  Menu,
+  CreditCard,
 } from "lucide-react";
 import { LandingPage } from "./components/LandingPage";
 import { DarkLandingPage } from "./components/DarkLandingPage";
@@ -21,6 +23,7 @@ import { LeadCenter } from "./components/LeadCenter";
 import { CommentsInbox } from "./components/CommentsInbox";
 import { DmInbox } from "./components/DmInbox";
 import { Automations } from "./components/Automations";
+import { DashboardSidebar } from "./components/DashboardSidebar";
 import { PostPerformance } from "./components/PostPerformance";
 import { InstagramBrandMark } from "./components/InstagramBrandMark";
 import { Button } from "./components/ui/button";
@@ -315,6 +318,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [workspace, setWorkspace] = useState(null);
   const [activeView, setActiveView] = useState("leads");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(() => getStoredTheme());
   const [pendingAction, setPendingAction] = useState("");
@@ -1196,15 +1200,61 @@ export default function App() {
   const ActiveViewIcon = activeViewMeta.icon;
 
   return (
-    <div className="brand-shell-bg min-h-screen">
-      <div className="flex min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-gray-200 pt-1">
+    <div className="brand-shell-bg min-h-screen flex">
+      {/* Sidebar */}
+      <DashboardSidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView} 
+        onGoToPricing={handleGoToPricing}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col">
+        {/* Mobile Header */}
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between px-4 bg-white/90 backdrop-blur-md border-b border-gray-200 lg:hidden">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="text-gray-500 hover:text-gray-700 p-2 -ml-2 rounded-md hover:bg-gray-100 transition-colors"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-sm">
+                IL
+              </div>
+              <span className="text-lg font-bold text-gray-900 tracking-tight">InstaLead</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <Bell className="w-4 h-4" />
+            </button>
+            <DashboardAccountMenu
+              gowner={session.gowner}
+              owner={session.owner}
+              accounts={session.accounts || []}
+              pendingAction={pendingAction}
+              onSwitchAccount={handleSwitchAccount}
+              onSelectAccount={handleSelectWorkspaceAccount}
+              onConnectInstagram={handleInstagramAuth}
+              onLogout={handleLogout}
+              collapsed={true}
+            />
+          </div>
+        </header>
+
+        {/* Desktop Header */}
+        <header className="hidden lg:flex sticky top-0 z-30 h-20 shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-gray-200 pt-1">
           {/* Left: Logo */}
           <div className="flex items-center gap-2 w-48 shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
               IL
             </div>
-            <span className="text-xl font-bold text-gray-900">InstaLead</span>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">InstaLead</span>
           </div>
 
           {/* Center: Pill Navigation */}
@@ -1222,18 +1272,19 @@ export default function App() {
                 {meta.label}
               </button>
             ))}
-          </nav>
-
-          {/* Right: Actions and Profile */}
-          <div className="flex items-center justify-end gap-3 w-48 shrink-0">
+            <div className="w-px h-5 bg-gray-200 mx-1"></div>
             <button
-              type="button"
               onClick={handleGoToPricing}
-              className="hidden md:inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900"
+              className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 group"
             >
+              <CreditCard className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
               Manage plan
             </button>
-            <button className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center justify-end gap-3 w-48 shrink-0">
+            <button className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
               <Bell className="w-4 h-4" />
             </button>
             <DashboardAccountMenu
@@ -1250,7 +1301,7 @@ export default function App() {
           </div>
         </header>
         
-        <main className="min-w-0 flex-1 py-8 px-4 sm:px-6 lg:px-8">
+        <main className="min-w-0 flex-1 py-6 px-4 sm:px-6 lg:py-8 lg:px-8 overflow-y-auto">
           <div className="mx-auto max-w-7xl">
               {activeView === "leads" && (
                 <LeadCenter
