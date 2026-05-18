@@ -56,6 +56,7 @@ export function Automations({
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [togglingId, setTogglingId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     setTemplates((initialTemplates || []).map(mapTemplate));
