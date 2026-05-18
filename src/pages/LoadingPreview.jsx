@@ -1,106 +1,4 @@
-import { useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/skeleton";
-import { getInstagramRedirectUri } from "../lib/instagramAuthConfig";
-
-const INSTAGRAM_EXCHANGE_LOCK_PREFIX = "instagram_exchange_inflight:";
-
-export default function InstagramCallback({ onComplete, onFailed }) {
-  const [hasCode, setHasCode] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const state = params.get("state");
-    let isCancelled = false;
-
-    if (code && state) {
-      setHasCode(true);
-      setErrorMessage("");
-
-      const lockKey = `${INSTAGRAM_EXCHANGE_LOCK_PREFIX}${code}`;
-      if (window.sessionStorage.getItem(lockKey) === "1") {
-        if (!isCancelled) {
-          setErrorMessage("This Instagram login callback was already processed. Please start login again.");
-          setHasCode(false);
-        }
-
-        return () => {
-          isCancelled = true;
-        };
-      }
-
-      window.sessionStorage.setItem(lockKey, "1");
-
-      const finishInstagramLogin = async () => {
-        try {
-          const response = await fetch("/api/auth/instagram/callback", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              code,
-              state,
-              redirectUri: getInstagramRedirectUri(),
-            }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData?.message || "Instagram authentication failed");
-          }
-
-          const sessionPayload = await response.json();
-
-          if (!isCancelled) {
-            onComplete?.(sessionPayload);
-          }
-        } catch (error) {
-          if (!isCancelled) {
-            setErrorMessage(error?.message || "Instagram login could not be completed.");
-            setHasCode(false);
-          }
-          window.sessionStorage.removeItem(lockKey);
-        }
-      };
-
-      finishInstagramLogin();
-
-      return () => {
-        isCancelled = true;
-      };
-    }
-
-    if (!code) {
-      setHasCode(false);
-      setErrorMessage("No authorization code was found. Start login from the Accounts page.");
-    }
-
-    return undefined;
-  }, []);
-
-  if (!hasCode) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <h2 className="mb-3 text-2xl font-bold text-gray-900">Instagram login failed</h2>
-          <p className="mb-6 text-gray-600">
-            {errorMessage || "No authorization code was found. Start login from the Accounts page."}
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Button onClick={() => (window.location.href = "/accounts")}>Go to Accounts</Button>
-            <Button variant="outline" onClick={() => onFailed?.()}>
-              Back Home
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+export default function LoadingPreview() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F4F4F5] px-4">
       <style>{`
@@ -127,9 +25,9 @@ export default function InstagramCallback({ onComplete, onFailed }) {
           50% { transform: rotate(30deg); }
         }
       `}</style>
-      
+
       <div className="w-full max-w-md mx-auto relative flex flex-col min-h-screen py-8">
-        
+
         {/* Top Header Row */}
         <div className="flex items-center gap-4 w-full">
           <div className="h-12 flex-1 rounded-2xl bg-slate-200/60 animate-pulse"></div>
@@ -139,8 +37,8 @@ export default function InstagramCallback({ onComplete, onFailed }) {
         {/* Center Character Area */}
         <div className="flex-1 flex flex-col items-center justify-center relative z-10">
           <div className="relative flex flex-col items-center justify-end h-40 w-32">
-            
-            {/* Character Body (stretches up and down) */}
+
+            {/* Character Body */}
             <div className="absolute bottom-[4px] flex flex-col items-center" style={{ animation: 'stretch 1.2s ease-in-out infinite' }}>
               <div className="w-[46px] h-full min-h-[60px] bg-white border-[2.5px] border-slate-800 rounded-full relative z-10 flex flex-col items-center pt-3 shadow-sm">
                 {/* Eyes */}
@@ -150,33 +48,32 @@ export default function InstagramCallback({ onComplete, onFailed }) {
                 </div>
                 {/* Mouth */}
                 <div className="w-2.5 h-1.5 rounded-b-full bg-slate-800 mt-1"></div>
-                
                 {/* Arms */}
                 <div className="absolute -left-1.5 top-8 w-2 h-5 rounded-full border-[2px] border-slate-800 bg-white origin-top" style={{ animation: 'armLeft 1.2s ease-in-out infinite' }}></div>
                 <div className="absolute -right-1.5 top-8 w-2 h-5 rounded-full border-[2px] border-slate-800 bg-white origin-top" style={{ animation: 'armRight 1.2s ease-in-out infinite' }}></div>
               </div>
             </div>
-            
+
             {/* Shoes */}
             <div className="absolute bottom-[1px] flex gap-2 z-20">
               <div className="w-[22px] h-[14px] bg-[#0066FF] border-[2.5px] border-slate-800 rounded-t-xl rounded-b-sm" style={{ animation: 'walk 1.2s ease-in-out infinite' }}></div>
               <div className="w-[22px] h-[14px] bg-[#0066FF] border-[2.5px] border-slate-800 rounded-t-xl rounded-b-sm" style={{ animation: 'walk 1.2s ease-in-out infinite', animationDelay: '0.6s' }}></div>
             </div>
-            
+
             {/* Floor Line */}
             <div className="absolute bottom-0 w-24 h-[2.5px] bg-slate-800 rounded-full"></div>
           </div>
-          
+
           <div className="mt-8 font-medium text-slate-400 animate-pulse text-sm">
-            Processing Instagram login...
+            Processing login...
           </div>
         </div>
 
-        {/* Bottom Skeleton Rows */}
+        {/* Bottom Skeleton Circles */}
         <div className="w-full mt-auto pb-8">
           <div className="flex justify-between px-2">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={`r1-${i}`} className="w-[48px] h-[48px] rounded-full bg-slate-200/60 animate-pulse" style={{ animationDelay: `${i * 150}ms` }}></div>
+              <div key={i} className="w-[48px] h-[48px] rounded-full bg-slate-200/60 animate-pulse" style={{ animationDelay: `${i * 150}ms` }}></div>
             ))}
           </div>
         </div>
