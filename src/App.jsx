@@ -40,6 +40,7 @@ import {
 } from "./components/ui/dropdown-menu";
 import { readInstagramCallbackParams } from "./lib/instagramCallback";
 import Privacy from "./pages/Privacy";
+import LoadingPreview from "./pages/LoadingPreview";
 import Terms from "./pages/Terms";
 import DeleteData from "./pages/DeleteData";
 import GoogleCallback from "./pages/GoogleCallback";
@@ -217,6 +218,10 @@ function getCurrentRoute() {
 
   if (path === "/privacy") {
     return { page: "privacy", search: window.location.search };
+  }
+
+  if (path === "/loading-preview") {
+    return { page: "loading-preview", search: "" };
   }
 
   if (path === "/terms") {
@@ -1069,7 +1074,9 @@ export default function App() {
   if (route.page !== "dashboard") {
     return (
       <>
-        {route.page === "privacy" ? (
+        {route.page === "loading-preview" ? (
+          <LoadingPreview />
+        ) : route.page === "privacy" ? (
           <Privacy />
         ) : route.page === "terms" ? (
           <Terms />
