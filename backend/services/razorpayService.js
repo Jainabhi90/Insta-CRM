@@ -81,6 +81,16 @@ function getPaidPlanCheckoutConfig(tier, billingCycle = "monthly") {
 async function createRazorpayOrder({ amount, currency = "INR", receipt, notes = {} }) {
   ensureRazorpayCredentials()
 
+  const maskedKeyId = config.razorpay.keyId
+    ? `${config.razorpay.keyId.slice(0, 6)}...${config.razorpay.keyId.slice(-4)}`
+    : "null"
+  const secretLen = config.razorpay.keySecret ? config.razorpay.keySecret.length : 0
+  const maskedSecret = config.razorpay.keySecret
+    ? `${config.razorpay.keySecret.slice(0, 2)}...${config.razorpay.keySecret.slice(-2)} (len: ${secretLen})`
+    : "null"
+
+  console.log(`[Razorpay Order Create] Initiating request. KeyID: ${maskedKeyId}, Secret: ${maskedSecret}`)
+
   const response = await fetch(`${RAZORPAY_API_BASE}/orders`, {
     method: "POST",
     headers: {
@@ -96,14 +106,24 @@ async function createRazorpayOrder({ amount, currency = "INR", receipt, notes = 
     }),
   })
 
-  const data = await response.json().catch(() => null)
+  const responseText = await response.text().catch(() => "")
+  let data = null
+  try {
+    data = JSON.parse(responseText)
+  } catch (e) {
+    data = null
+  }
 
   if (!response.ok) {
+    console.error(
+      `[Razorpay Order Create Failed] Status: ${response.status}. Raw Response:`,
+      responseText
+    )
     const error = new Error(
       data?.error?.description ||
         data?.error?.message ||
         data?.message ||
-        "Unable to create Razorpay order.",
+        `Unable to create Razorpay order. Status: ${response.status}`,
     )
     error.status = response.status
     error.data = data
