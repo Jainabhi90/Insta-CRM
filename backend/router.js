@@ -1224,7 +1224,7 @@ router.post(
       req.body?.tier || req.body?.plan || req.body?.subscriptionTier,
       req.body?.billingCycle || req.body?.cycle,
     )
-    const receipt = `instalead_${req.owner._id}_${Date.now()}`
+    const receipt = `rcpt_${req.owner._id.toString().slice(-8)}_${Date.now()}`
 
     const apiCall = await ApiCall.create({
       requestType: "razorpay_order",
